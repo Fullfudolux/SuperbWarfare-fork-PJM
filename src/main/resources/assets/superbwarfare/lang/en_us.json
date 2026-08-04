@@ -10,7 +10,6 @@
   "item.superbwarfare.ammo.rifle": "Rifle Ammo",
   "item.superbwarfare.ammo.sniper": "Sniper Ammo",
   "item.superbwarfare.ammo.heavy": "Heavy Ammo",
-
   "item.superbwarfare.sentinel": "Sentinel",
   "item.superbwarfare.rpk": "RPK",
   "item.superbwarfare.m_870": "M870 MCS",
@@ -63,10 +62,8 @@
   "des.superbwarfare.ql_1031_2": "Chiram",
   "item.superbwarfare.super_star_shooter": "Super Star Shooter",
   "item.superbwarfare.reforging": "Reforging",
-
   "item.superbwarfare.vehicle_gun": "Vehicle Gun",
   "des.superbwarfare.vehicle_gun": "You should not have got this",
-
   "des.superbwarfare.guns.damage": "Damage: ",
   "des.superbwarfare.guns.level": "Level: ",
   "des.superbwarfare.guns.bypass": "Armor Piercing: ",
@@ -74,7 +71,6 @@
   "des.superbwarfare.guns.rpm": "RPM: ",
   "des.superbwarfare.guns.headshot": "Headshot: ",
   "des.superbwarfare.guns.edit": "Press %1$s key to open Edit Screen",
-
   "item.superbwarfare.ammo_box": "Ammo Box",
   "des.superbwarfare.ammo_box.rifle": "Storage Rifle Ammo: ",
   "des.superbwarfare.ammo_box.handgun": "Storage Handgun Ammo: ",
@@ -88,7 +84,6 @@
   "des.superbwarfare.ammo_box.type.sniper": "Sniper Ammo Chosen",
   "des.superbwarfare.ammo_box.type.heavy": "Heavy Ammo Chosen",
   "des.superbwarfare.ammo_box": "When sneaking, left-click to switch ammo types, right-click to store that type of ammo. Right-click without sneaking to take out the corresponding type of ammo ",
-
   "item.superbwarfare.vector_blueprint": "Vector Blueprint",
   "item.superbwarfare.m_60_blueprint": "M60 Blueprint",
   "item.superbwarfare.hk_416_blueprint": "HK-416 Blueprint",
@@ -135,7 +130,6 @@
   "item.superbwarfare.igla_9k38_blueprint": "IGLA-9K38 MANPADS Blueprint",
   "item.superbwarfare.ql_1031_blueprint": "QL-1031 \"Qinglan\" Blueprint",
   "item.superbwarfare.super_star_shooter_blueprint": "Superb Star Shooter Blueprint",
-
   "item.superbwarfare.common_material_pack": "Common Material Pack",
   "item.superbwarfare.rare_material_pack": "Rare Material Pack",
   "item.superbwarfare.epic_material_pack": "Epic Material Pack",
@@ -162,7 +156,6 @@
   "item.superbwarfare.crystal_action": "Crystal Action",
   "item.superbwarfare.crystal_spring": "Crystal Spring",
   "item.superbwarfare.crystal_trigger": "Crystal Trigger",
-
   "item.superbwarfare.buckshot": "Buckshot",
   "item.superbwarfare.taser_electrode": "Taser Electrode",
   "item.superbwarfare.mortar_shell": "Mortar Shell",
@@ -345,9 +338,7 @@
   "des.superbwarfare.handsome_goggles": "A very cool pair of goggles. It would be even cooler if worn by a Ghast\n§c⚠ Photosensitive epilepsy warning: do not wear these goggles. If you do, press F4 to disable the shader effect",
   "item.superbwarfare.skin_spray": "Skin Spray",
   "item.superbwarfare.vehicle_key": "Vehicle Key",
-
   "attribute.superbwarfare.bullet_resistance": "Bullet Resistance",
-
   "block.superbwarfare.jump_pad": "Jump Pad",
   "block.superbwarfare.sandbag": "Sandbag",
   "block.superbwarfare.barbed_wire": "Barbed Wire",
@@ -416,7 +407,6 @@
   "block.superbwarfare.raw_galena_block": "Raw Galena Block",
   "block.superbwarfare.raw_scheelite_block": "Raw Scheelite Block",
   "block.superbwarfare.raw_silver_block": "Raw Silver Block",
-
   "item.superbwarfare.high_energy_explosives": "High Energy Explosives",
   "item.superbwarfare.grain": "Grain",
   "item.superbwarfare.tungsten_rod": "Tungsten Rod",
@@ -434,10 +424,8 @@
   "item.superbwarfare.galena": "Raw Galena",
   "item.superbwarfare.scheelite": "Raw Scheelite",
   "item.superbwarfare.raw_silver": "Raw Silver",
-
   "item.superbwarfare.armor_plate": "Armor Plate",
   "des.superbwarfare.armor_plate.infinite": "Infinite",
-
   "item.superbwarfare.ru_helmet_6b47": "Russian 6b47 Helmet",
   "item.superbwarfare.ru_chest_6b43": "Russian 6b43 Chest",
   "item.superbwarfare.us_helmet_pasgt": "US PASGT Helmet",
@@ -445,7 +433,6 @@
   "item.superbwarfare.ge_helmet_m_35": "German M35 Helmet",
   "item.superbwarfare.parachute": "Parachute",
   "item.superbwarfare.thermal_imaging_goggles": "Thermal Imaging Goggles",
-
   "item.superbwarfare.ap_bullet": "AP Bullet",
   "des.superbwarfare.ap_bullet": "Increased the armor-piercing ratio of bullets.",
   "item.superbwarfare.silver_bullet": "Silver Bullet",
@@ -474,7 +461,6 @@
   "des.superbwarfare.riot_bullet": "Adds slowness and weakness on the target after hitting, deals extra damage to illager entities.",
   "item.superbwarfare.phase_penetrating_bullet": "Phase Penetrating Bullet",
   "des.superbwarfare.phase_penetrating_bullet": "Allows bullets to penetrate any block.",
-
   "item.superbwarfare.heal_clip": "Heal Clip",
   "des.superbwarfare.heal_clip": "Reloading after defeating a mob will heal you and your nearby allies.",
   "item.superbwarfare.fourth_times_charm": "Fourth Time's The Charm",
@@ -497,7 +483,6 @@
   "des.superbwarfare.powerful_cooler": "Enhances the heat dissipation effect of the weapon and slightly reduces the heat generated during firing.",
   "item.superbwarfare.cast_no_shadows": "Cast No Shadows",
   "des.superbwarfare.cast_no_shadows": "Dealing melee damage loads a certain amount of ammo from reserves and heals you.",
-
   "item.superbwarfare.kill_clip": "Kill Clip",
   "des.superbwarfare.kill_clip": "Increases the damage of weapon after dealing a final blow.",
   "item.superbwarfare.killing_tally": "Killing Tally",
@@ -528,18 +513,15 @@
   "des.superbwarfare.brain_storm": "Increases the rate of headshot.",
   "item.superbwarfare.battle_of_wits": "Battle of Wits",
   "des.superbwarfare.battle_of_wits": "Sending a message increases damage of next shot.",
-
   "item.superbwarfare.empty_perk": "Empty Perk",
   "item.superbwarfare.shortcut_pack": "Shortcut Pack",
   "des.superbwarfare.shortcut_pack_1": "Really?",
   "des.superbwarfare.shortcut_pack_2": "Put a gun and shortcut pack at the anvil to upgrade gun level",
-
   "perk.superbwarfare.tips": "[Perks]",
   "perk.superbwarfare.slot": "Type: ",
   "perk.superbwarfare.slot_Ammo": "Bullet Perk",
   "perk.superbwarfare.slot_Functional": "Functional Perk",
   "perk.superbwarfare.slot_Damage": "Damage Perk",
-
   "death.attack.gunfire": "%1$s was gunned down by %2$s",
   "death.attack.gunfire.entity": "%1$s was gunned down by %2$s",
   "death.attack.gunfire.item": "%1$s was gunned down by %2$s using %3$s",
@@ -601,7 +583,6 @@
   "death.attack.ammo_consumption": "%1$s made the last shot",
   "death.attack.ammo_consumption.entity": "%1$s made the last shot",
   "death.attack.ammo_consumption.item": "%1$s made the last shot",
-
   "entity.superbwarfare.projectile": "Bullet",
   "entity.superbwarfare.mortar_shell": "Mortar Shell",
   "entity.superbwarfare.gun_grenade": "Gun Grenade",
@@ -665,9 +646,11 @@
   "entity.superbwarfare.waveforce_tower": "Wave-Force Tower",
   "entity.superbwarfare.igla_9k38_missile": "IGLA-9K38 SAM",
   "entity.superbwarfare.ru_9m336_missile": "9M336 AA Missile",
+  "entity.superbwarfare.ru_57e6_missile": "57E6 AA Missile",
   "entity.superbwarfare.ru_9m100_missile": "9M100 AA Missile",
   "entity.superbwarfare.ru_3m14_missile": "3M-14 Kalibr Cruise Missile",
   "entity.superbwarfare.truck": "Truck",
+  "entity.superbwarfare.kamaz": "KamAZ-5350",
   "entity.superbwarfare.ural": "Ural 4320",
   "entity.superbwarfare.tow": "TOW Anti-tank Missile Launcher",
   "entity.superbwarfare.plz_05": "PLZ-05 Self-Propelled Artillery",
@@ -690,7 +673,6 @@
   "entity.superbwarfare.happiest_ghast": "Happiest Ghast",
   "entity.superbwarfare.kirov": "Kirov Airship",
   "entity.superbwarfare.ac_130h": "AC-130H",
-
   "key.categories.superbwarfare": "Superb Warfare",
   "key.superbwarfare.move_forward": "Forward / Throttle Up",
   "key.superbwarfare.move_backward": "Backward / Throttle Down",
@@ -724,12 +706,13 @@
   "key.superbwarfare.vehicle_seek": "Vehicle Lock Target",
   "key.superbwarfare.active_thermal_imaging": "Active Thermal Imaging",
   "key.superbwarfare.toggle_vehicle_engine": "Start / Stop Vehicle Engine",
+  "key.superbwarfare.pantsir_radar_menu": "Open Pantsir Radar Screen",
+  "container.superbwarfare.pantsir_radar": "RADAR",
   "tips.superbwarfare.vehicle_engine.start_hint": "Engine is off — press %1$s to start it",
   "tips.superbwarfare.vehicle_engine.starting": "Engine starting…",
   "tips.superbwarfare.vehicle_engine.started": "Engine started",
   "tips.superbwarfare.vehicle_engine.stopped": "Engine stopped",
   "tips.superbwarfare.vehicle_engine.no_energy": "Cannot start engine: no energy",
-
   "effect.superbwarfare.shock": "Shock",
   "effect.superbwarfare.burn": "Burn",
   "effect.superbwarfare.strike_protection": "Strike Protection",
@@ -772,7 +755,6 @@
   "commands.superbwarfare.skin.fail.vehicle": "The selected vehicle must be a Superb Warfare vehicle entity",
   "commands.superbwarfare.skin.fail.empty": "The selected vehicle doesn't have any skin",
   "commands.superbwarfare.skin.success.clear": "Cleared skin of vehicle %1$s",
-
   "tips.superbwarfare.sensitivity": "Current Sensitivity of This Gun: %1$s",
   "tips.superbwarfare.monitor.linked": "Connect!",
   "tips.superbwarfare.monitor.already_linked": "This monitor has been connected!",
@@ -809,7 +791,6 @@
   "tips.superbwarfare.vehicle.lock_vehicle": "Successfully locked vehicle %1$s",
   "tips.superbwarfare.vehicle.unlock_vehicle": "Successfully unlocked vehicle %1$s",
   "tips.superbwarfare.vehicle.lock_fail": "This is not your vehicle",
-
   "tips.superbwarfare.target.yaw": "Target Yaw: ",
   "tips.superbwarfare.target.pitch": "Target Pitch: ",
   "tips.superbwarfare.barrel_empty": "EMPTY",
@@ -817,21 +798,18 @@
   "tips.superbwarfare.mortar.deploying": "Deploying Mortar",
   "tips.superbwarfare.mortar.retrieving": "Packing Mortar",
   "tips.superbwarfare.vehicle_assembling_table.warn": "Not enough place to disassemble vehicle",
-
   "tips.superbwarfare.modify_result.function": "[Custom Function]",
   "tips.superbwarfare.modify_result.all": "[All Damage]",
   "tips.superbwarfare.modify_result.resource_key": "[Damage Type] <%1$s>",
   "tips.superbwarfare.modify_result.tag_key": "[Damage Tag] <%1$s>",
   "tips.superbwarfare.modify_result.entity_type": "[Entity Type] <%1$s>",
   "tips.superbwarfare.modify_result.entity_id": "[Entity ID] <%1$s>",
-
   "tips.superbwarfare.category.land": "Land Vehicles",
   "tips.superbwarfare.category.defense": "Fixed Weapon",
   "tips.superbwarfare.category.aircraft": "Aircraft",
   "tips.superbwarfare.category.civilian": "Civilian Vehicles",
   "tips.superbwarfare.category.water": "Water Vehicles",
   "tips.superbwarfare.category.misc": "Miscellaneous",
-
   "tips.superbwarfare.switch_ammo": "Switch",
   "tips.superbwarfare.flare.ready": "FLARE READY",
   "tips.superbwarfare.hover_mode_on": "HOVER ON",
@@ -847,14 +825,11 @@
   "tips.superbwarfare.auto_aimable_entity.inactive": "INACTIVE",
   "tips.superbwarfare.need.ammo": "Not Enough Ammo! Need ",
   "tips.superbwarfare.not.enough.energy": "Not Enough Energy",
-
   "tips.superbwarfare.vehicle_reset_kit_1": "[Warning] Detected Superb Warfare version change [%1$s=>%2$s]. Vehicles from previous version may not work properly.",
   "tips.superbwarfare.vehicle_reset_kit_2": "After taking all items from the old vehicle, use %1$s to craft with the vehicle container to complete the reset.",
   "tips.superbwarfare.vehicle_reset_kit_3": "If you don't want to see this warning, you can disable it in Client Config.",
-
   "tips.superbwarfare.battle_of_wits.active": "Your words add %1$s damage to your next shot.",
   "tips.superbwarfare.battle_of_wits.cooldown": "Battle of Wits is now ready",
-
   "container.superbwarfare.reforging_table": "Gun Reforge Table",
   "container.superbwarfare.charging_station": "Charging Station",
   "container.superbwarfare.charging_station.show_range": "Show Range",
@@ -865,7 +840,6 @@
   "container.superbwarfare.mod_info": "Added by %1$s",
   "container.superbwarfare.blueprint_research_table": "Blueprint Research Table",
   "container.superbwarfare.missile_pos_input": "Missile Position Input",
-
   "info.superbwarfare.mod_id": "Superb Warfare",
   "info.superbwarfare.no_info": "[No Info]",
   "info.superbwarfare.prism_tank": "The Prism Tank is a specialized tank capable of firing high-energy lasers at enemies. It accommodates 2 crew members and lacks fording capability.",
@@ -886,6 +860,7 @@
   "info.superbwarfare.speedboat": "The Speedboat is a light vessel armed with a .50 CAL heavy machine gun. It accommodates 5 crew members and achieves high speeds on water.",
   "info.superbwarfare.waveforce_tower": "The Wave-Force Tower is an advanced base defense structure for the Empire of the Rising Sun in Red Alert 3. This stationary turret eliminates ground threats with superheated energy barrages.",
   "info.superbwarfare.truck": "Trucks are civilian transport vehicles capable of carrying large quantities of cargo.",
+  "info.superbwarfare.kamaz": "A six-wheel all-terrain cargo truck.",
   "info.superbwarfare.mi_28": "The Mi-28 Attack Helicopter is a dedicated tank hunter. Its primary armament consists of a 30mm automatic cannon, 42 unguided rockets, and up to 18 various types of missiles. It is designed to destroy heavy ground targets like tanks and armored vehicles. With its heavy armor and all-weather operational capability, it can deliver a decisive blow in complex battlefield environments.",
   "info.superbwarfare.plz_05": "The PLZ-05 self-propelled howitzer is a cornerstone of the army's long-range strike capability. Its primary weapon is a 155mm/L52 gun with an automatic loading system, capable of firing various types of ammunition. It is designed to suppress and destroy enemy fortifications, armored concentrations, and logistical hubs in deep battle areas. With excellent mobility and rapid response capability, it provides decisive fire support on the modern battlefield.",
   "info.superbwarfare.lav_ad": "The LAV-AD is a US self-propelled air defense vehicle. Armed with a 25mm Gatling gun and Stinger missiles, it specializes in engaging low-altitude threats like helicopters and UAVs, offering high mobility and amphibious capability.",
@@ -905,7 +880,6 @@
   "info.superbwarfare.happiest_ghast": "Heeheeheeheeheehee hahahahahaha, yahahahahaha, heeheeheeheehee",
   "info.superbwarfare.kirov": "The Kirov Airship is a Soviet heavy bomber airship. Armed with armor-piercing aerial bombs, it is specifically designed to destroy ground bases and armored concentrations. It features heavy armor and devastating firepower, but its drawbacks include slow speed and the absence of anti-air defenses",
   "info.superbwarfare.ac_130h": "The AC-130H \"Spectre\" is a U.S. heavy gunship. Its primary armament comprises two 20mm Gatling cannons, one 40mm Bofors cannon, and one 105mm howitzer. Designed for prolonged loitering to suppress ground targets, it excels at destroying fortifications and light armor, renowned for its fierce firepower and endurance",
-
   "weapon.superbwarfare.20mm_cannon": "20MM CANNON %1$s",
   "weapon.superbwarfare.20mm_cannon_ap": "20MM CANNON AP %1$s",
   "weapon.superbwarfare.20mm_cannon_he": "20MM CANNON HE %1$s",
@@ -918,6 +892,7 @@
   "weapon.superbwarfare.25mm_cannon_aa": "25MM CANNON AA %1$s",
   "weapon.superbwarfare.30mm_cannon_ap": "30MM CANNON AP %1$s",
   "weapon.superbwarfare.30mm_cannon_he": "30MM CANNON HE %1$s",
+  "weapon.superbwarfare.2a38m_cannon_aa": "2A38M CANNON AA %1$s",
   "weapon.superbwarfare.30mm_cannon_gs": "30MM CANNON GS %1$s",
   "weapon.superbwarfare.30mm_cannon_aa": "30MM CANNON AA %1$s",
   "weapon.superbwarfare.40mm_cannon": "40MM CANNON %1$s",
@@ -957,6 +932,7 @@
   "weapon.superbwarfare.9m_336_missile": "9M-336 %1$s",
   "weapon.superbwarfare.9m_100_missile": "9M-100 %1$s",
   "weapon.superbwarfare.fim_92_missile": "FIM-92 %1$s",
+  "weapon.superbwarfare.57e6_missile": "57E6 %1$s",
   "weapon.superbwarfare.kh_39_missile_entity": "KH-39 %1$s (Entity Mode)",
   "weapon.superbwarfare.kh_39_missile_block": "KH-39 %1$s (Block Mode)",
   "weapon.superbwarfare.kh_39_missile_coordinates": "KH-39 %1$s (Coordinates Mode)",
@@ -965,7 +941,6 @@
   "weapon.superbwarfare.laser_semi": "LASER %1$s Semi",
   "weapon.superbwarfare.laser_auto": "LASER %1$s Auto",
   "weapon.superbwarfare.mortar_shell": "Mortar Shells %1$s",
-
   "config.superbwarfare.title": "SuperbWarfare: Config",
   "config.superbwarfare.client.reload": "Reload Config",
   "config.superbwarfare.client.reload.left_click_reload": "Rapid Reload",
@@ -1031,7 +1006,6 @@
   "config.superbwarfare.client.control.invert_aircraft_control.des": "Set TRUE to invert aircraft control",
   "config.superbwarfare.client.control.mouse_sensitivity": "Mouse Sensitivity",
   "config.superbwarfare.client.control.mouse_sensitivity.des": "Adjust mouse sensitivity while holding a gun",
-
   "config.superbwarfare.common.gameplay": "Gameplay Config",
   "config.superbwarfare.common.gameplay.respawn_reload": "Respawn Reload",
   "config.superbwarfare.common.gameplay.respawn_reload.des": "Whether to reload all weapons in the inventory after respawning automatically",
@@ -1039,22 +1013,18 @@
   "config.superbwarfare.common.gameplay.global_indication.des": "Whether to show a kill indication around the cross hair when killing a creature with only the damage type of this module",
   "config.superbwarfare.common.gameplay.respawn_auto_armor": "Respawn Auto Armor Plate",
   "config.superbwarfare.common.gameplay.respawn_auto_armor.des": "Whether to refill your armor plate after respawning automatically",
-
   "des.superbwarfare.perk_damage_reduce": "Damage -",
   "des.superbwarfare.perk_damage_plus": "Damage +",
   "des.superbwarfare.perk_speed_reduce": "Velocity -",
   "des.superbwarfare.perk_speed_plus": "Velocity +",
   "des.superbwarfare.perk_slug": "Slug",
-
   "des.superbwarfare.developing": "This item is still under development",
-
   "jei.superbwarfare.ancient_cpu": "Mysterious ancient technology, can be found at ancient cities.",
   "jei.superbwarfare.charging_station": "Generates power by consuming fuel or food, and can also accept FE energy input. This block supplies FE energy to adjacent blocks, and can also charge rechargeable vehicles within range.",
   "jei.superbwarfare.gun_perks": "Available Perks",
   "jei.superbwarfare.vehicle_assembling": "Vehicle Assembling",
   "jei.superbwarfare.researching": "Blueprint Researching",
   "jei.superbwarfare.researching.selectable": "[Selectable]",
-
   "config.jade.plugin_superbwarfare.vehicle_energy": "Vehicle Energy",
   "config.jade.plugin_superbwarfare.vehicle_health": "Vehicle Health",
   "config.jade.plugin_superbwarfare.container_entity": "Container Entity",
@@ -1065,9 +1035,7 @@
   "des.jade_plugin_superbwarfare.dps_generator.level": "Generator Level: %1$s",
   "des.jade_plugin_superbwarfare.dps_generator.health": "Maximum Health: %1$s",
   "config.jade.plugin_superbwarfare.vehicle_deployer": "Vehicle Deployer",
-
   "gamerule.sbwDoGenerateLoots": "Generate Superb Warfare Chest Loots",
-
   "superbwarfare.advancement.main.root": "Superb Warfare",
   "superbwarfare.advancement.main.root.des": "Welcome to the Superb Warfare!",
   "superbwarfare.advancement.main.best_friend": "\"Best Friends\" Forever",
@@ -1114,15 +1082,12 @@
   "superbwarfare.advancement.main.vehicle_assembling.des": "Make a Vehicle Assembling Table",
   "superbwarfare.advancement.main.powerful_cooler": "To judge or to be a fridge",
   "superbwarfare.advancement.main.powerful_cooler.des": "When a weapon perk updates and no longer fits this gun, ain't that worth a rant?",
-
   "warning.superbwarfare.title.mod_sell": "[SuperbWarfare Mod Warning]",
   "warning.superbwarfare.content.mod_sell": "This mod is Free And Open-Source, No Commercial Use\nCode: GPL-3.0 License; Asserts: Private (No Commercialization)\nBan on paid downloads or EULA-breaking purchases\nReport violations by submitting an issue in the mod's repository",
   "warning.superbwarfare.check.mod_sell": "I have read and agreed to the content. Do not show this message again",
   "warning.superbwarfare.title.snapshot": "[SuperbWarfare Gameplay Warning]",
   "warning.superbwarfare.content.snapshot": "It has been detected that Minecraft is running a snapshot version of SuperbWarfare mod. This version may be incompatible with some add-on mods, cause unknown bugs, or even have irreversible effects on existing save files. If you wish to continue playing this version, please create a new save file to do so!",
-
   "pack.superbwarfare.sbw_legacy": "Superb Warfare Legacy Textures",
-
   "superbwarfare.book.superb_warfare_manual": "Superb Warfare Manual",
   "superbwarfare.book.superb_warfare_manual.des": "A tutorial on Superb Warfare mod, teaching you how to become a superb soldier (WIP)",
   "superbwarfare.category.weapon": "Weapons",
@@ -1135,7 +1100,6 @@
   "superbwarfare.category.misc.des": "Understand how to use Superb Warfare's misc items",
   "superbwarfare.category.resources": "Resources",
   "superbwarfare.category.resources.des": "Understand how to get Superb Warfare's resources",
-
   "superbwarfare.entry.weapon.intro": "Weapon Basics",
   "superbwarfare.page.weapon.intro.1": "Most weapons in Superb Warfare require $(item)Blueprints$(), $(item)Material Packs$() of corresponding rarity, and $(thing)other materials$() for crafting.",
   "superbwarfare.page.weapon.intro.2": "This manual doesn't display complete forging recipes. Crafting $(item)weapons$() requires the weapon's corresponding $(item)Blueprint$() in addition to shown materials.",
@@ -1146,7 +1110,6 @@
   "superbwarfare.page.weapon.control.1": "This chapter introduces weapon controls in Superb Warfare.",
   "superbwarfare.page.weapon.control.2": "$(l)Basic Controls: $()$(p)$(thing)$(k:key.superbwarfare.fire)$() - Fire$(br)$(thing)$(k:key.superbwarfare.hold_zoom) / $(k:key.superbwarfare.switch_zoom)$() - Aim$(br)$(thing)$(k:key.superbwarfare.reload)$() - Reload$(br)$(thing)$(k:key.superbwarfare.unload)$() - Unload Ammo$(br)$(thing)$(k:key.superbwarfare.breath)$() - Hold Breath$(br)$(thing)$(k:key.superbwarfare.sensitivity_increase)$() - Increase Sensitivity$(br)$(thing)$(k:key.superbwarfare.sensitivity_reduce)$() - Decrease Sensitivity$(br)$(thing)$(k:key.superbwarfare.fire_mode)$() - Switch Fire Mode$(p)For melee-capable weapons:$(br)$(thing)$(k:key.superbwarfare.melee)$() - Melee",
   "superbwarfare.page.weapon.control.3": "$(l)Editing: $()$(p)For weapons that can be edited: $(br)$(thing)$(k:key.superbwarfare.edit_mode)$() - Open Edit Screen$(br)$(thing)$(k:key.superbwarfare.change_ammo_forward) / $(k:key.superbwarfare.change_ammo_backward)$() - Change Ammo Types",
-
   "superbwarfare.entry.vehicle.intro": "Vehicle Basics",
   "superbwarfare.page.vehicle.intro.1": "The vehicles in Superb Warfare are stored in $(item)Containers$() and need to be opened by a $(item)Crowbar$().$(p)Opening a container requires sufficient space. You can check the required space by aiming at the container when holding a crowbar.",
   "superbwarfare.page.vehicle.intro.2": "$(thing)Sneak and Right-Click$() an empty vehicle with a crowbar, you can store it into a container.",
@@ -1197,7 +1160,6 @@
   "superbwarfare.page.vehicle.wheel_chair.1": "$(thing)Wheelchair$() is a small vehicle with no armor protection.$(p)Repeat clicking $(thing)$(k:key.forward)$() to move forward when there is no energy.$(br)Hold $(thing)$(k:key.forward)$() to move forward rapidly when there is enough energy. Press $(thing)$(k:key.jump)$() to jump.",
   "superbwarfare.page.vehicle.wheel_chair.2": "$(l)Basic Attributes: $()$(p)Durability - 10$(br)Max Passengers - 1$(br)Climbing Height - 1.1m$(br)Max Energy - 24,000FE$(br)Energy Cost - 1FE/tick$(br)",
   "superbwarfare.page.vehicle.wheel_chair.3": "$(o)“Rush! Rush! Run!”$()",
-
   "superbwarfare.entry.perk.reforging_table": "Gun Reforge Table",
   "superbwarfare.page.perk.reforging_table.1": "$(item)Gun Reforge Table$() allows adding perks for guns in Superb Warfare to enhance their strength. $(p)Every gun can be added 3 types of perks: $(thing)Ammo Perk$(), $(thing)Functional Perk$() and $(thing)Damage Perk$().",
   "superbwarfare.page.perk.reforging_table.2": "Guns possess $(thing)Level$() and $(thing)Upgrade Points$(). Shooting or killing living entities grants experience. For every 2 levels gained, 1 Upgrade Point is obtained. Upgrade Points are used to upgrade $(thing)Perks$(). The max level of each perk is 20.",
@@ -1206,7 +1168,6 @@
   "superbwarfare.page.perk.ap_bullet.1": "$(l)Damage: $()-10%%$(br)$(l)Velocity: $()+20%%$(br)$(l)Armor Piercing: $()+(35 + 5 x $(thing)Perk Level$())%%$(br)Converts shotguns to fire slugs$(br)$(l)Bullet Color: $()$(#E64623)#E64623$()",
   "superbwarfare.entry.perk.jhp_bullet": "JHP Bullet",
   "superbwarfare.page.perk.jhp_bullet.1": "$(l)Damage: $()+10%%$(br)$(l)Velocity: $()-5%%$(br)$(l)Armor Piercing: $()-20%%$(br)Converts shotguns to fire slugs$(br)$(l)Bullet Color: $()$(#E68341)#E68341$()$(br)$(l)Effect: $()Deals bonus damage scaling inversely with target's armor upon hitting entities.",
-
   "superbwarfare.entry.misc.aircraft_catapult": "Aircraft Catapult",
   "superbwarfare.page.misc.aircraft_catapult.1": "$(item)Aircraft Catapult$() transports entities standing on it. Direction depends on the arrow orientation on the block.$(p)Requires redstone signal to activate. Higher signal strength increases transport speed.$(p)$(l)Redstone signal must be applied at the front end of the entire device!$()",
   "superbwarfare.page.misc.aircraft_catapult.2": "$(o)Essentially a conveyor belt.$()",
@@ -1232,7 +1193,6 @@
   "superbwarfare.page.misc.drone.2": "$(l)Drone Controls:$()$(p)$(thing)$(k:key.use)$() - Enter/Exit View$(br)$(thing)$(k:key.forward) / $(k:key.back)$() - Move Forward/Backward$(br)$(thing)$(k:key.left) / $(k:key.right)$() - Move Left/Right$(br)$(thing)$(k:key.jump)$() - Ascend$(br)$(thing)$(k:key.sneak)$() - Descend$(br)$(thing)Mouse Wheel Scroll$() - Zoom$(br)$(thing)$(k:key.superbwarfare.interact)$() - Interact/Attack$(br)$(thing)$(k:key.superbwarfare.fire)$() - Drop Payload/Self-Destruct",
   "superbwarfare.page.misc.drone.3": "Load drones with items like $(item)RGO Grenade$() or $(item)Mortar Shell$() (configurable via datapacks). Press $(thing)$(k:key.superbwarfare.fire)$() to deploy payload or self-destruct.",
   "superbwarfare.page.misc.drone.4": "$(o)Nuclear-powered aircraft without electricity!$()",
-
   "superbwarfare.entry.resources.galena": "Galena Ore",
   "superbwarfare.page.resources.galena.1": "$(thing)Galena Ore$() is generated in the overworld $(thing)from Y=36 to Y=1$().",
   "superbwarfare.page.resources.galena.2": "$(thing)Deepslate Galena Ore$() is generated in the overworld $(thing)from Y=0 to Y=-64$().",
@@ -1242,5 +1202,7 @@
   "superbwarfare.page.resources.scheelite.3": "$(thing)Tungsten Ingot$() can only be blasted by $(thing)Blast Furnace$().",
   "superbwarfare.entry.resources.silver": "Silver Ore",
   "superbwarfare.page.resources.silver.1": "$(thing)Silver Ore$() is generated in the overworld $(thing)from Y=48 to Y=1$().",
-  "superbwarfare.page.resources.silver.2": "$(thing)Deepslate Silver Ore() is generated in the overworld $(thing)from Y=0 to Y=-64$()."
+  "superbwarfare.page.resources.silver.2": "$(thing)Deepslate Silver Ore() is generated in the overworld $(thing)from Y=0 to Y=-64$().",
+  "entity.superbwarfare.pantsir_s1": "Pantsir-S1",
+  "info.superbwarfare.pantsir_s1": "A self-propelled anti-aircraft gun and missile system."
 }

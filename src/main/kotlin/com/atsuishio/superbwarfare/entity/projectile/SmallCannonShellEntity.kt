@@ -1,6 +1,8 @@
 package com.atsuishio.superbwarfare.entity.projectile
 
 import com.atsuishio.superbwarfare.config.server.ExplosionConfig
+import com.atsuishio.superbwarfare.data.vehicle.subdata.VehicleType
+import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
 import com.atsuishio.superbwarfare.init.ModDamageTypes.causeProjectileHitDamage
 import com.atsuishio.superbwarfare.init.ModItems
 import com.atsuishio.superbwarfare.init.ModSounds
@@ -8,6 +10,7 @@ import com.atsuishio.superbwarfare.network.message.receive.ClientIndicatorMessag
 import com.atsuishio.superbwarfare.tools.CustomExplosion
 import com.atsuishio.superbwarfare.tools.forceHurt
 import com.atsuishio.superbwarfare.tools.sendPacketTo
+import com.atsuishio.superbwarfare.world.phys.ExtendedEntityRayTraceResult
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.sounds.SoundSource
@@ -21,10 +24,16 @@ import net.minecraft.world.level.entity.EntityTypeTest
 import net.minecraft.world.phys.BlockHitResult
 import net.minecraft.world.phys.EntityHitResult
 import net.minecraft.world.phys.Vec3
+import net.neoforged.neoforge.entity.PartEntity
 
 open class SmallCannonShellEntity(type: EntityType<out SmallCannonShellEntity>, level: Level) :
     FastThrowableProjectile(type, level) {
     private var aa = false
+
+    // Set only by GunItem.shootBullet(), only when the shooter was seated
+    // in a PantsirEntity — every other vehicle sharing this same shell type
+    // (LAV-AD, Bradley, Mi-28, etc.) leaves this false.
+    var firedFromPantsir = false
 
     init {
         this.noCulling = true
@@ -35,6 +44,22 @@ open class SmallCannonShellEntity(type: EntityType<out SmallCannonShellEntity>, 
 
     override fun getDefaultItem(): Item {
         return ModItems.SMALL_SHELL_AP.get()
+    }
+
+    // Bonus direct-hit damage specifically for the Pantsir's own 2A38M
+    // against actual aircraft/helicopters — its whole purpose is shooting
+    // those down, so its shells should hurt them more than the flat base
+    // damage alone implies. Boosts damageValue right before the base
+    // class's onHitEntity() applies it.
+    override fun onHitEntity(result: EntityHitResult) {
+        if (firedFromPantsir && result is ExtendedEntityRayTraceResult) {
+            var target = result.entity
+            if (target is PartEntity<*>) target = target.parent
+            if (target is VehicleEntity && (target.vehicleType == VehicleType.AIRPLANE || target.vehicleType == VehicleType.HELICOPTER)) {
+                damageValue *= PANTSIR_AIRBORNE_DAMAGE_MULTIPLIER
+            }
+        }
+        super.onHitEntity(result)
     }
 
     override fun afterHitEntity(result: EntityHitResult) {
@@ -135,5 +160,10 @@ open class SmallCannonShellEntity(type: EntityType<out SmallCannonShellEntity>, 
 
     override fun isFastMoving(): Boolean {
         return false
+    }
+
+    companion object {
+        // Tune to taste — applies only when firedFromPantsir is true.
+        private const val PANTSIR_AIRBORNE_DAMAGE_MULTIPLIER = 1.5f
     }
 }

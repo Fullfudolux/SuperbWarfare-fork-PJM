@@ -1,6 +1,7 @@
 package com.atsuishio.superbwarfare.event
 
 import com.atsuishio.superbwarfare.client.screens.MissilePosInputScreen
+import com.atsuishio.superbwarfare.client.screens.PantsirRadarScreen
 import com.atsuishio.superbwarfare.client.screens.WeaponEditScreen
 import com.atsuishio.superbwarfare.compat.CompatHolder
 import com.atsuishio.superbwarfare.compat.clothconfig.ClothConfigHelper
@@ -10,6 +11,7 @@ import com.atsuishio.superbwarfare.data.gun.GunData
 import com.atsuishio.superbwarfare.data.gun.GunProp
 import com.atsuishio.superbwarfare.data.gun.SeekType
 import com.atsuishio.superbwarfare.entity.vehicle.MortarEntity
+import com.atsuishio.superbwarfare.entity.vehicle.PantsirEntity
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
 import com.atsuishio.superbwarfare.init.*
 import com.atsuishio.superbwarfare.item.ItemScreenProvider
@@ -301,6 +303,13 @@ object ClickEventHandler {
                             player.playSound(ModSounds.CANNON_ZOOM_OUT.get())
                         }
                     }
+                }
+            }
+
+            if (key == ModKeyMappings.PANTSIR_RADAR_MENU.key.value) {
+                if (vehicle is PantsirEntity && vehicle.getSeatIndex(player) == 2 && vehicle.jacksProgress >= 1f) {
+                    Minecraft.getInstance().setScreen(PantsirRadarScreen(vehicle))
+                    return
                 }
             }
 

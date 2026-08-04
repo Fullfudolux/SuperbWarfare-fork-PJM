@@ -17,6 +17,10 @@
       "Weight": 2
     },
     {
+      "Type": "superbwarfare:kamaz",
+      "Weight": 2
+    },
+    {
       "Type": "superbwarfare:prism_tank",
       "Weight": 3
     },
@@ -56,6 +60,10 @@
       "Type": "superbwarfare:lav_25",
       "Weight": 5
     },
-    "superbwarfare:yx_100"
+    "superbwarfare:yx_100",
+    {
+      "Type": "superbwarfare:pantsir_s1",
+      "Weight": 1
+    }
   ]
 }

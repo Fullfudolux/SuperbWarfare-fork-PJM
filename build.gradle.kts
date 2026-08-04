@@ -1,4 +1,4 @@
-plugins {
+ plugins {
     idea
     id("java-library")
     id("maven-publish")
@@ -243,18 +243,20 @@ dependencies {
     // (com.github.mcmodderanchor:simplebedrockmodel) — иначе JarJar не сравнивает
     // версии и может выбрать более старую копию из TACZ (crash: NoClassDefFoundError
     // BedrockModelRenderTypes). flatDir игнорирует group, файл лежит в libs/.
+    // Версия 2.5.1 берётся из локального composite-билда ./sbm (settings.gradle.kts),
+    // а не с jitpack — поэтому правки исходника SBM попадают в ребилд SBW.
     val sbm = implementation(
         group = "com.github.mcmodderanchor",
         name = "simplebedrockmodel",
-        version = "2.3.3-neoforge-mc1.21.1",
+        version = "2.5.1-neoforge-mc1.21.1",
     )
     jarJar(sbm) {
         version {
             strictly("[2.0,3.0)")
-            prefer("2.3.3-neoforge-mc1.21.1")
+            prefer("2.5.1-neoforge-mc1.21.1")
         }
     }
-    compileOnly("com.maydaymemory:mae:1.1.2") {
+    compileOnly("com.maydaymemory:mae:1.1.4") {
         exclude("com.google.code.findbugs", "jsr305")
         exclude("it.unimi.dsi", "fastutil")
         exclude("org.joml", "joml")
@@ -341,6 +343,28 @@ val generateModMetadata = tasks.register<ProcessResources>("generateModMetadata"
 sourceSets.main.get().resources.srcDir(generateModMetadata)
 // To avoid having to run "generateModMetadata" manually, make it run on every project reload
 neoForge.ideSyncTask(generateModMetadata)
+
+// Auto-generate OBB hitboxes from Bedrock geometry models.
+// Reads scripts/vehicles.json for vehicle configs.
+// Only regenerates if model file changed (mtime check).
+tasks.register("generateObbs") {
+    description = "Generate OBB hitboxes from Bedrock models"
+    group = "build"
+    outputs.upToDateWhen { false }
+    val scriptPath = layout.projectDirectory.file("scripts/generate_vehicle_obbs.py").asFile.absolutePath
+    val workDir = layout.projectDirectory.asFile
+    doLast {
+        val proc = ProcessBuilder("python", scriptPath)
+        proc.directory(workDir)
+        proc.redirectErrorStream(true)
+        val process = proc.start()
+        process.inputStream.bufferedReader().forEachLine { println(it) }
+        val exitCode = process.waitFor()
+        if (exitCode != 0) throw GradleException("generateObbs failed with exit code $exitCode")
+    }
+}
+
+tasks.named("processResources") { dependsOn("generateObbs") }
 
 // Fast development build — compiles code only, skips JAR packaging.
 // Serves as the compilation prerequisite for runClient and runServer.

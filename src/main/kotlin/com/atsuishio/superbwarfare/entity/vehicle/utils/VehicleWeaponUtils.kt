@@ -70,11 +70,28 @@ object VehicleWeaponUtils {
             -vehicle.turretMaxPitch,
             -vehicle.turretMinPitch
         )
-        vehicle.turretYRot = Mth.clamp(
-            vehicle.turretYRot - Mth.clamp(1f * diffY, min, max),
-            -vehicle.turretMaxYaw,
-            -vehicle.turretMinYaw
-        )
+        val newYaw = vehicle.turretYRot - Mth.clamp(1f * diffY, min, max)
+        // A turret whose configured range spans the full circle (e.g. -180..180)
+        // must wrap through the ±180 seam instead of clamping there — clamping
+        // hard-stops rotation the instant it reaches -180 (or 180) and can never
+        // come back around from the other side, even though +180 and -180 are
+        // the same physical angle. Turrets with a genuine partial traverse limit
+        // still clamp as before.
+        vehicle.turretYRot = if (vehicle.turretMaxYaw - vehicle.turretMinYaw >= 359f) {
+            val wrapped = Mth.wrapDegrees(newYaw)
+            // turretYRotO was snapshotted before this update and is still on the
+            // pre-wrap side (e.g. 179 while the new value becomes -179) — render
+            // and OBB rotation both lerp between turretYRotO and turretYRot, and
+            // a naive lerp across that 358° gap sweeps the long way around in a
+            // single frame instead of the actual ~2° step. Shift turretYRotO onto
+            // the same loop as the new value so the interpolation stays short.
+            if (Mth.abs(wrapped - vehicle.turretYRotO) > 180f) {
+                vehicle.turretYRotO += if (wrapped > vehicle.turretYRotO) 360f else -360f
+            }
+            wrapped
+        } else {
+            Mth.clamp(newYaw, -vehicle.turretMaxYaw, -vehicle.turretMinYaw)
+        }
 
         vehicle.turretTurnSound(vehicle.turretXRot - vehicle.turretXRotO, vehicle.turretYRot - vehicle.turretYRotO, 0.95f)
 

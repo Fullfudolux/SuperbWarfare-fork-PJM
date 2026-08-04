@@ -1,0 +1,21 @@
+{
+  "step": {
+    "subtitle": "sounds.subtitle.step",
+    "sounds": [
+      "example:step1",
+      "example:step2"
+    ]
+  },
+  "deagle_shoot": {
+    "subtitle": "sounds.subtitle.deagle_shoot",
+    "sounds": [
+      "example:deagle_shoot"
+    ]
+  },
+  "deagle_draw": {
+    "subtitle": "sounds.subtitle.deagle_draw",
+    "sounds": [
+      "example:deagle_draw"
+    ]
+  }
+}

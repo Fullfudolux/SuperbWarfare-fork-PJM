@@ -47,6 +47,8 @@ object StagedVehicleEngineSound {
         "plz_05" to Profile("artillery", Kind.GROUND),
         "sodayo_pick_up" to Profile("pickup", Kind.GROUND),
         "sodayo_pick_up_hmg" to Profile("pickup", Kind.GROUND),
+        "kamaz" to Profile("truck", Kind.GROUND),
+        "pantsir_s1" to Profile("truck", Kind.GROUND),
         "sodayo_pick_up_rocket" to Profile("pickup", Kind.GROUND),
         "sodayo_pick_up_tow" to Profile("pickup", Kind.GROUND),
         "truck" to Profile("truck", Kind.GROUND),

@@ -173,6 +173,8 @@ open class SbmVehicleRenderer<T>(manager: EntityRendererProvider.Context) :
             OverlayTexture.NO_OVERLAY
         )
 
+        renderDepthMask(entity, model, poseStack, buffer, texture, packedLight, partialTick)
+
         if (emissiveTexture != null) {
             model.renderToBuffer(
                 poseStack,
@@ -389,6 +391,23 @@ open class SbmVehicleRenderer<T>(manager: EntityRendererProvider.Context) :
             // PJM: убран отладочный спавн FIRE_STAR у стволов (BOUND_BONES) — звёзды вылетали
             // из пушек AC-130 каждый кадр без условия выстрела (см. upstream-коммит 5c02f061b)
         }
+    }
+
+    /**
+     * Override to render specific bones with depth-writing RenderType.
+     * Called after main render, while poseStack still has vehicle transform.
+     * Depth mask is flushed immediately so passengers are occluded by these bones.
+     */
+    open fun renderDepthMask(
+        entity: T,
+        model: BedrockVehicleModel,
+        poseStack: PoseStack,
+        buffer: MultiBufferSource,
+        texture: ResourceLocation,
+        packedLight: Int,
+        partialTick: Float
+    ) {
+        // Default: no depth mask. Override in subclasses.
     }
 
     open fun transformCustomModelPart(

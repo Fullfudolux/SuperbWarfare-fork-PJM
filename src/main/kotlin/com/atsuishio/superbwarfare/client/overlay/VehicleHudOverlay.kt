@@ -28,6 +28,7 @@ import net.minecraft.network.chat.Component
 import net.minecraft.network.chat.MutableComponent
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.util.Mth
+import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
@@ -39,6 +40,22 @@ import top.theillusivec4.curios.api.CuriosApi
 @OnlyIn(Dist.CLIENT)
 object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
     const val ANIMATION_TIME = 300
+
+    // HP/energy bars sit to the right of the seat list — a fixed margin
+    // from wherever the seat rows actually end (computed per-frame, since
+    // that depends on how long the longest passenger name is), not a fixed
+    // screen-space x that either wastes space or clips into a long name.
+    private const val SEAT_LIST_MARGIN = 6
+
+    // Speed sits further right, past the HP/energy bars (which end at
+    // hpEnergyX + 70) — its own column, vertically centered between the
+    // HP and energy rows instead of sharing either one.
+    private const val SPEED_MARGIN = 80
+
+    // HP (+ gear/hover) on the bottom row, energy (+ speed) above it.
+    private const val ENERGY_ROW = 20
+    private const val HP_ROW = 13
+    private const val SPEED_ROW = (ENERGY_ROW + HP_ROW) / 2
 
     private val ARMOR = loc("textures/overlay/vehicle/base/armor.png")
     private val ENERGY = loc("textures/overlay/vehicle/base/energy.png")
@@ -108,6 +125,8 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
         RenderSystem.setShaderColor(1f, 1f, 1f, 1f)
 
         val compatHeight: Int = getArmorPlateCompatHeight(player)
+        val hpEnergyX = passengerListRightEdge(entity) + SEAT_LIST_MARGIN
+        val speedX = hpEnergyX + SPEED_MARGIN
 
         if (entity.hasEnergyStorage()) {
             val energy = entity.energy.toFloat()
@@ -116,8 +135,8 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
             RenderHelper.preciseBlit(
                 guiGraphics,
                 ENERGY,
-                10f,
-                (screenHeight - 22 - compatHeight).toFloat(),
+                hpEnergyX.toFloat(),
+                (screenHeight - ENERGY_ROW - compatHeight).toFloat(),
                 100f,
                 0f,
                 0f,
@@ -129,8 +148,8 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
             RenderHelper.preciseBlit(
                 guiGraphics,
                 VALUE_FRAME,
-                20f,
-                (screenHeight - 21 - compatHeight).toFloat(),
+                (hpEnergyX + 10).toFloat(),
+                (screenHeight - (ENERGY_ROW - 1) - compatHeight).toFloat(),
                 100f,
                 0f,
                 0f,
@@ -142,8 +161,8 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
             RenderHelper.preciseBlit(
                 guiGraphics,
                 VALUE_BAR,
-                20f,
-                (screenHeight - 21 - compatHeight).toFloat(),
+                (hpEnergyX + 10).toFloat(),
+                (screenHeight - (ENERGY_ROW - 1) - compatHeight).toFloat(),
                 100f,
                 0f,
                 0f,
@@ -160,8 +179,8 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
         RenderHelper.preciseBlit(
             guiGraphics,
             ARMOR,
-            10f,
-            (screenHeight - 13 - compatHeight).toFloat(),
+            hpEnergyX.toFloat(),
+            (screenHeight - HP_ROW - compatHeight).toFloat(),
             100f,
             0f,
             0f,
@@ -173,8 +192,8 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
         RenderHelper.preciseBlit(
             guiGraphics,
             VALUE_FRAME,
-            20f,
-            (screenHeight - 12 - compatHeight).toFloat(),
+            (hpEnergyX + 10).toFloat(),
+            (screenHeight - (HP_ROW - 1) - compatHeight).toFloat(),
             100f,
             0f,
             0f,
@@ -186,8 +205,8 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
         RenderHelper.preciseBlit(
             guiGraphics,
             VALUE_BAR,
-            20f,
-            (screenHeight - 12 - compatHeight).toFloat(),
+            (hpEnergyX + 10).toFloat(),
+            (screenHeight - (HP_ROW - 1) - compatHeight).toFloat(),
             100f,
             0f,
             0f,
@@ -198,10 +217,10 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
         )
 
         renderWeaponInfo(guiGraphics, entity, screenWidth, screenHeight)
-        renderPassengerInfo(guiGraphics, entity, screenWidth, screenHeight)
+        renderPassengerInfo(guiGraphics, entity, screenWidth, screenHeight, compatHeight)
         renderGearInfo(guiGraphics, entity, screenWidth, screenHeight, partialTick, compatHeight)
         renderHoverInfo(guiGraphics, entity, screenWidth, screenHeight, partialTick, compatHeight)
-        renderSpeedInfo(guiGraphics, entity, screenWidth, screenHeight, partialTick, compatHeight)
+        renderSpeedInfo(guiGraphics, entity, screenWidth, screenHeight, partialTick, compatHeight, speedX)
 
         poseStack.popPose()
     }
@@ -283,29 +302,49 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
         }
     }
 
+    private fun passengerDisplayName(passenger: Entity?): String {
+        var name = "---"
+        if (passenger != null) {
+            name = passenger.name.string
+        }
+        if (passenger is Player) {
+            CuriosApi.getCuriosInventory(passenger)
+                .flatMap { c -> c.findFirstCurio(ModItems.DOG_TAG.get()) }
+                .ifPresent { s -> name = s.stack().hoverName.string }
+        }
+        return name
+    }
+
+    // Widest current seat row (name text starts at x=42, same as
+    // renderPassengerInfo draws it) — HP/energy get positioned a fixed
+    // margin past THIS instead of a fixed screen x, so they sit right next
+    // to the seat list no matter how long the longest passenger's name is.
+    private fun passengerListRightEdge(vehicle: VehicleEntity): Int {
+        var maxRight = 42
+        for (passenger in vehicle.getOrderedPassengers()) {
+            val right = 42 + mc.font.width(passengerDisplayName(passenger))
+            if (right > maxRight) maxRight = right
+        }
+        return maxRight
+    }
+
     private fun renderPassengerInfo(
         guiGraphics: GuiGraphics,
         vehicle: VehicleEntity,
         screenWidth: Int,
-        screenHeight: Int
+        screenHeight: Int,
+        compatHeight: Int
     ) {
         val passengers = vehicle.getOrderedPassengers()
 
         for ((index, i) in passengers.indices.reversed().withIndex()) {
             val passenger = passengers[i]
 
-            val y = screenHeight - 35 - index * 12
-            var name = "---"
-
-            if (passenger != null) {
-                name = passenger.name.string
-            }
-
-            if (passenger is Player) {
-                CuriosApi.getCuriosInventory(passenger)
-                    .flatMap { c -> c.findFirstCurio(ModItems.DOG_TAG.get()) }
-                    .ifPresent { s -> name = s.stack().hoverName.string }
-            }
+            // Bottom-most seat row now sits where HP/energy used to (those
+            // moved to sit right next to the seat list) instead of
+            // stacking above them — same -13 baseline the armor bar used.
+            val y = screenHeight - 13 - compatHeight - index * 12
+            val name = passengerDisplayName(passenger)
 
             guiGraphics.drawString(mc.font, name, 42, y, 0x66ff00, true)
 
@@ -375,7 +414,7 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
             Minecraft.getInstance().font,
             componentReady,
             85,
-            (h - 13 - compatHeight),
+            (h - HP_ROW - compatHeight),
             -1,
             false
         )
@@ -409,7 +448,7 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
             Minecraft.getInstance().font,
             componentReady,
             85,
-            (h - 13 - compatHeight),
+            (h - HP_ROW - compatHeight),
             -1,
             false
         )
@@ -421,7 +460,8 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
         w: Int,
         h: Int,
         partialTick: Float,
-        compatHeight: Int
+        compatHeight: Int,
+        speedX: Int
     ) {
         if (localPlayer != vehicle.firstPassenger) return
 
@@ -435,8 +475,8 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
         guiGraphics.drawString(
             Minecraft.getInstance().font,
             componentReady,
-            85,
-            (h - 22 - compatHeight),
+            speedX,
+            (h - SPEED_ROW - compatHeight),
             -1,
             false
         )

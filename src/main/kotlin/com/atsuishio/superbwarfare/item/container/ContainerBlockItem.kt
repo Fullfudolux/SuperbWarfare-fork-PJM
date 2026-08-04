@@ -98,6 +98,8 @@ class ContainerBlockItem : BlockItem(ModBlocks.CONTAINER.get(), Properties().sta
             event.add(ModEntities.SODAYO_PICK_UP_TOW)
             event.add(ModEntities.SODAYO_PICK_UP_ROCKET)
             event.add(ModEntities.TRUCK)
+            event.add(ModEntities.KAMAZ)
+            event.add(ModEntities.PANTSIR_S1)
             event.add(ModEntities.URAL)
             event.add(ModEntities.TYPE_63)
             event.add(ModEntities.TOW)

@@ -14,3 +14,14 @@ plugins {
 }
 
 include(":ksp")
+
+// Composite build: compile SimpleBedrockModel from local source (./sbm)
+// so edits to SBM land in SBW rebuilds instead of pulling a prebuilt jar
+// from jitpack. Substitutes the module com.github.mcmodderanchor:simplebedrockmodel
+// (declared as jarJar dependency in build.gradle.kts) with SBM's root project.
+includeBuild("sbm") {
+    dependencySubstitution {
+        substitute(module("com.github.mcmodderanchor:simplebedrockmodel"))
+            .using(project(":"))
+    }
+}

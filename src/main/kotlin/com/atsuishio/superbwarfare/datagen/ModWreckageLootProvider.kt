@@ -673,6 +673,23 @@ class ModWreckageLootProvider(output: PackOutput, existingFileHelper: ExistingFi
         )
 
         this.add(
+            ModEntities.KAMAZ.get(),
+            LootBuilder()
+                .addPool(
+                    PoolBuilder(type = Type.COMPLETE)
+                        .source(ModDamageTypes.REPAIR_TOOL)
+                        .addEntry(
+                            Entry(ModItems.STEEL_BLOCK.get(), 5, 1.0),
+                            Entry(ModItems.WHEEL.get(), 3, 0.5),
+                            Entry(ModItems.LARGE_MOTOR.get(), 1, 0.5),
+                            Entry(ModItems.MEDIUM_BATTERY_PACK.get(), 1, 0.2)
+                        ).build(),
+                    PoolBuilder(type = Type.COMPLETE)
+                        .addEntry(Entry(ModItems.STEEL_BLOCK.get(), 5, 0.5)).build()
+                )
+        )
+
+        this.add(
             ModEntities.TRUCK.get(),
             LootBuilder()
                 .addPool(
