@@ -71,6 +71,42 @@ public class HumanoidModelMixin {
             if (index >= seats.size() || index < 0) return;
             var seat = seats.get(index);
 
+            // Reset head/hat (may have been modified previous frame)
+            this.head.visible = true;
+            this.hat.visible = true;
+            this.head.yScale = 1.0F;
+            this.hat.yScale = 1.0F;
+
+            // Hide head for cargo seats if camera-to-head ray intersects pehota OBB
+            if (seat.pose.equals("Cargo")) {
+                net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                net.minecraft.client.Camera camera = mc.gameRenderer.getMainCamera();
+                net.minecraft.world.phys.Vec3 camPos = camera.getPosition();
+                // Use interpolated eye position for accurate head world pos
+                net.minecraft.world.phys.Vec3 headPos = livingEntity.getEyePosition(1.0F).add(0, 0.15, 0);
+
+                org.joml.Vector3d from = new org.joml.Vector3d(camPos.x, camPos.y, camPos.z);
+                org.joml.Vector3d to = new org.joml.Vector3d(headPos.x, headPos.y, headPos.z);
+
+                var obbList = vehicle.getOBBs();
+                var obbInfos = vehicle.getObb();
+                boolean occluded = false;
+                for (int i = 0; i < obbList.size() && i < obbInfos.size() && !occluded; i++) {
+                    var info = obbInfos.get(i);
+                    // Identify pehota OBBs by their Transform field ("PehotaMask")
+                    if (!"PehotaMask".equals(info.getTransform())) continue;
+                    var obb = obbList.get(i);
+                    if (obb.clip(from, to).isPresent()) {
+                        occluded = true;
+                    }
+                }
+
+                if (occluded) {
+                    this.head.visible = false;
+                    this.hat.visible = false;
+                }
+            }
+
             if (seat.pose.equals("Pilot")) {
                 this.head.xRot = 0;
                 this.head.yRot = 0;

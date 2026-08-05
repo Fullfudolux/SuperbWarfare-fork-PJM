@@ -20,7 +20,13 @@ public class EntityRenderDispatcherMixin {
     @Inject(method = "renderHitbox", at = @At("RETURN"))
     private static void renderHitbox(PoseStack poseStack, VertexConsumer buffer, Entity p_entity, float red, float green, float blue, float alpha, CallbackInfo ci) {
         if (p_entity instanceof VehicleEntity vehicle && !vehicle.enableAABB()) {
-            OBBRenderer.INSTANCE.render(vehicle, vehicle.getOBBs(), poseStack, buffer, 0, 1, 0, 1, Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true));
+            float partialTicks = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true);
+            // Refresh with the frame's real partial tick so fast-animating parts
+            // (e.g. the Pantsir radar dish while folding/spinning) are drawn at
+            // the same smoothly-interpolated pose as the rendered mesh, instead
+            // of the tick-locked pose from the last collision update.
+            vehicle.updateOBB(partialTicks);
+            OBBRenderer.INSTANCE.render(vehicle, vehicle.getOBBs(), poseStack, buffer, 0, 1, 0, 1, partialTicks);
         }
     }
 

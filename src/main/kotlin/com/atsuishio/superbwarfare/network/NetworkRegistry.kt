@@ -129,6 +129,7 @@ private fun registerPayloads() {
     playToServer<SwitchScopeMessage>()
     playToServer<SwitchVehicleWeaponMessage>()
     playToServer<ToggleVehicleEngineMessage>()
+    playToServer<ToggleVehicleRampMessage>()
     playToServer<UnloadMessage>()
     playToServer<VehicleFireMessage>()
     playToServer<VehicleMovementMessage>()

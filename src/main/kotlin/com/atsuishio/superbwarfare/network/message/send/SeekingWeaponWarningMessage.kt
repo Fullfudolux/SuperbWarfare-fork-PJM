@@ -1,5 +1,6 @@
 package com.atsuishio.superbwarfare.network.message.send
 
+import com.atsuishio.superbwarfare.entity.vehicle.PantsirEntity
 import com.atsuishio.superbwarfare.init.ModSounds
 import com.atsuishio.superbwarfare.network.PayloadContext
 import com.atsuishio.superbwarfare.network.ServerPacketPayload
@@ -22,5 +23,14 @@ data class SeekingWeaponWarningMessage(val lockOn: Boolean, val uuid: Serialized
             SoundSource.PLAYERS,
             2f, 1f
         )
+
+        // Same heartbeat also keeps the Pantsir's turret-tracking alive
+        // while the gunner has a full lock — see PantsirEntity.adjustTurretAngle.
+        if (lockOn) {
+            val vehicle = player.vehicle
+            if (vehicle is PantsirEntity && vehicle.getSeatIndex(player) == 2) {
+                vehicle.refreshTrackedTarget(uuid.toString())
+            }
+        }
     }
 }

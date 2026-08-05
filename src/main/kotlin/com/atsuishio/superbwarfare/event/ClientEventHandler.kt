@@ -13,6 +13,8 @@ import com.atsuishio.superbwarfare.data.gun.*
 import com.atsuishio.superbwarfare.data.gun.value.AttachmentType
 import com.atsuishio.superbwarfare.data.vehicle.subdata.EngineType
 import com.atsuishio.superbwarfare.entity.vehicle.BasicGeoVehicleEntity
+import com.atsuishio.superbwarfare.entity.vehicle.PantsirEntity
+import com.atsuishio.superbwarfare.entity.vehicle.utils.VehicleVecUtils
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
 import com.atsuishio.superbwarfare.init.*
 import com.atsuishio.superbwarfare.item.gun.GunItem
@@ -405,6 +407,29 @@ object ClientEventHandler {
 
     @JvmField
     var lockOnVehicle: Boolean = false
+
+    // seekingTimeVehicle stops incrementing once locked (Pantsir's sticky
+    // lock branch never touches it again) but stays PERMANENTLY above
+    // lockTime for the rest of the lock — so the `seekingTimeVehicle >
+    // lockTime` check that plays the "locked" confirmation sound would
+    // otherwise re-fire it every single tick for as long as the lock holds,
+    // machine-gunning the same one-shot sound instead of playing it once.
+    // Reset alongside every other per-lock-session flag in seekFailure().
+    private var lockedSoundPlayed = false
+
+    // Tracks the seek key's RAW physical held/released state, so a fresh
+    // press can be detected as a true edge (was up, now down). GLFW/vanilla
+    // KeyMapping.consumeClick() looked like the right tool for this but
+    // isn't: OS key-repeat re-fires GLFW_REPEAT press events for a key
+    // that's just being held down (same mechanism that makes a held letter
+    // key spam in a text box), and vanilla's KeyMapping.click() treats
+    // those exactly like a fresh press — so consumeClick() kept returning
+    // true while the player was still just holding X from the acquisition
+    // phase, instantly toggling the lock back off the moment it completed.
+    // isDown() itself doesn't have this problem (it's a plain "currently
+    // held" boolean), so edge-detecting on that directly is what actually
+    // ignores repeat.
+    private var vehicleSeekKeyWasDown = false
 
     @JvmField
     var lastOperatingGunUUID: UUID? = null
@@ -1099,7 +1124,29 @@ object ClientEventHandler {
                 lockOnVehicle = true
             }
 
-            if (ModKeyMappings.VEHICLE_SEEK.isDown()) {
+            // Computed every tick regardless of lock state (so the "was
+            // down" side stays accurate even before a lock exists).
+            val seekKeyDownNow = ModKeyMappings.VEHICLE_SEEK.isDown()
+            val seekKeyPressedEdge = seekKeyDownNow && !vehicleSeekKeyWasDown
+            vehicleSeekKeyWasDown = seekKeyDownNow
+
+            // Hands-free sticky lock is Pantsir-only, and deliberately so:
+            // it only stays valid because Pantsir's turret auto-tracks the
+            // locked target (PantsirEntity.adjustTurretAngle) once lockOn
+            // is true, keeping the barrel/seekVec pointed at it on its own.
+            // Every other vehicle's turret still just follows raw mouse
+            // look — without auto-tracking, letting go of the key means the
+            // gunner's own aim immediately drifts off target, and the angle
+            // check just below would then seekFailure() almost right away.
+            // If that vehicle is ALSO still holding the key out of old
+            // habit, it would then re-seek and re-lock instantly, fail
+            // again next tick, and repeat — the "recursively tries to
+            // lock" loop this used to cause for non-Pantsir vehicles.
+            if (lockOnVehicle && vehicle is PantsirEntity) {
+                if (seekKeyPressedEdge) {
+                    seekFailure(player)
+                }
+            } else if (seekKeyDownNow) {
                 if (seekingEntityVehicle == null) {
                     seekingEntityVehicle = nearestEntityVehicle
                 }
@@ -1122,6 +1169,14 @@ object ClientEventHandler {
         }
 
         // 锁定失败
+        // Once a Pantsir's lock is hands-free (sticky) and the turret is
+        // auto-tracking it, give this re-validation a few degrees of slack
+        // beyond the normal acquisition cone — the turret's turn speed is
+        // clamped per-tick, so it's always chasing slightly behind a fresh
+        // firing-solution update, and without this margin that lag alone
+        // was enough to bounce across the exact seekAngle threshold and
+        // flicker the lock on/off every couple ticks.
+        val effectiveSeekAngle = if (lockOnVehicle && vehicle is PantsirEntity) seekAngle + 6.0 else seekAngle
         if (seekingEntityVehicle != null &&
             (seekVec.angleTo(
                 cameraPos.vectorTo(
@@ -1130,7 +1185,7 @@ object ClientEventHandler {
                         1f
                     )
                 )
-            ) > seekAngle
+            ) > effectiveSeekAngle
                     || !SeekTool.NOT_IN_SMOKE.test(seekingEntityVehicle)
                     || !noClip(player, seekingEntityVehicle!!))
         ) {
@@ -1146,7 +1201,10 @@ object ClientEventHandler {
         }
 
         if (seekingTimeVehicle > lockTime) {
-            playLockedSound(data, player)
+            if (!lockedSoundPlayed) {
+                lockedSoundPlayed = true
+                playLockedSound(data, player)
+            }
             if (seekWeaponInfo.onlyLockEntity && lockingEntityVehicle != null && (!lockingEntityVehicle!!.passengers.isEmpty()
                         || lockingEntityVehicle is VehicleEntity) && player.tickCount % 2 == 0
             ) {
@@ -1161,8 +1219,37 @@ object ClientEventHandler {
     }
 
     fun seekFailure(player: Player) {
+        // Pantsir's turret auto-tracks the locked target the whole time
+        // it's locked (PantsirEntity.adjustTurretAngle), completely
+        // ignoring the gunner's own mouse look — so their raw player
+        // xRot/yRot just sits wherever it was the moment the lock
+        // completed (the camera doesn't need it while auto-tracking is
+        // doing the aiming, so most players simply stop moving the mouse).
+        // The instant control hands back to normal mouse-follow below,
+        // that stale/frozen view would suddenly become live again — which
+        // looked like the turret "snapping back" to wherever they were
+        // aiming before the FIRST lock. Sync the player's own view to
+        // match the turret's actual current (auto-tracked) orientation
+        // right as the lock drops, so there's no discontinuity to snap
+        // across — aiming continues smoothly from there.
+        //
+        // Gated to lockOnVehicle being true RIGHT NOW (i.e. an actual lock
+        // is being torn down this call) — seekFailure() is also the normal
+        // no-op reset called every single tick the seek key just isn't
+        // held (the idle/not-seeking state), which is most of the time.
+        // Without this gate, every idle tick forced the player's live
+        // view to snap to the turret's current (still-catching-up)
+        // orientation, fighting their own mouse input and making the
+        // turret feel like it turned in slow motion the whole time the
+        // gunner wasn't locking anything.
+        val vehicle = player.vehicle
+        if (lockOnVehicle && vehicle is PantsirEntity && vehicle.getSeatIndex(player) == 2) {
+            VehicleVecUtils.setDriverAngle(vehicle, player)
+        }
+
         seekingTimeVehicle = 0
         lockOnVehicle = false
+        lockedSoundPlayed = false
         lockingEntityVehicle = null
         seekingEntityVehicle = null
         lockingPosVehicle = null

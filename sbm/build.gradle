@@ -1,0 +1,259 @@
+plugins {
+    id 'java-library'
+    id 'idea'
+    id 'net.neoforged.moddev' version '2.0.+'
+    id "com.modrinth.minotaur" version "2.8.7"
+    id 'me.champeau.jmh' version '0.7.2'
+    id 'maven-publish'
+}
+
+version = mod_version
+group = mod_group_id
+archivesBaseName = 'simplebedrockmodel'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    version = project.neo_version
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+    runs {
+        client {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        data {
+            data()
+            programArguments.addAll '--mod', project.mod_id, '--all',
+                    '--output', file('src/generated/resources/').getAbsolutePath(),
+                    '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+            sourceSet(sourceSets.test)
+        }
+    }
+}
+
+sourceSets.main.resources {
+    srcDir 'src/generated/resources'
+}
+
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+
+    // 自定义一个 minecraftLibrary，方便引入需要 jarJar 的库
+    mcLib
+    implementation {
+        extendsFrom mcLib
+    }
+    additionalRuntimeClasspath {
+        extendsFrom mcLib
+    }
+
+    // 让测试编译期能访问 Minecraft / NeoForge 等主模块的编译依赖
+    testCompileClasspath.extendsFrom compileClasspath
+    testRuntimeClasspath.extendsFrom runtimeClasspath
+}
+
+repositories {
+    mavenLocal()
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+    }
+    maven {
+        url "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+        content {
+            includeGroup "curse.maven"
+        }
+    }
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation "maven.modrinth:sodium:mc1.21.1-0.6.13-neoforge"
+    compileOnly "maven.modrinth:embeddium:1.0.11+mc1.21.1-neoforge"
+    mcLib jarJar("com.maydaymemory:mae:1.1.4") {
+        exclude group: 'com.google.code.gson', module: 'gson'
+        exclude group: 'com.google.code.findbugs', module: 'jsr305'
+        exclude group: 'it.unimi.dsi', module: 'fastutil'
+        exclude group: 'org.joml', module: 'joml'
+    }
+
+    implementation "curse.maven:accelerated-rendering-1314021:8437381"
+    api 'org.ow2.asm:asm:9.8'
+    runtimeOnly "curse.maven:configured-457570:7276577"
+
+    // 测试用兼容模组：发布时仍保持可选依赖。
+    compileOnly "curse.maven:epic-fight-mod-405076:7734081"
+//    localRuntime "curse.maven:epic-fight-mod-405076:7734081"
+    localRuntime "curse.maven:playeranimator-658587:7389814"
+    localRuntime "maven.modrinth:iris:1.8.12+1.21.1-neoforge"
+
+    // Test
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
+    testImplementation "org.joml:joml:1.10.5"
+
+    // JMH: mocha 原版 (javassist) 用于性能对比
+    jmhImplementation 'team.unnamed:mocha:3.0.1'
+}
+
+// 用于 neoforge.mods 里替换那一堆 ${xxxx}
+tasks.withType(ProcessResources).configureEach {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            neo_version_range      : neo_version_range,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand replaceProperties
+    }
+}
+
+// 生成 manifest 内容，用于填充版本信息等内容
+jar {
+    manifest {
+        attributes([
+                "Specification-Title"     : mod_id,
+                "Specification-Vendor"    : mod_authors,
+                "Specification-Version"   : version,
+                "Implementation-Title"    : project.name,
+                "Implementation-Version"  : project.jar.archiveVersion,
+                "Implementation-Vendor"   : mod_authors,
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+    exclude 'example/**'
+    exclude 'assets/example/**'
+    exclude 'data/example/**'
+}
+
+// 让 idea 主动下载前置库的源码和 Javadoc
+// 新版本 idea 默认不会下载这两个，这虽然加快了构建速度，但是不方便调试
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}
+
+// 必须，编码需要显式指定为 UTF
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jmh {
+    zip64 = true
+    jmhVersion = '1.37'
+}
+
+java {
+    // 编译源码文件，方便发布 maven
+    withSourcesJar()
+}
+
+modrinth {
+    token = System.getenv("MODRINTH_TOKEN")
+
+    projectId = mod_id
+    versionName = "${mod_id}-${version}"
+    versionNumber = mod_version
+    uploadFile = "${layout.buildDirectory.get()}/libs/${mod_id}-${version}.jar"
+    additionalFiles = ["${layout.buildDirectory.get()}/libs/${mod_id}-${version}-sources.jar"]
+    gameVersions = [minecraft_version]
+    loaders = ["neoforge"]
+    //debugMode = true
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = project.group
+            artifactId = archivesBaseName
+            version = project.version
+
+            // 仅发布最终 Mod JAR 与源码包；不要从 Java component 导出开发/运行依赖。
+            artifact tasks.named('jar')
+            artifact tasks.named('sourcesJar')
+
+            pom {
+                name = mod_name
+                description = mod_description
+                licenses {
+                    license {
+                        name = mod_license
+                    }
+                }
+            }
+        }
+    }
+}
+
+tasks.register("runWithRenderDoc", Exec) {
+    commandLine = [
+            "D:\\tools\\RenderDoc_1.44_64\\renderdoccmd.exe",
+            "capture",
+            "--opt-hook-children",
+            "--wait-for-exit",
+            "--working-dir",
+            projectDir.absolutePath,
+
+            "C:\\Windows\\System32\\cmd.exe",
+            "/c",
+            file("gradlew.bat").absolutePath,
+            "--no-daemon",
+            "runClient"
+    ]
+
+    doFirst {
+        println "=== RenderDoc gradlew command ==="
+        println commandLine.collect {
+            it.toString().contains(" ") ? "\"${it}\"" : it
+        }.join(" ")
+        println "================================="
+    }
+}

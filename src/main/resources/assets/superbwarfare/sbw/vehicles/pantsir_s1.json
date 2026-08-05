@@ -1,0 +1,8 @@
+{
+  "Models": [
+    {
+      "Model": "superbwarfare:models/bedrock/vehicle/pantsir_s1.geo.json",
+      "Texture": "superbwarfare:textures/bedrock/vehicle/pantsir_s1.png"
+    }
+  ]
+}

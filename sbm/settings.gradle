@@ -1,0 +1,16 @@
+pluginManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+        maven { url = 'https://maven.neoforged.net/releases' }
+    }
+}
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+// Coordinates of the included (composite) build must be
+// com.github.mcmodderanchor:simplebedrockmodel so SBW's dependency
+// substitution in settings.gradle.kts matches the module.
+rootProject.name = 'simplebedrockmodel'

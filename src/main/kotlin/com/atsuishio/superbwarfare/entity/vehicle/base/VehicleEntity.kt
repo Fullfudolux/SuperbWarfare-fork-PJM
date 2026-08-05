@@ -372,10 +372,15 @@ open class VehicleEntity(pEntityType: EntityType<*>, pLevel: Level) : Entity(pEn
 
     open fun processInput(keys: Short) {
         val movementEnabled = engineReady()
+        // Steering (not propulsion) is allowed even before the engine has
+        // started, for vehicles with manual engine control — otherwise this
+        // gate zeroes leftInputDown/rightInputDown before travel() ever runs,
+        // so [steerWhileParked] never sees the key press in the first place.
+        val steeringEnabled = movementEnabled || hasManualEngineControl()
         leftInputDown =
-            movementEnabled && (keys.toInt() and 0b00000001) > 0
+            steeringEnabled && (keys.toInt() and 0b00000001) > 0
         rightInputDown =
-            movementEnabled && (keys.toInt() and 0b00000010) > 0
+            steeringEnabled && (keys.toInt() and 0b00000010) > 0
         forwardInputDown =
             movementEnabled && (keys.toInt() and 0b00000100) > 0
         backInputDown =
@@ -565,6 +570,11 @@ open class VehicleEntity(pEntityType: EntityType<*>, pLevel: Level) : Entity(pEn
             val computed = computed()
             val type = computed.vehicleContainerType
             if (!type.hasMenu()) return null
+            // PJM: the live inventory only gets resized to match vehicleContainerType on
+            // NBT read/write. An already-loaded entity whose config changed container type
+            // (e.g. data reload) keeps its old slot count in memory, so the menu below --
+            // built for the NEW size -- would index slots the handler doesn't have.
+            this.resizeItems()
             return when (type) {
                 VehicleContainerType.MINI -> MiniVehicleContainerMenu(pContainerId, pPlayerInventory, this.id)
                 VehicleContainerType.SMALL -> SmallVehicleContainerMenu(pContainerId, pPlayerInventory, this.id)
@@ -2357,9 +2367,23 @@ open class VehicleEntity(pEntityType: EntityType<*>, pLevel: Level) : Entity(pEn
 
     override fun canFreeze() = false
 
-    open fun updateOBB() {
+    open fun updateOBB() = updateOBB(1f)
+
+    /**
+     * @param partialTicks Position and rotation MUST use the same value here — the
+     * old no-arg overloads defaulted to 1f and 0f respectively, which for any
+     * transform that interpolates with Mth.lerp(ticks, xO, x) (RADAR's
+     * fold/spin, jacks, doors, etc.) evaluated position one tick ahead of
+     * rotation. Tick-based callers (collision, movement) should keep using the
+     * no-arg overload (locked to 1f, the settled per-tick state); the debug
+     * hitbox renderer calls this one with the frame's real partial tick so the
+     * drawn boxes track the smoothly-interpolated mesh instead of only
+     * updating once per tick (which showed up as fast-moving parts, like the
+     * radar dish while spinning, visibly floating off the mesh between ticks).
+     */
+    open fun updateOBB(partialTicks: Float) {
         this.obb.forEach { obbInfo ->
-            val transform = this.getTransformFromString(obbInfo.transform)
+            val transform = this.getTransformFromString(obbInfo.transform, partialTicks)
             val obb = obbInfo.getOBB()
             val worldPos = this.transformPosition(transform, obbInfo.position.x, obbInfo.position.y, obbInfo.position.z)
 
@@ -2368,7 +2392,7 @@ open class VehicleEntity(pEntityType: EntityType<*>, pLevel: Level) : Entity(pEn
             }
 
             obb.center.set(Vec3(worldPos.x, worldPos.y, worldPos.z).toVector3d())
-            obb.updateRotation(this.getRotationFromString(obbInfo.rotation))
+            obb.updateRotation(this.getRotationFromString(obbInfo.rotation, partialTicks))
 
             val rotate = obbInfo.customRotate
 
@@ -3085,18 +3109,6 @@ open class VehicleEntity(pEntityType: EntityType<*>, pLevel: Level) : Entity(pEn
             return
         }
 
-        if (hasManualEngineControl() && !engineReady()) {
-            stopEngineMotion()
-            val coasting = VehicleEngineCoasting.coast(
-                deltaMovement.x,
-                deltaMovement.y,
-                deltaMovement.z,
-                onGround()
-            )
-            deltaMovement = Vec3(coasting.x, coasting.y, coasting.z)
-            return
-        }
-
         if (this.engineInfo == null) {
             val engineInfo = computed.engineInfo
             try {
@@ -3121,9 +3133,31 @@ open class VehicleEntity(pEntityType: EntityType<*>, pLevel: Level) : Entity(pEn
             } catch (e: Exception) {
                 Mod.LOGGER.error("Failed to parse engine info for vehicle {}, {}", this, e)
             }
-        } else {
-            this.engineInfo!!.work(this)
         }
+
+        if (hasManualEngineControl() && !engineReady()) {
+            steerWhileParked()
+            // NOT stopEngineMotion() — it zeroes leftInputDown/rightInputDown
+            // and deltaRot every tick, which is exactly what steerWhileParked
+            // just read and built up. Zeroing them right back out here fought
+            // the steering every single tick (holdTick/deltaRot could never
+            // accumulate across ticks), which is why the wheel would twitch
+            // and immediately snap back to center instead of holding an
+            // angle. forward/back/up/down/sprint are already false here
+            // (processInput gates them on engineReady()); only power needs
+            // resetting so a later restart doesn't inherit stale throttle.
+            power = 0f
+            val coasting = VehicleEngineCoasting.coast(
+                deltaMovement.x,
+                deltaMovement.y,
+                deltaMovement.z,
+                onGround()
+            )
+            deltaMovement = Vec3(coasting.x, coasting.y, coasting.z)
+            return
+        }
+
+        this.engineInfo?.work(this)
     }
 
     open fun getEngineSoundVolume(): Float {
@@ -4121,6 +4155,31 @@ open class VehicleEntity(pEntityType: EntityType<*>, pLevel: Level) : Entity(pEn
         sprintInputDown = false
         power = 0f
         deltaRot = 0f
+    }
+
+    /**
+     * Lets the steering wheel/front wheels turn from A/D input while the engine
+     * isn't started yet — [stopEngineMotion] normally zeroes left/right input
+     * every tick in that state, so [VehicleEngineUtils.wheelEngine]'s own steering
+     * code (which also drives the vehicle's yaw and rolling wheel spin — neither
+     * of which should happen while parked) never runs at all.
+     */
+    open fun steerWhileParked() {
+        val steeringSpeed = when (val info = this.engineInfo) {
+            is Wheel -> info.steeringSpeed
+            else -> return
+        }
+        if (rightInputDown) {
+            holdTick++
+            deltaRot += steeringSpeed * 0.12f * Math.min(holdTick, 10)
+        } else if (leftInputDown) {
+            holdTick++
+            deltaRot -= steeringSpeed * 0.12f * Math.min(holdTick, 10)
+        } else {
+            holdTick = 0
+        }
+        deltaRot *= 0.78f
+        rudderRot = Mth.clamp(rudderRot - deltaRot, -0.8f, 0.8f) * 0.75f
     }
 
     /** Whether this vehicle's audible engine is currently switched on. */

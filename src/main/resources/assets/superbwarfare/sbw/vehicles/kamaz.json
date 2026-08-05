@@ -1,0 +1,8 @@
+{
+  "Models": [
+    {
+      "Model": "superbwarfare:models/bedrock/vehicle/kamaz.geo.json",
+      "Texture": "superbwarfare:textures/bedrock/vehicle/kamaz.png"
+    }
+  ]
+}

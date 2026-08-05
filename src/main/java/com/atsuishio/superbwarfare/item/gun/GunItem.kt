@@ -17,6 +17,7 @@ import com.atsuishio.superbwarfare.data.launchable.LaunchableEntityTool
 import com.atsuishio.superbwarfare.data.launchable.ShootData
 import com.atsuishio.superbwarfare.entity.mixin.ICustomKnockback
 import com.atsuishio.superbwarfare.entity.projectile.*
+import com.atsuishio.superbwarfare.entity.vehicle.PantsirEntity
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
 import com.atsuishio.superbwarfare.event.ClientEventHandler
 import com.atsuishio.superbwarfare.init.ModDamageTypes
@@ -777,8 +778,19 @@ abstract class GunItem(properties: Properties) : Item(properties.stacksTo(1)), I
                 entity.setLauncherVehicle(shooter.vehicle!!.getUUID())
             }
 
+            if (entity is Ru57e6MissileEntity && shooter != null && shooter.vehicle != null) {
+                entity.setLauncherVehicle(shooter.vehicle!!.getUUID())
+            }
+
             if (entity is SmallCannonShellEntity && data.get(GunProp.SHELL_TYPE) == "AA") {
                 entity.antiAir(true)
+            }
+
+            // Only the Pantsir's own 2A38M gets the anti-air-vehicle damage
+            // bonus — other vehicles sharing the same small_cannon_shell
+            // projectile (LAV-AD, Bradley, Mi-28's own gun, etc.) don't.
+            if (entity is SmallCannonShellEntity && shooter?.vehicle is PantsirEntity) {
+                entity.firedFromPantsir = true
             }
 
             if (entity is CannonShellEntity) {

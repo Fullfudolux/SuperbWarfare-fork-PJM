@@ -1,0 +1,27 @@
+package com.github.mcmodderanchor.simplebedrockmodel.v1.client.event;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.neoforged.bus.api.Event;
+
+
+/**
+ * 在调用 ItemInHandRenderer#renderHandsWithItems 方法时触发该事件
+ * 用于相机动画相关调用
+ */
+public class BeforeRenderHandEvent extends Event {
+    private final PoseStack poseStack;
+    private final float partialTick;
+
+    public BeforeRenderHandEvent(PoseStack poseStack, float partialTicks) {
+        this.poseStack = poseStack;
+        this.partialTick = partialTicks;
+    }
+
+    public PoseStack getPoseStack() {
+        return poseStack;
+    }
+
+    public float getPartialTick() {
+        return partialTick;
+    }
+}

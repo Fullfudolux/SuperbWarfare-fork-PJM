@@ -173,6 +173,9 @@ object ModEntities {
     val RU_9M336_MISSILE = register("ru_9m336_missile", fastProjectile(::Ru9m336MissileEntity).sized(0.5f, 0.5f))
 
     @JvmField
+    val RU_57E6_MISSILE = register("ru_57e6_missile", fastProjectile(::Ru57e6MissileEntity).sized(0.5f, 0.5f))
+
+    @JvmField
     val RU_9M100_MISSILE = register("ru_9m100_missile", fastProjectile(::Ru9m100MissileEntity).sized(0.75f, 0.75f))
 
     // PJM: ЗУР 9М33М3 комплекса «Оса-АКМ»
@@ -272,6 +275,9 @@ object ModEntities {
     val BRADLEY = register("bradley", vehicle(::BradleyEntity).sized(3.6f, 2.3f))
 
     @JvmField
+    val CV_90 = register("cv_90", vehicle(::Cv90Entity).sized(3.6f, 2.4f))
+
+    @JvmField
     val ZTZ_99A = register("ztz_99a", vehicle(::Ztz99aEntity).sized(4.62f, 2.2f))
 
     @JvmField
@@ -342,6 +348,12 @@ object ModEntities {
 
     @JvmField
     val TRUCK = register("truck", vehicle(::TruckEntity).sized(2.6f, 3f))
+
+    @JvmField
+    val KAMAZ = register("kamaz", vehicle(::KamazEntity).sized(2.4f, 3f))
+
+    @JvmField
+    val PANTSIR_S1 = register("pantsir_s1", vehicle(::PantsirEntity).sized(2.6f, 3.5f))
 
     @JvmField
     val URAL = register("ural", vehicle(::UralEntity).sized(3.4f, 3.8f))

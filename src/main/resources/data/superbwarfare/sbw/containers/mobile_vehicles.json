@@ -10,6 +10,7 @@
     "superbwarfare:prism_tank",
     "superbwarfare:a_10a",
     "superbwarfare:truck",
+    "superbwarfare:kamaz",
     "superbwarfare:mi_28",
     "superbwarfare:plz_05",
     "superbwarfare:lav_ad",
@@ -24,6 +25,7 @@
     "superbwarfare:ju_87",
     "superbwarfare:tiny_speedboat",
     "superbwarfare:m_1a_2",
-    "superbwarfare:lav_25"
+    "superbwarfare:lav_25",
+    "superbwarfare:pantsir_s1"
   ]
 }
