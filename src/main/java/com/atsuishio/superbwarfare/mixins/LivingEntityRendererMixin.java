@@ -50,7 +50,8 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
             poseStack.mulPose(quaternionf);
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - yBodyRot));
 
-            float renderScale = vehicle.getPassengerRenderScale();
+            // PJM: масштаб берём у места, а не у машины — отсеки бывают разной высоты
+            float renderScale = vehicle.seatRenderScale(entity);
 
             if (Minecraft.getInstance().player != null && ClientEventHandler.zoomVehicle && entity.getRootVehicle() == Minecraft.getInstance().player.getRootVehicle()) {
                 renderScale = 0;

@@ -1,0 +1,11 @@
+{
+  "Skins": [
+    {
+      "Id": "ukraine",
+      "Name": "Ukraine",
+      "Description": "Ukrainian camouflage",
+      "Texture": "superbwarfare:textures/bedrock/vehicle/osa_ukraine.png",
+      "Priority": 1
+    }
+  ]
+}

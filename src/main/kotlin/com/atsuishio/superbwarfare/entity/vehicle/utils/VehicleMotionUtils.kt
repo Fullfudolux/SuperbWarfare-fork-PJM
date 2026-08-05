@@ -174,11 +174,21 @@ object VehicleMotionUtils {
             // 站在地面上时不允许向下推，防止玩家被压进地里
             if (pushY < 0 && entity.onGround()) pushY = 0.0
 
+            // PJM: setPos телепортирует мимо блочной коллизии, поэтому MTV, направленный вниз
+            // или в стену, вбивал игрока в грунт. onGround() выше это ловит только когда флаг
+            // уже выставлен — при прыжке, шаге со ступеньки или пока игрока держал сам OBB он
+            // ложный. Режем сдвиг ванильным клипом по блокам (пустой список — чтобы другие
+            // сущности выталкиванию не мешали).
+            fun clipToBlocks(dx: Double, dy: Double, dz: Double): Vec3 = Entity.collideBoundingBox(
+                entity, Vec3(dx, dy, dz), entity.boundingBox, entity.level(), emptyList()
+            )
+
             if (bestOnTop) {
+                val safe = clipToBlocks(pushX + vehicleDx, pushY, pushZ + vehicleDz)
                 entity.setPos(
-                    entity.x + pushX + vehicleDx,
-                    entity.y + pushY,
-                    entity.z + pushZ + vehicleDz
+                    entity.x + safe.x,
+                    entity.y + safe.y,
+                    entity.z + safe.z
                 )
                 entity.deltaMovement = Vec3(vehicle.deltaMovement.x, 0.0, vehicle.deltaMovement.z)
                 entity.setOnGround(true)
@@ -186,10 +196,11 @@ object VehicleMotionUtils {
                 return
             }
             // 推出 + 清零朝向该OBB的速度分量
+            val safe = clipToBlocks(pushX, pushY, pushZ)
             entity.setPos(
-                entity.x + pushX,
-                entity.y + pushY,
-                entity.z + pushZ
+                entity.x + safe.x,
+                entity.y + safe.y,
+                entity.z + safe.z
             )
             val velToward = movement.x * pushNx + movement.y * pushNy + movement.z * pushNz
             if (velToward > 0) {
@@ -703,7 +714,13 @@ object VehicleMotionUtils {
                         speed,
                         level,
                         1,
-                        vehicle.deltaMovement.scale(60.0)
+                        // PJM: было scale(60.0) — при 0.5 бл/тик партикл стартовал с 30 бл/тик.
+                        // Затухание CustomCloudParticle (0.85) поверх ванильного friction (0.98)
+                        // даёт 0.833/тик, т.е. суммарный путь ≈ v0 * 6 → ~180 блоков: облако
+                        // мгновенно улетало вперёд смазанной полосой. 0.5 → пыль проходит ~3*speed
+                        // блока и отстаёт от машины, как и должна.
+                        // ponytail: коэффициент подобран по затуханию, крутить тут при подгонке вида
+                        vehicle.deltaMovement.scale(0.5)
                     )
                 } else {
                     vehicle.addRandomParticle(

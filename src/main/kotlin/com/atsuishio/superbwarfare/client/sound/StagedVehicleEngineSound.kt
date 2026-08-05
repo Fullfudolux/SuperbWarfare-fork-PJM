@@ -42,6 +42,13 @@ object StagedVehicleEngineSound {
         "ztz_99a" to Profile("t90", Kind.GROUND),
         "t_90a" to Profile("t90", Kind.GROUND),
         "m_1a_2" to Profile("abrams", Kind.GROUND),
+        "m_10_booker" to Profile("booker", Kind.GROUND),
+        "m_10_booker_aps" to Profile("booker", Kind.GROUND),
+        "ajax" to Profile("ajax", Kind.GROUND),
+        // PJM: 9К33 «Оса-АКМ»
+        "osa" to Profile("osa", Kind.GROUND),
+        // PJM: БМПТ-72 «Терминатор» (звук от Т-72, JSRS2025)
+        "terminator" to Profile("terminator", Kind.GROUND),
         "yx_100" to Profile("heavy", Kind.GROUND),
         "prism_tank" to Profile("heavy", Kind.GROUND),
         "plz_05" to Profile("artillery", Kind.GROUND),
@@ -52,10 +59,15 @@ object StagedVehicleEngineSound {
         "sodayo_pick_up_rocket" to Profile("pickup", Kind.GROUND),
         "sodayo_pick_up_tow" to Profile("pickup", Kind.GROUND),
         "truck" to Profile("truck", Kind.GROUND),
+        // PJM: Урал-4320 — записи JSRS2025
+        "ural" to Profile("ural", Kind.GROUND),
 
         // Real aircraft only. Fictional aircraft deliberately retain their original sounds.
         "ah_6" to Profile("ah6", Kind.HELICOPTER),
+        "mh_6" to Profile("ah6", Kind.HELICOPTER),
         "mi_28" to Profile("mi28", Kind.HELICOPTER),
+        // PJM: Ка-52 — тот же ВК-2500, звук переиспользуем от Ми-28
+        "ka_52" to Profile("mi28", Kind.HELICOPTER),
         "ju_87" to Profile("ju87", Kind.AIRCRAFT),
         "a_10a" to Profile("a10", Kind.AIRCRAFT),
         "ac_130h" to Profile("ac130", Kind.AIRCRAFT)

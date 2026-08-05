@@ -12,6 +12,7 @@ import com.atsuishio.superbwarfare.data.vehicle.subdata.EngineInfo.Aircraft
 import com.atsuishio.superbwarfare.data.vehicle.subdata.EngineInfo.Helicopter
 import com.atsuishio.superbwarfare.data.vehicle.subdata.EngineType
 import com.atsuishio.superbwarfare.entity.vehicle.Cv90Entity
+import com.atsuishio.superbwarfare.entity.vehicle.M10BookerApsEntity
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
 import com.atsuishio.superbwarfare.init.ModItems
 import com.atsuishio.superbwarfare.init.ModKeyMappings
@@ -60,6 +61,14 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
 
     // Ramp readout sits one row above energy.
     private const val RAMP_ROW = ENERGY_ROW + 10
+
+    // PJM: цвета кольца перезарядки КАЗ
+    private val APS_COLOR_READY = floatArrayOf(1f, 0.78f, 0.3f, 0.9f)
+    private val APS_COLOR_EMPTY = floatArrayOf(1f, 0.33f, 0.33f, 0.9f)
+
+    // PJM: пипсы КАЗ — 3 px ширины, шаг 5; пара на борт, 6 px между бортами
+    private val APS_SIDE_PIPS_WIDTH = M10BookerApsEntity.APS_SIDE_CHARGES * 5 - 2
+    private val APS_PIPS_WIDTH = APS_SIDE_PIPS_WIDTH * 2 + 6
 
     private val ARMOR = loc("textures/overlay/vehicle/base/armor.png")
     private val ENERGY = loc("textures/overlay/vehicle/base/energy.png")
@@ -251,6 +260,8 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
         renderGearInfo(guiGraphics, entity, screenWidth, screenHeight, partialTick, compatHeight)
         renderHoverInfo(guiGraphics, entity, screenWidth, screenHeight, partialTick, compatHeight)
         renderSpeedInfo(guiGraphics, entity, screenWidth, screenHeight, partialTick, compatHeight, speedX)
+        // PJM: остаток зарядов КАЗ
+        renderApsInfo(guiGraphics, entity, screenWidth, screenHeight)
 
         poseStack.popPose()
     }
@@ -510,6 +521,64 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
             -1,
             false
         )
+    }
+
+    // PJM: строка КАЗ — ещё один «слот» поверх колонки выбора оружия, той же геометрии
+    private fun renderApsInfo(guiGraphics: GuiGraphics, vehicle: VehicleEntity, w: Int, h: Int) {
+        if (vehicle !is M10BookerApsEntity) return
+
+        val player = localPlayer ?: return
+        val index = vehicle.getSeatIndex(player)
+        if (index == -1) return
+
+        val weaponCount = vehicle.computed().seats()[index].weapons().size
+        val left = vehicle.apsChargesLeft
+        val right = vehicle.apsChargesRight
+        val ready = left + right > 0
+        val font = Minecraft.getInstance().font
+
+        // Рамки оружия: левый край w - 85, ширина 75, высота 16, шаг 18 вверх от h - 20.
+        // Верхняя рамка — h - (weaponCount - 1) * 18 - 20, строку КАЗ ставим ещё на шаг выше.
+        val rowY = h - weaponCount * 18 - 20
+        val rowRight = w - 10
+
+        // подложка в габаритах рамки оружия — чтобы строка стояла ровно в колонке
+        guiGraphics.fill(w - 85, rowY, rowRight, rowY + 16, 0x50000000)
+
+        // кольцо перезарядки — на той же вертикали, что и кольца перезарядки пушек
+        RenderHelper.renderCircularRing(
+            guiGraphics,
+            (w - 102).toFloat(), (rowY + 8).toFloat(),
+            5f, 3.5f,
+            floatArrayOf(0f, 0f, 0f, 0.45f),
+            if (ready) APS_COLOR_READY else APS_COLOR_EMPTY,
+            vehicle.apsReloadProgress,
+            false
+        )
+        // хелпер гасит блендинг за собой — вернуть, иначе поедет остальной HUD
+        RenderSystem.enableBlend()
+
+        guiGraphics.drawString(
+            font, Component.literal("APS"), w - 81, rowY + 4,
+            if (ready) 0xFFFFFFFF.toInt() else 0xFF8A8A8A.toInt(), false
+        )
+
+        // по два пипса на борт, прижаты к правому краю: пара L, зазор, пара R
+        val pipsY = rowY + 4
+        drawApsPips(guiGraphics, rowRight - APS_PIPS_WIDTH, pipsY, left)
+        drawApsPips(guiGraphics, rowRight - APS_SIDE_PIPS_WIDTH, pipsY, right)
+    }
+
+    private fun drawApsPips(guiGraphics: GuiGraphics, x: Int, y: Int, charges: Int) {
+        for (i in 0 until M10BookerApsEntity.APS_SIDE_CHARGES) {
+            val px = x + i * 5
+            if (i < charges) {
+                guiGraphics.fill(px, y, px + 3, y + 8, 0xFFFFC64D.toInt())
+            } else {
+                guiGraphics.fill(px, y, px + 3, y + 8, 0x66000000)
+                guiGraphics.renderOutline(px, y, 3, 8, 0x55FFFFFF)
+            }
+        }
     }
 
     private fun renderWeaponInfo(guiGraphics: GuiGraphics, vehicle: VehicleEntity, w: Int, h: Int) {

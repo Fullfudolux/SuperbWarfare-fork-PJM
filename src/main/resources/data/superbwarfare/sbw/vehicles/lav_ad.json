@@ -197,7 +197,7 @@
         "FireSoundInstances3P": "superbwarfare:lav_ad_fire",
         "FireSoundInstancesFar": "superbwarfare:lav_ad_fire_far",
         "FireSoundInstancesVeryFar": "superbwarfare:lav_ad_fire_veryfar",
-        "Change": "superbwarfare:into_cannon"
+        "Change": "superbwarfare:into_autocannon"
       },
       "AmmoType": "superbwarfare:small_shell_aa",
       "ShootPos": {
@@ -246,7 +246,7 @@
         "Fire3P": "superbwarfare:bmp_2_missile_fire_3p",
         "VehicleReload3p": "superbwarfare:bomb_reload",
         "VehicleReloadSoundTime": 11,
-        "Change": "superbwarfare:into_missile",
+        "Change": "superbwarfare:into_atgm",
         "Locking": "superbwarfare:javelin_locking",
         "Locked": "superbwarfare:javelin_locked"
       },

@@ -179,6 +179,9 @@ object ModItems {
     @JvmField val SMALL_AERIAL_BOMB = registerAmmo("small_aerial_bomb") { Item(Properties().stacksTo(4)) }
     @JvmField val MEDIUM_AERIAL_BOMB = registerAmmo("medium_aerial_bomb") { Item(Properties().stacksTo(2)) }
     @JvmField val LARGE_AERIAL_BOMB = registerAmmo("large_aerial_bomb") { Item(Properties().stacksTo(1)) }
+
+    // PJM: перехватчик КАЗ — загружается в инвентарь техники, из него пополняются заряды
+    @JvmField val APS_INTERCEPTOR = registerAmmo("aps_interceptor") { Item(Properties().stacksTo(8)) }
     // @formatter:on
 
     /**
@@ -294,6 +297,8 @@ object ModItems {
     @JvmField val VEHICLE_RESET_KIT = registerItem("vehicle_reset_kit") { VehicleResetKitItem() }
     @JvmField val SKIN_SPRAY = registerItem("skin_spray") { SkinSprayItem() }
     @JvmField val VEHICLE_KEY = registerItem("vehicle_key") { VehicleKeyItem() }
+    // PJM: навесная маскировочная сеть (Ajax)
+    @JvmField val CAMO_NET = registerItem("camo_net") { CamoNetItem() }
 
     @JvmField val TUNGSTEN_ROD = registerItem("tungsten_rod")
 

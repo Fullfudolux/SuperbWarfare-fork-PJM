@@ -68,4 +68,10 @@ class SeatInfo {
 
     @SerialName("DismountInfo")
     var dismountInfo: DismountInfo? = null
+
+    // PJM: масштаб седока для конкретного места. Нужен там, где отсеки разной высоты —
+    // у Урала в кузове низкий тент, а в кабине места хватает. null = общий
+    // DefaultVehicleData.PassengerRenderScale машины.
+    @SerialName("RenderScale")
+    var renderScale: Float? = null
 }

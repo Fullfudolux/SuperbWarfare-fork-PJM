@@ -7,6 +7,7 @@ import com.atsuishio.superbwarfare.entity.OBBEntity
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
 import com.atsuishio.superbwarfare.init.ModParticleTypes
 import com.atsuishio.superbwarfare.init.ModSounds
+import com.atsuishio.superbwarfare.tools.OBB
 import com.atsuishio.superbwarfare.tools.OBB.Part.*
 import com.atsuishio.superbwarfare.tools.ParticleTool
 import com.atsuishio.superbwarfare.tools.toVec3
@@ -21,6 +22,9 @@ import net.minecraft.world.phys.Vec3
  * 处理载具特效、粒子、低血量警告等方法的工具类
  */
 object VehicleEffectUtils {
+
+    /** PJM: период (в тиках) эффекта сломанной части техники */
+    private const val PART_EFFECT_INTERVAL = 8
 
     /**
      * 在载具位置添加随机粒子
@@ -99,42 +103,24 @@ object VehicleEffectUtils {
     @JvmStatic
     fun handlePartDamaged(vehicle: VehicleEntity, obbEntity: OBBEntity) {
         val obbList = obbEntity.getOBBs()
-        for (obb in obbList) {
-            val pos = obb.center.toVec3()
-            when (obb.part) {
-                TURRET -> {
-                    if (vehicle.turretDamaged) {
-                        vehicle.onTurretDamaged(pos)
-                    }
-                }
 
-                WHEEL_LEFT -> {
-                    if (vehicle.leftWheelDamaged) {
-                        vehicle.onLeftWheelDamaged(pos)
-                    }
-                }
-
-                WHEEL_RIGHT -> {
-                    if (vehicle.rightWheelDamaged) {
-                        vehicle.onRightWheelDamaged(pos)
-                    }
-                }
-
-                MAIN_ENGINE -> {
-                    if (vehicle.mainEngineDamaged) {
-                        vehicle.onEngine1Damaged(pos)
-                    }
-                }
-
-                SUB_ENGINE -> {
-                    if (vehicle.subEngineDamaged) {
-                        vehicle.onEngine2Damaged(pos)
-                    }
-                }
-
-                else -> {}
-            }
+        // PJM: эффект повреждения — ОДИН раз на часть раз в PART_EFFECT_INTERVAL тиков, по случайному
+        // её боксу, со сдвигом фазы между частями. Раньше эффект шёл каждый тик и по КАЖДОМУ боксу:
+        // у LAV-25 это 8 колёсных боксов, у башни Терминатора/Осы/Ajax — 90+, отсюда ковёр из
+        // FIRE_STAR (у него lifetime 20-60 тиков + гравитация, искры копятся на земле).
+        fun emitPartEffect(part: OBB.Part, phase: Int, damaged: Boolean, effect: (Vec3) -> Unit) {
+            if (!damaged) return
+            if ((vehicle.tickCount + phase) % PART_EFFECT_INTERVAL != 0) return
+            val boxes = obbList.filter { it.part == part }
+            if (boxes.isEmpty()) return
+            effect(boxes[vehicle.getRandom().nextInt(boxes.size)].center.toVec3())
         }
+
+        emitPartEffect(TURRET, 0, vehicle.turretDamaged, vehicle::onTurretDamaged)
+        emitPartEffect(WHEEL_LEFT, 1, vehicle.leftWheelDamaged, vehicle::onLeftWheelDamaged)
+        emitPartEffect(WHEEL_RIGHT, 3, vehicle.rightWheelDamaged, vehicle::onRightWheelDamaged)
+        emitPartEffect(MAIN_ENGINE, 5, vehicle.mainEngineDamaged, vehicle::onEngine1Damaged)
+        emitPartEffect(SUB_ENGINE, 7, vehicle.subEngineDamaged, vehicle::onEngine2Damaged)
     }
 
     /**
@@ -182,7 +168,9 @@ object VehicleEffectUtils {
             vehicle.subEngineDamaged = false
         }
 
-        if (!vehicle.isWreck) {
+        // Регенерация частей подчиняется тому же выключателю, что и корпус (repair_cooldown < 0).
+        // Иначе башня/колёса/двигатель чинились бы сами даже при отключённом саморемонте.
+        if (!vehicle.isWreck && vehicle.maxRepairCoolDown() >= 0) {
             vehicle.turretHealth = kotlin.math.min(
                 vehicle.turretHealth + 0.0025f * vehicle.getTurretMaxHealth(),
                 vehicle.getTurretMaxHealth()
@@ -264,16 +252,19 @@ object VehicleEffectUtils {
             )
         }
 
-        if (vehicle.health <= 0.25 * vehicle.getMaxHealth()) {
+        // PJM: пороги 0.25/0.15 раньше складывались и давали 4 дымовых партикла за тик поверх
+        // остальных. Чередуем их по чётности тика — плотность дыма та же на глаз, партиклов вдвое меньше.
+        if (vehicle.health <= 0.25 * vehicle.getMaxHealth() && vehicle.tickCount % 2 == 0) {
             playLowHealthParticle(vehicle)
         }
-        if (vehicle.health <= 0.15 * vehicle.getMaxHealth()) {
+        if (vehicle.health <= 0.15 * vehicle.getMaxHealth() && vehicle.tickCount % 2 == 1) {
             playLowHealthParticle(vehicle)
         }
 
         if (vehicle.health <= 0.1 * vehicle.getMaxHealth()) {
             val random = 2 * (vehicle.getRandom().nextFloat() - 0.5f)
             if (vehicle.level().isClientSide) {
+                // PJM: было по 2 — с учётом порогов выше набегало 11 дымовых партиклов за тик
                 addRandomParticle(
                     vehicle,
                     ParticleTypes.LARGE_SMOKE,
@@ -281,7 +272,7 @@ object VehicleEffectUtils {
                     0.35f * vehicle.bbWidth,
                     vehicle.level(),
                     0.01f,
-                    2
+                    1
                 )
                 addRandomParticle(
                     vehicle,
@@ -290,7 +281,7 @@ object VehicleEffectUtils {
                     0.35f * vehicle.bbWidth,
                     vehicle.level(),
                     0.01f,
-                    2
+                    1
                 )
                 addRandomParticle(
                     vehicle,

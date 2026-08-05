@@ -21,7 +21,10 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.entity.Entity
+import net.minecraft.world.phys.shapes.CollisionContext
+import net.minecraft.world.level.ClipContext
 import net.minecraft.world.level.Level
+import net.minecraft.world.phys.HitResult
 import net.minecraft.world.phys.Vec3
 import kotlin.math.cos
 import kotlin.math.sin
@@ -459,6 +462,60 @@ object ParticleTool {
         ParticleTool.spawnDirectionalParticles(1, 0.0, serverLevel, CannonMuzzleFlareOption(0.4f, 0.4f, 0.4f, 45, 0.88f, 2, 0.5f), direct, pos, 0.25)
         ParticleTool.spawnDirectionalParticles(1, 0.0, serverLevel, CannonMuzzleFlareOption(0.45f, 0.45f, 0.45f, 47, 0.90f, 2, 0.3f), direct, pos, 0.17)
         ParticleTool.spawnDirectionalParticles(1, 0.0, serverLevel, CannonMuzzleFlareOption(0.5f, 0.5f, 0.5f, 48, 0.92f, 2, 0.1f), direct, pos, 0.1)
+        spawnCannonBlastGroundDust(direct, pos, serverLevel) // PJM: пыль, поднятая дульным выхлопом
+        // PJM: тряска экрана у стоящих рядом при выстреле крупной пушки (гасится конфигом EXPLOSION_SCREEN_SHAKE)
+        ShakeClientMessage.sendToNearbyPlayers(serverLevel, pos.x, pos.y, pos.z, 22.0, 6.0, 3.5)
+    }
+
+    /**
+     * PJM: пыль, поднятая дульным выхлопом крупнокалиберной пушки. Избыточное давление сдувает
+     * пыль с земли под/перед стволом веером по направлению выстрела. Молча пропускается, если
+     * под дулом нет земли поблизости (выстрел в воздух/над обрывом) или ствол смотрит строго вверх.
+     */
+    @JvmStatic
+    fun spawnCannonBlastGroundDust(direct: Vec3, pos: Vec3, serverLevel: ServerLevel) {
+        val horiz = Vec3(direct.x, 0.0, direct.z)
+        if (horiz.lengthSqr() < 1.0e-4) return
+        val fwd = horiz.normalize()
+
+        // ищем землю под точкой чуть впереди дула
+        val probe = pos.add(fwd.scale(2.0))
+        val hit = serverLevel.clip(
+            ClipContext(
+                probe.add(0.0, 1.0, 0.0), probe.add(0.0, -8.0, 0.0),
+                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, CollisionContext.empty()
+            )
+        )
+        if (hit.type != HitResult.Type.BLOCK) return
+        val g = hit.location
+
+        // клубящаяся пыль веером вдоль выстрела
+        for (i in 0..3) {
+            val c = g.add(fwd.scale(-0.5 + i * 1.4))
+            val spread = 1.2 + 0.6 * i
+            sendParticle(
+                serverLevel,
+                CustomFlareOption(
+                    0.667f, 0.631f, 0.592f,
+                    36 + 10 * i, 0.9f,
+                    (8 + 12 * Math.random()).toInt(), 0.02f,
+                    size = 0.9f + 0.6f * Math.random().toFloat()
+                ),
+                c.x, c.y + 0.1, c.z,
+                5 + i, spread, 0.08, spread, 0.03, true
+            )
+        }
+
+        // низкая быстрая волна пыли, летящая вперёд от дула
+        for (i in 0..17) {
+            val v = fwd.yRot((Math.random().toFloat() - 0.5f) * 1.4f)
+            sendParticle(
+                serverLevel,
+                CustomCloudOption(0xA89E86, 22, 3f, 0f, cooldown = false, light = false),
+                g.x, g.y + 0.15, g.z,
+                0, v.x, 0.15 * Math.random(), v.z, 5.0 + 3.0 * Math.random(), true
+            )
+        }
     }
 
     @JvmStatic

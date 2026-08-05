@@ -102,7 +102,8 @@ object HelicopterHud {
         val poseStack = guiGraphics.pose()
         val index = vehicle.getSeatIndex(player)
         val data = vehicle.getGunData(index)
-        if (data == null) {
+        // PJM: у невооружённых вертолётов (MH-6) оружия нет, но приборная часть HUD нужна
+        if (data == null && vehicle.hasWeapon()) {
             scopeScale = 0.7f
             return
         }
@@ -492,13 +493,15 @@ object HelicopterHud {
                         )
                     }
                 }
-                val component = vehicle.firstPersonAmmoComponent(data, player)
+                if (data != null) {
+                    val component = vehicle.firstPersonAmmoComponent(data, player)
 
-                val heat = vehicle.getWeaponHeat(player)
-                guiGraphics.drawString(
-                    mc.font, component, screenWidth / 2 - 160, screenHeight / 2 - 59,
-                    getGradientColor(color, 0xFF0000, heat, 2), false
-                )
+                    val heat = vehicle.getWeaponHeat(player)
+                    guiGraphics.drawString(
+                        mc.font, component, screenWidth / 2 - 160, screenHeight / 2 - 59,
+                        getGradientColor(color, 0xFF0000, heat, 2), false
+                    )
+                }
 
                 renderEnergyInfo(vehicle, guiGraphics, screenWidth, screenHeight, mc.font)
 
@@ -637,7 +640,9 @@ object HelicopterHud {
                 poseStack.translate(x, y + 50, 0f)
                 poseStack.scale(0.75f, 0.75f, 1f)
 
-                VehicleMainWeaponHudOverlay.renderWeaponInfoThirdAir(guiGraphics, vehicle, player, data, font)
+                if (data != null) {
+                    VehicleMainWeaponHudOverlay.renderWeaponInfoThirdAir(guiGraphics, vehicle, player, data, font)
+                }
 
                 if (vehicle.hasDecoy()) {
                     if (vehicle.decoyReady) {

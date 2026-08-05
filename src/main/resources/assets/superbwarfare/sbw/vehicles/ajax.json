@@ -1,0 +1,9 @@
+{
+  "Animation": "superbwarfare:animations/bedrock/vehicle/ajax.animation.json",
+  "Models": [
+    {
+      "Model": "superbwarfare:models/bedrock/vehicle/ajax.geo.json",
+      "Texture": "superbwarfare:textures/bedrock/vehicle/ajax.png"
+    }
+  ]
+}

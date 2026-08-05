@@ -178,6 +178,10 @@ object ModEntities {
     @JvmField
     val RU_9M100_MISSILE = register("ru_9m100_missile", fastProjectile(::Ru9m100MissileEntity).sized(0.75f, 0.75f))
 
+    // PJM: ЗУР 9М33М3 комплекса «Оса-АКМ»
+    @JvmField
+    val RU_9M33_MISSILE = register("ru_9m33_missile", fastProjectile(::Ru9m33MissileEntity).sized(0.5f, 0.5f))
+
     @JvmField
     val RU_3M14_MISSILE = register("ru_3m14_missile", fastProjectile(::Ru3m14MissileEntity).sized(1f, 1f))
 
@@ -356,6 +360,34 @@ object ModEntities {
 
     @JvmField
     val TURRET_WRECK = register("turret_wreck", vehicle(::TurretWreckEntity).sized(2.4f, 1.2f))
+
+    // PJM: M10 Booker
+    @JvmField
+    val M_10_BOOKER = register("m_10_booker", vehicle(::M10BookerEntity).sized(4.4f, 1.9f))
+
+    // PJM: M10 Booker с КАЗ
+    @JvmField
+    val M_10_BOOKER_APS = register("m_10_booker_aps", vehicle(::M10BookerApsEntity).sized(4.4f, 1.9f))
+
+    // PJM: Ajax
+    @JvmField
+    val AJAX = register("ajax", vehicle(::AjaxEntity).sized(4.2f, 2f))
+
+    // PJM: 9К33 «Оса-АКМ»
+    @JvmField
+    val OSA = register("osa", vehicle(::OsaEntity).sized(3.4f, 2.6f))
+
+    // PJM: MH-6 — невооружённый транспортный Little Bird
+    @JvmField
+    val MH_6 = register("mh_6", vehicle(::Ah6Entity).sized(2.25f, 2.175f))
+
+    // PJM: БМПТ-72 «Терминатор»
+    @JvmField
+    val TERMINATOR = register("terminator", vehicle(::TerminatorEntity).sized(3.6f, 2.4f))
+
+    // PJM: Ка-52 «Аллигатор»
+    @JvmField
+    val KA_52 = register("ka_52", vehicle(::Ka52Entity).sized(3.375f, 3.375f))
 
     private fun <T : Entity> register(
         name: String,

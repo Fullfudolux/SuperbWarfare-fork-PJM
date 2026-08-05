@@ -111,7 +111,7 @@
       "ShootShake": [8, 10, 60],
       "Spread": 0.02,
       "ShootAnimationTime": 20,
-      "Crosshair": "@VehicleRuApc",
+      "Crosshair": "superbwarfare:textures/overlay/vehicle/crosshair/tabs_sosna_u.png",
       "CrosshairColor": "0xFFC700",
       "Name": "weapon.superbwarfare.cannon_ap",
       "AmmoType": [
@@ -148,8 +148,8 @@
         "Fire3P": "superbwarfare:t_90a_fire_3p",
         "Fire3PFar": "superbwarfare:t_90a_far",
         "Fire3PVeryFar": "superbwarfare:t_90a_veryfar",
-        "VehicleReload": "superbwarfare:t_90a_reload",
-        "Change": "superbwarfare:into_cannon",
+        "VehicleReload": "superbwarfare:autoloader",
+        "Change": "superbwarfare:into_main_cannon",
         "CancellableSounds": [
           "superbwarfare:t_90a_reload"
         ]
@@ -190,7 +190,7 @@
         "Fire3P": "superbwarfare:m_60_fire_3p",
         "Fire3PFar": "superbwarfare:m_60_far",
         "Fire3PVeryFar": "superbwarfare:m_60_veryfar",
-        "Change": "superbwarfare:into_cannon"
+        "Change": "superbwarfare:into_coax"
       },
       "SoundRadius": 12,
       "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/gun_7_62mm.png"
@@ -225,7 +225,7 @@
         "Fire3P": "superbwarfare:m_2_hb_fire_3p",
         "Fire3PFar": "superbwarfare:m_2_hb_far",
         "Fire3PVeryFar": "superbwarfare:m_2_hb_veryfar",
-        "Change": "superbwarfare:into_cannon"
+        "Change": "superbwarfare:into_coax"
       },
       "SoundRadius": 16
     }

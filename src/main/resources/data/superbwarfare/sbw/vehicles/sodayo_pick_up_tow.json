@@ -47,6 +47,7 @@
   ],
   "Seats": [
     {
+      "BanHand": true,
       "IsEnclosed": true,
       "Transform": "Vehicle",
       "Position": [
@@ -64,6 +65,7 @@
       }
     },
     {
+      "BanHand": true,
       "IsEnclosed": true,
       "Transform": "Vehicle",
       "Position": [

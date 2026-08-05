@@ -26,10 +26,11 @@ class UralEntity(type: EntityType<UralEntity>, world: Level) : VehicleEntity(typ
     private var leftDoorOpen = false
     private var rightDoorOpen = false
     private var lastZadOpen = false
+    private var lastRiderCount = 0
 
     // Hinge angle (degrees) driving the "zad" tailgate's collision box; eased toward
-    // ZAD_MAX_ANGLE/0 in updateOBB() at ZAD_ROT_STEP degrees/tick, tuned to match the real
-    // 1-second duration of animation.zad.open/close in ural.animation.json (see ZAD_ROT_STEP).
+    // ZAD_MAX_ANGLE/0 in baseTick() at ZAD_ROT_STEP degrees/tick, matching the 1-second
+    // duration of animation.zad.open/close in ural.animation.json.
     private var zadRot = 0f
 
     var zadOpen by ZAD_OPEN
@@ -81,14 +82,16 @@ class UralEntity(type: EntityType<UralEntity>, world: Level) : VehicleEntity(typ
         return super.interactAt(pPlayer, pVec, pHand)
     }
 
-    override fun updateOBB() {
+    // PJM: угол створки крутился в updateOBB(), а он вызывается из разрешения коллизий —
+    // сколько раз за тик, зависит от того, движется ли машина и с кем она пересекается.
+    // Отсюда и расхождение с анимацией. Считаем шаг ровно раз в тик, в baseTick().
+    private fun tickZadRot() {
         val target = if (zadOpen) ZAD_MAX_ANGLE else 0f
         zadRot = if (zadRot < target) {
             (zadRot + ZAD_ROT_STEP).coerceAtMost(target)
         } else {
             (zadRot - ZAD_ROT_STEP).coerceAtLeast(target)
         }
-        super.updateOBB()
     }
 
     // Hinge pivot of the "zad" bone (bottom edge of the tailgate), converted from the geo
@@ -139,6 +142,8 @@ class UralEntity(type: EntityType<UralEntity>, world: Level) : VehicleEntity(typ
     override fun baseTick() {
         super.baseTick()
 
+        tickZadRot()
+
         if (decoyInputDown) {
             horn()
         }
@@ -149,17 +154,24 @@ class UralEntity(type: EntityType<UralEntity>, world: Level) : VehicleEntity(typ
         // The door swing is a single open-then-close animation; play it once on every
         // mount AND dismount edge, rather than holding the door open for the whole ride.
         val driverPresent = getNthEntity(0) != null
-        if (driverPresent != leftDoorOpen) {
-            ctx.playAnimation("animation.door_l.open", AnimationPlayType.PLAY_ONCE_STOP)
-        }
-        leftDoorOpen = driverPresent
-
         // Seats 1 (middle) and 2 (right) are both boarded through the right door on the bench seat.
         val passengerPresent = getNthEntity(1) != null || getNthEntity(2) != null
-        if (passengerPresent != rightDoorOpen) {
-            ctx.playAnimation("animation.door_r.open", AnimationPlayType.PLAY_ONCE_STOP)
+
+        // PJM: пересадка внутри кабины меняет занятость обоих мест, но никто не входит и не
+        // выходит — дверь при этом хлопать не должна. Анимируем только когда изменилось общее
+        // число пассажиров, то есть кто-то реально сел в машину или вылез из неё.
+        val riders = passengers.size
+        if (riders != lastRiderCount) {
+            if (driverPresent != leftDoorOpen) {
+                ctx.playAnimation("animation.door_l.open", AnimationPlayType.PLAY_ONCE_STOP)
+            }
+            if (passengerPresent != rightDoorOpen) {
+                ctx.playAnimation("animation.door_r.open", AnimationPlayType.PLAY_ONCE_STOP)
+            }
         }
+        leftDoorOpen = driverPresent
         rightDoorOpen = passengerPresent
+        lastRiderCount = riders
 
         // The tailgate is toggled (held open/closed) rather than auto-closing.
         if (zadOpen != lastZadOpen) {
@@ -173,9 +185,8 @@ class UralEntity(type: EntityType<UralEntity>, world: Level) : VehicleEntity(typ
 
     companion object {
         private const val ZAD_MAX_ANGLE = -100f
-        // Tuned by testing: the tick-based hitbox ran ~2x faster than the door's real
-        // 1-second animation, so this is halved from the naive 20-tick (5 deg/tick) value.
-        private const val ZAD_ROT_STEP = 2.5f
+        // animation.zad.open/close длятся 1 с = 20 тиков, значит 100 град / 20.
+        private const val ZAD_ROT_STEP = ZAD_MAX_ANGLE / -20f
 
         private val FRONT_WHEEL_L_PIVOT = Vec3(1.3125, 0.8099, 2.9375)
         private val FRONT_WHEEL_R_PIVOT = Vec3(-1.0625, 0.8099, 2.9375)

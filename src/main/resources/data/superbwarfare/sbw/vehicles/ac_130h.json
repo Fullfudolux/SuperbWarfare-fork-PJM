@@ -307,7 +307,7 @@
         "Fire3P": "superbwarfare:ac_130h_m102_fire_3p",
         "Fire3PFar": "superbwarfare:ac_130h_m102_far",
         "Fire3PVeryFar": "superbwarfare:ac_130h_m102_veryfar",
-        "VehicleReload": "superbwarfare:m_1a_2_reload",
+        "VehicleReload": "superbwarfare:reload_88mm",
         "Change": "superbwarfare:into_cannon",
         "CancellableSounds": [
           "superbwarfare:m_1a_2_reload"
