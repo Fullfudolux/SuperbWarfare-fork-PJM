@@ -10,6 +10,7 @@ import net.minecraft.util.Mth
 import net.minecraft.world.damagesource.DamageSource
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.player.Player
+import net.minecraft.world.entity.projectile.Projectile
 import net.minecraft.world.phys.Vec3
 import org.joml.*
 
@@ -150,20 +151,27 @@ object VehicleVecUtils {
      * @return 角度
      */
     fun getDamageSourceAngle(vehicle: VehicleEntity, source: DamageSource, multiplier: Float): Float {
-        var attacker = source.entity
-        if (attacker == null) {
-            attacker = source.directEntity
-        }
-
-        if (attacker != null) {
-            val toVec = Vec3(
+        // PJM: направление берём по вектору полёта снаряда (реальная точка входа), и только при его
+        // отсутствии — по позиции атакующего. Обе стороны проецируем на горизонталь: иначе выстрел
+        // в упор или с превышения задирает Y-компоненту, dot схлопывается к нулю и лоб == корма.
+        val directEntity = source.directEntity
+        val toVec = if (directEntity is Projectile && directEntity.deltaMovement.lengthSqr() > 1.0e-6) {
+            directEntity.deltaMovement.scale(-1.0)
+        } else {
+            val attacker = source.entity ?: directEntity ?: return 1f
+            Vec3(
                 vehicle.x,
                 vehicle.y + vehicle.bbHeight / 2,
                 vehicle.z
-            ).vectorTo(attacker.position()).normalize()
-            return Math.max(1f - multiplier * toVec.dot(vehicle.getViewVector(1f)), 0.5).toFloat()
+            ).vectorTo(attacker.position())
         }
-        return 1f
+
+        val flatTo = Vec3(toVec.x, 0.0, toVec.z)
+        val view = vehicle.getViewVector(1f)
+        val flatView = Vec3(view.x, 0.0, view.z)
+        if (flatTo.lengthSqr() < 1.0e-6 || flatView.lengthSqr() < 1.0e-6) return 1f
+
+        return Math.max(1f - multiplier * flatTo.normalize().dot(flatView.normalize()), 0.5).toFloat()
     }
 
     /**

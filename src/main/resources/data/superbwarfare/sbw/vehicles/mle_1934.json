@@ -50,7 +50,7 @@
         "Fire3PVeryFar": "superbwarfare:mk_42_veryfar",
         "VehicleReload3p": "superbwarfare:cannon_reload",
         "VehicleReloadSoundTime": 30,
-        "Change": "superbwarfare:into_cannon"
+        "Change": "superbwarfare:into_main_cannon"
       },
       "SoundRadius": 32,
       "AmmoType": [

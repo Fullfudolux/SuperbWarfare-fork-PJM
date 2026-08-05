@@ -3,6 +3,7 @@ package com.atsuishio.superbwarfare.client.renderer.entity
 import com.atsuishio.superbwarfare.client.model.entity.BedrockVehicleModel
 import com.atsuishio.superbwarfare.entity.vehicle.BasicGeoVehicleEntity
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
+import com.atsuishio.superbwarfare.init.ModEntities
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.renderer.entity.EntityRendererProvider
 import net.minecraft.util.Mth
@@ -24,5 +25,13 @@ class Ah6Renderer<T>(manager: EntityRendererProvider.Context) :
         propeller.rotation.rotationY(Mth.lerp(partialTicks, vehicle.propellerRotO, vehicle.propellerRot))
         tailPropeller.rotation.rotationX(-6 * Mth.lerp(partialTicks, vehicle.propellerRotO, vehicle.propellerRot))
 
+        // PJM: MH-6 делит модель с AH-6, поэтому видимость подвески выставляем каждый кадр
+        val armed = vehicle.type != ModEntities.MH_6.get()
+        WEAPON_BONES.forEach { model.getBone(it)?.visible = armed }
+    }
+
+    companion object {
+        // wuqijia — общий пилон, на нём же держатся боковые лавки, поэтому его не трогаем
+        private val WEAPON_BONES = listOf("huojiandan", "huojiandan2", "cannon", "cannon2")
     }
 }

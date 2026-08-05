@@ -183,8 +183,8 @@
         "Fire3P": "superbwarfare:yx_100_fire_3p",
         "Fire3PFar": "superbwarfare:yx_100_far",
         "Fire3PVeryFar": "superbwarfare:yx_100_veryfar",
-        "VehicleReload": "superbwarfare:yx_100_reload",
-        "Change": "superbwarfare:into_cannon",
+        "VehicleReload": "superbwarfare:reload_57mm",
+        "Change": "superbwarfare:into_main_cannon",
         "CancellableSounds": [
           "superbwarfare:yx_100_reload"
         ]
@@ -226,7 +226,7 @@
         "Fire3P": "superbwarfare:m_2_hb_fire_3p",
         "Fire3PFar": "superbwarfare:m_2_hb_far",
         "Fire3PVeryFar": "superbwarfare:m_2_hb_veryfar",
-        "Change": "superbwarfare:into_cannon"
+        "Change": "superbwarfare:into_coax"
       },
       "SoundRadius": 16
     },
@@ -255,7 +255,7 @@
         "Fire3P": "superbwarfare:yx_100_autocannon_fire_3p",
         "Fire3PFar": "superbwarfare:yx_100_autocannon_far",
         "Fire3PVeryFar": "superbwarfare:yx_100_autocannon_veryfar",
-        "Change": "superbwarfare:into_missile"
+        "Change": "superbwarfare:into_autocannon"
       },
       "SoundRadius": 24,
       "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/cannon_30mm_ap.png",

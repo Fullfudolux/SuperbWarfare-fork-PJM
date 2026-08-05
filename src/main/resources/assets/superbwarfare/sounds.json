@@ -6251,5 +6251,464 @@
   },
   "lav_ad_fire_veryfar": {
     "sounds": [{"attenuation_distance": 1024, "name": "superbwarfare:vehicle/lav_ad/lav_ad_fire_veryfar", "stream": false}]
+  },
+  "engine_ural_start_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 96,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ural/start_ext"
+      }
+    ]
+  },
+  "engine_ural_start_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 96,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ural/start_int"
+      }
+    ]
+  },
+  "engine_ural_stop_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 96,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ural/stop_ext"
+      }
+    ]
+  },
+  "engine_ural_stop_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 96,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ural/stop_int"
+      }
+    ]
+  },
+  "engine_ural_idle_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ural/idle_ext"
+      }
+    ]
+  },
+  "engine_ural_idle_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ural/idle_int"
+      }
+    ]
+  },
+  "engine_ural_drive_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ural/drive_ext"
+      }
+    ]
+  },
+  "engine_ural_drive_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ural/drive_int"
+      }
+    ]
+  },
+  "engine_ural_release_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ural/release_ext"
+      }
+    ]
+  },
+  "engine_ural_release_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ural/release_int"
+      }
+    ]
+  },
+  "engine_ural_distance": {
+    "sounds": [
+      {
+        "attenuation_distance": 384,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ural/distance"
+      }
+    ]
+  },
+  "engine_booker_start_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 96,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/booker/start_ext"
+      }
+    ]
+  },
+  "engine_booker_start_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 96,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/booker/start_int"
+      }
+    ]
+  },
+  "engine_booker_stop_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 96,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/booker/stop_ext"
+      }
+    ]
+  },
+  "engine_booker_stop_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 96,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/booker/stop_int"
+      }
+    ]
+  },
+  "engine_booker_idle_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/booker/idle_ext"
+      }
+    ]
+  },
+  "engine_booker_idle_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/booker/idle_int"
+      }
+    ]
+  },
+  "engine_booker_drive_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/booker/drive_ext"
+      }
+    ]
+  },
+  "engine_booker_drive_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/booker/drive_int"
+      }
+    ]
+  },
+  "engine_booker_release_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/booker/release_ext"
+      }
+    ]
+  },
+  "engine_booker_release_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/booker/release_int"
+      }
+    ]
+  },
+  "engine_booker_distance": {
+    "sounds": [
+      {
+        "attenuation_distance": 384,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/booker/distance"
+      }
+    ]
+  },
+  "engine_ajax_start_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 96,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ajax/start_ext"
+      }
+    ]
+  },
+  "engine_ajax_start_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 96,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ajax/start_int"
+      }
+    ]
+  },
+  "engine_ajax_stop_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 96,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ajax/stop_ext"
+      }
+    ]
+  },
+  "engine_ajax_stop_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 96,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ajax/stop_int"
+      }
+    ]
+  },
+  "engine_ajax_idle_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ajax/idle_ext"
+      }
+    ]
+  },
+  "engine_ajax_idle_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ajax/idle_int"
+      }
+    ]
+  },
+  "engine_ajax_drive_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ajax/drive_ext"
+      }
+    ]
+  },
+  "engine_ajax_drive_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ajax/drive_int"
+      }
+    ]
+  },
+  "engine_ajax_release_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ajax/release_ext"
+      }
+    ]
+  },
+  "engine_ajax_release_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ajax/release_int"
+      }
+    ]
+  },
+  "engine_ajax_distance": {
+    "sounds": [
+      {
+        "attenuation_distance": 384,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/ajax/distance"
+      }
+    ]
+  },
+  "engine_osa_idle_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/osa/idle_ext"
+      }
+    ]
+  },
+  "engine_osa_idle_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/osa/idle_int"
+      }
+    ]
+  },
+  "engine_osa_drive_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/osa/drive_ext"
+      }
+    ]
+  },
+  "engine_osa_drive_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/osa/drive_int"
+      }
+    ]
+  },
+  "engine_osa_release_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/osa/release_ext"
+      }
+    ]
+  },
+  "engine_osa_release_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/osa/release_int"
+      }
+    ]
+  },
+  "engine_osa_distance": {
+    "sounds": [
+      {
+        "attenuation_distance": 384,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/osa/distance"
+      }
+    ]
+  },
+  "engine_terminator_start_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 96,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/terminator/start_ext"
+      }
+    ]
+  },
+  "engine_terminator_start_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 96,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/terminator/start_int"
+      }
+    ]
+  },
+  "engine_terminator_stop_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 96,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/terminator/stop_ext"
+      }
+    ]
+  },
+  "engine_terminator_stop_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 96,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/terminator/stop_int"
+      }
+    ]
+  },
+  "engine_terminator_idle_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/terminator/idle_ext"
+      }
+    ]
+  },
+  "engine_terminator_idle_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/terminator/idle_int"
+      }
+    ]
+  },
+  "engine_terminator_drive_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/terminator/drive_ext"
+      }
+    ]
+  },
+  "engine_terminator_drive_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/terminator/drive_int"
+      }
+    ]
+  },
+  "engine_terminator_release_ext": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/terminator/release_ext"
+      }
+    ]
+  },
+  "engine_terminator_release_int": {
+    "sounds": [
+      {
+        "attenuation_distance": 72,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/terminator/release_int"
+      }
+    ]
+  },
+  "engine_terminator_distance": {
+    "sounds": [
+      {
+        "attenuation_distance": 384,
+        "stream": false,
+        "name": "superbwarfare:vehicle/engine/terminator/distance"
+      }
+    ]
   }
 }

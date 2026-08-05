@@ -65,7 +65,7 @@ open class Ru9m336MissileEntity(type: EntityType<out Ru9m336MissileEntity>, leve
                 setLostTarget(calculateAngle(deltaMovement, toVec) > 120 && !isLostTarget())
 
                 if (!isLostTarget()) {
-                    turn(toVec, ((tickCount - 1) * 0.5f).coerceIn(0f, 15f))
+                    turn(toVec, turnRate())
                     this.deltaMovement = this.deltaMovement.scale(0.05).add(lookAngle.scale(8.0))
                 }
 
@@ -75,6 +75,9 @@ open class Ru9m336MissileEntity(type: EntityType<out Ru9m336MissileEntity>, leve
             }
         }
     }
+
+    // PJM: вынесено в метод как точка расширения — маневренность отличает варианты ЗУР
+    protected open fun turnRate(): Float = ((tickCount - 1) * 0.5f).coerceIn(0f, 15f)
 
     override fun getSound(): SoundEvent {
         return ModSounds.ROCKET_FLY.get()

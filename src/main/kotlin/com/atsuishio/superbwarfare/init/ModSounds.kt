@@ -151,6 +151,10 @@ object ModSounds {
     @JvmField val DECOY_RELEASE_FIRST = register("decoy_release_first")
     @JvmField val DECOY_RELOAD = register("decoy_reload")
 
+    // PJM: КАЗ
+    @JvmField val APS_FIRE = register("aps_fire")
+    @JvmField val APS_RELOAD = register("aps_reload")
+
     @JvmField val WHEEL_VEHICLE_STEP = register("wheel_vehicle_step")
     @JvmField val WHEEL_VEHICLE_SKIP = register("wheel_vehicle_skip")
     @JvmField val TRACK_VEHICLE_STEP = register("track_vehicle_step")
@@ -176,7 +180,7 @@ object ModSounds {
     @JvmField
     val VEHICLE_ENGINE_SOUNDS: Map<String, Map<VehicleEngineSoundLayer, DeferredHolder<SoundEvent, SoundEvent>>> =
         buildMap {
-            listOf("bmp", "bradley", "t90", "abrams", "artillery", "heavy", "lav", "pickup", "truck", "wheel_chair")
+            listOf("bmp", "bradley", "t90", "abrams", "artillery", "heavy", "lav", "pickup", "truck", "wheel_chair", "booker", "ajax", "osa", "terminator", "ural")
                 .forEach { profile ->
                     put(profile, registerVehicleEngineProfile(profile, VehicleEngineSoundLayer.groundLayers(profile)))
                 }
@@ -193,7 +197,7 @@ object ModSounds {
     @JvmField
     val VEHICLE_ENGINE_TRANSIENT_SOUNDS: Map<String, Map<VehicleEngineTransientSound, DeferredHolder<SoundEvent, SoundEvent>>> =
         buildMap {
-            listOf("bmp", "bradley", "t90", "abrams", "artillery", "heavy", "lav", "pickup", "truck", "wheel_chair")
+            listOf("bmp", "bradley", "t90", "abrams", "artillery", "heavy", "lav", "pickup", "truck", "wheel_chair", "booker", "ajax", "osa", "terminator", "ural")
                 .forEach { profile ->
                     put(profile, registerVehicleEngineTransientProfile(profile))
                 }

@@ -1,0 +1,8 @@
+{
+  "Models": [
+    {
+      "Model": "superbwarfare:models/bedrock/vehicle/terminator.geo.json",
+      "Texture": "superbwarfare:textures/bedrock/vehicle/terminator_green.png"
+    }
+  ]
+}

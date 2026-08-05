@@ -3572,6 +3572,15 @@ open class VehicleEntity(pEntityType: EntityType<*>, pLevel: Level) : Entity(pEn
     open val passengerRenderScale: Float
         get() = computed().passengerRenderScale
 
+    /**
+     * PJM: масштаб конкретного седока — [SeatInfo.renderScale] его места, иначе общий
+     * [passengerRenderScale] машины.
+     */
+    open fun seatRenderScale(passenger: Entity): Float {
+        val index = getSeatIndex(passenger)
+        return computed().seats().getOrNull(index)?.renderScale ?: passengerRenderScale
+    }
+
     open fun gearRot(tickDelta: Float) = Mth.lerp(tickDelta, gearRotO, this.gearRot)
 
     open val mass: Float

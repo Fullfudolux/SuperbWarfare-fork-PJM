@@ -107,7 +107,7 @@ public abstract class EntityMixin implements OBBHitter {
     private void getBoundingBox(CallbackInfoReturnable<AABB> cir) {
         if (this.getVehicle() instanceof VehicleEntity vehicle) {
             cir.cancel();
-            var s = vehicle.getPassengerRenderScale();
+            var s = vehicle.seatRenderScale((net.minecraft.world.entity.Entity) (Object) this);
             var x = bb.getXsize() - bb.getXsize() * s;
             var y = bb.getYsize() - bb.getYsize() * s;
             var z = bb.getZsize() - bb.getZsize() * s;
@@ -120,7 +120,7 @@ public abstract class EntityMixin implements OBBHitter {
     private void getEyeY(CallbackInfoReturnable<Double> cir) {
         if (this.getVehicle() instanceof VehicleEntity vehicle) {
             cir.cancel();
-            var s = vehicle.getPassengerRenderScale();
+            var s = vehicle.seatRenderScale((net.minecraft.world.entity.Entity) (Object) this);
             cir.setReturnValue(this.position.y + (double) this.eyeHeight * s);
         }
     }
@@ -130,7 +130,7 @@ public abstract class EntityMixin implements OBBHitter {
     private void getEyeHeight(CallbackInfoReturnable<Float> cir) {
         if (this.getVehicle() instanceof VehicleEntity vehicle) {
             cir.cancel();
-            var s = vehicle.getPassengerRenderScale();
+            var s = vehicle.seatRenderScale((net.minecraft.world.entity.Entity) (Object) this);
             cir.setReturnValue(this.eyeHeight * s);
         }
     }
@@ -140,7 +140,7 @@ public abstract class EntityMixin implements OBBHitter {
     private void getEyeHeightDimensions(Pose pose, CallbackInfoReturnable<Float> cir) {
         if (this.getVehicle() instanceof VehicleEntity vehicle) {
             cir.cancel();
-            var s = vehicle.getPassengerRenderScale();
+            var s = vehicle.seatRenderScale((net.minecraft.world.entity.Entity) (Object) this);
             cir.setReturnValue(getDimensions(pose).height() * 0.85f * s);
         }
     }

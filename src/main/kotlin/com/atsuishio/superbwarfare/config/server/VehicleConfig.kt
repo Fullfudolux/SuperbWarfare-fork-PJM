@@ -142,7 +142,7 @@ object VehicleConfig {
 
         comment("The default cooldown of vehicle repair. Set a negative value to disable vehicle repair")
         comment("载具自动回血的触发时间，设置为负数时禁用自动回血")
-        defineInRange("repair_cooldown", 200, -1, 100000000)
+        defineInRange("repair_cooldown", -1, -1, 100000000)
     }
 
     @JvmField

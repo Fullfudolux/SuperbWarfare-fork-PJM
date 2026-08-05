@@ -283,7 +283,9 @@ class DefaultVehicleData : IDBasedData<DefaultVehicleData> {
 
     override fun limit() {
         this.maxHealth = max(this.maxHealth, 0f)
-        this.repairCooldown = max(this.repairCooldown, 0)
+        // Нижняя граница -1, а не 0: отрицательное значение — документированный выключатель
+        // саморемонта, зажим в 0 превращал его в «чинить каждый тик».
+        this.repairCooldown = max(this.repairCooldown, -1)
         this.maxEnergy = max(this.maxEnergy, 0)
         this.obb = this.obb.map {
             it.limit()

@@ -80,6 +80,8 @@ object ModEntityRenderers {
             registerEntityRenderer(ModEntities.IGLA_MISSILE.get(), ::BasicProjectileRenderer)
             registerEntityRenderer(ModEntities.RU_9M336_MISSILE.get(), ::BasicProjectileRenderer)
             registerEntityRenderer(ModEntities.RU_9M100_MISSILE.get(), ::BasicProjectileRenderer)
+            // PJM: ЗУР 9М33М3 комплекса «Оса-АКМ»
+            registerEntityRenderer(ModEntities.RU_9M33_MISSILE.get(), ::BasicProjectileRenderer)
             registerEntityRenderer(ModEntities.RU_3M14_MISSILE.get(), ::BasicProjectileRenderer)
             registerEntityRenderer(ModEntities.TRUCK.get(), ::TruckRenderer)
             registerEntityRenderer(ModEntities.URAL.get(), ::UralRenderer)
@@ -103,6 +105,19 @@ object ModEntityRenderers {
             registerEntityRenderer(ModEntities.ZTZ_99A.get(), ::Ztz99aRenderer)
             registerEntityRenderer(ModEntities.EDD.get(), ::EDDRenderer)
             registerEntityRenderer(ModEntities.AC_130H.get(), ::Ac130hRenderer)
+            // PJM: M10 Booker
+            registerEntityRenderer(ModEntities.M_10_BOOKER.get(), ::M10BookerRenderer)
+            registerEntityRenderer(ModEntities.M_10_BOOKER_APS.get(), ::M10BookerRenderer)
+            // PJM: Ajax
+            registerEntityRenderer(ModEntities.AJAX.get(), ::AjaxRenderer)
+            // PJM: 9К33 «Оса-АКМ»
+            registerEntityRenderer(ModEntities.OSA.get(), ::OsaRenderer)
+            // PJM: MH-6 — та же модель, оружейные кости скрывает рендер
+            registerEntityRenderer(ModEntities.MH_6.get(), ::Ah6Renderer)
+            // PJM: БМПТ-72 «Терминатор»
+            registerEntityRenderer(ModEntities.TERMINATOR.get(), ::TerminatorRenderer)
+            // PJM: Ка-52 «Аллигатор»
+            registerEntityRenderer(ModEntities.KA_52.get(), ::Ka52Renderer)
         }
     }
 }

@@ -130,6 +130,19 @@ class ContainerBlockItem : BlockItem(ModBlocks.CONTAINER.get(), Properties().sta
             event.add(ModEntities.AC_130H)
             event.add(ModEntities.HAPPIEST_GHAST)
             event.add(ModEntities.KIROV)
+            // PJM: M10 Booker
+            event.add(ModEntities.M_10_BOOKER)
+            event.add(ModEntities.M_10_BOOKER_APS)
+            // PJM: Ajax
+            event.add(ModEntities.AJAX)
+            // PJM: 9К33 «Оса-АКМ»
+            event.add(ModEntities.OSA)
+            // PJM: MH-6
+            event.add(ModEntities.MH_6)
+            // PJM: БМПТ-72 «Терминатор»
+            event.add(ModEntities.TERMINATOR)
+            // PJM: Ка-52 «Аллигатор»
+            event.add(ModEntities.KA_52)
         }
 
         @SubscribeEvent

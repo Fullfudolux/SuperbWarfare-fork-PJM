@@ -1,0 +1,816 @@
+{
+  "MaxHealth": 360,
+  "MaxEnergy": 10000000,
+  "TurretPos": [-1.0, 0.9947, 0.596],
+  "BarrelPos": [0, 0, 0],
+  "TurretTurnSpeed": [25, 25],
+  "TurretYawRange": [-30, 30],
+  "TurretPitchRange": [-40, 15],
+  "TurretControllerIndex": 1,
+  "OBB": [
+    {
+      "Part": "Collision",
+      "Size": [1.0, 1.49, 6.8],
+      "Position": [0, 1.4857, -1.25]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.094, 0.468, 1.469],
+      "Position": [-0.844, 1.4337, 3.53],
+      "CustomRotate": [0, -177.5, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.781, 0.469, 0.469],
+      "Position": [0, 1.4347, 4.531],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.094, 0.468, 1.469],
+      "Position": [0.844, 1.4337, 3.53],
+      "CustomRotate": [0, 177.5, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.156, 0.094, 0.094],
+      "Position": [0.922, 1.6217, 4.594],
+      "CustomRotate": [0, 135, 12.5]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.562, 0.156, 0.562],
+      "Position": [0.177, 1.4347, 5.367],
+      "CustomRotate": [0, 164, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.562, 0.094, 0.219],
+      "Position": [0.272, 1.6847, 5.036],
+      "CustomRotate": [0, 164, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.156, 0.094, 0.094],
+      "Position": [-0.922, 1.6217, 4.594],
+      "CustomRotate": [0, -135, -12.5]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.562, 0.094, 0.219],
+      "Position": [-0.272, 1.6847, 5.036],
+      "CustomRotate": [0, -164, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.125, 0.156, 0.57],
+      "Position": [-0.603, 1.6047, 5.459],
+      "CustomRotate": [-15.351, -163.91, -3.382]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.562, 0.094, 0.219],
+      "Position": [-0.272, 1.1847, 5.036],
+      "CustomRotate": [0, -164, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.562, 0.031, 0.156],
+      "Position": [-0.168, 1.2467, 5.397],
+      "CustomRotate": [0, -164, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.562, 0.156, 0.563],
+      "Position": [-0.177, 1.4347, 5.367],
+      "CustomRotate": [0, -164, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.562, 0.031, 0.156],
+      "Position": [-0.168, 1.6217, 5.397],
+      "CustomRotate": [0, -164, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.156, 0.156, 0.57],
+      "Position": [-0.573, 1.2687, 5.451],
+      "CustomRotate": [15.395, -163.908, 3.382]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.563, 0.156, 0.555],
+      "Position": [0, 1.2757, 5.486],
+      "CustomRotate": [16, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.156, 0.156, 0.57],
+      "Position": [0.579, 1.2687, 5.451],
+      "CustomRotate": [15.395, 163.908, -3.382]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.562, 0.094, 0.219],
+      "Position": [0.272, 1.1847, 5.036],
+      "CustomRotate": [0, 164, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.562, 0.031, 0.156],
+      "Position": [0.168, 1.2467, 5.397],
+      "CustomRotate": [0, 164, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.562, 0.031, 0.156],
+      "Position": [0.168, 1.6217, 5.397],
+      "CustomRotate": [0, 164, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.125, 0.156, 0.57],
+      "Position": [0.603, 1.6047, 5.459],
+      "CustomRotate": [-15.351, 163.91, 3.382]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.563, 0.156, 0.555],
+      "Position": [0, 1.5937, 5.486],
+      "CustomRotate": [-16, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.094, 0.156, 0.18],
+      "Position": [-0.656, 1.6967, 5.126],
+      "CustomRotate": [-16, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.094, 0.156, 0.18],
+      "Position": [0.656, 1.6967, 5.126],
+      "CustomRotate": [-16, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.563, 0.156, 0.531],
+      "Position": [0, 1.4347, 5.531],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.875, 0.062, 2.406],
+      "Position": [0, 0.7167, 1.878],
+      "CustomRotate": [7.5, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.031, 0.063, 2.406],
+      "Position": [0.885, 0.7167, 1.877],
+      "CustomRotate": [7.5, 179.496, -0.066]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.938, 0.25, 1.937],
+      "Position": [0, 0.9657, 1.372],
+      "CustomRotate": [7.5, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [1, 0.813, 0.469],
+      "Position": [0, 1.7787, 1.594],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.188, 0.25, 0.547],
+      "Position": [0.691, 0.6637, -1.237],
+      "CustomRotate": [-7.82, -174.953, -0.688]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.938, 0.313, 0.125],
+      "Position": [0, 0.6537, -0.625],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.187, 0.062, 0.453],
+      "Position": [0.699, 0.9607, -1.102],
+      "CustomRotate": [-7.82, -174.953, -0.688]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.25, 0.625, 1.719],
+      "Position": [0.572, 1.5907, -2.433],
+      "CustomRotate": [0, -174, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.188, 0.25, 2.547],
+      "Position": [0.348, 1.1997, -5.123],
+      "CustomRotate": [-7.82, -174.953, -0.688]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.219, 0.25, 3.563],
+      "Position": [0.436, 2.0117, -4.183],
+      "CustomRotate": [7.465, -174.453, 0.723]
+    },
+    {
+      "Part": "Body",
+      "Size": [1.156, 0.094, 0.406],
+      "Position": [2.656, 1.8097, 0.031],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [1.188, 0.093, 0.406],
+      "Position": [2.576, 1.8097, -0.16],
+      "CustomRotate": [0, 171, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.125, 0.188, 0.75],
+      "Position": [3.938, 1.9037, 0.063],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.125, 0.25, 1.844],
+      "Position": [0.438, 2.2267, -2.545],
+      "CustomRotate": [7.5, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.313, 0.25, 3.531],
+      "Position": [0, 2.0067, -4.218],
+      "CustomRotate": [7.5, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.219, 0.25, 3.563],
+      "Position": [-0.436, 2.0117, -4.183],
+      "CustomRotate": [7.465, 174.453, -0.723]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.125, 0.25, 1.844],
+      "Position": [-0.437, 2.2267, -2.545],
+      "CustomRotate": [7.5, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.25, 0.625, 1.719],
+      "Position": [-0.572, 1.5907, -2.433],
+      "CustomRotate": [0, 174, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.25, 0.375, 0.844],
+      "Position": [-0.304, 1.4657, -4.982],
+      "CustomRotate": [0, 174, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.188, 0.25, 2.547],
+      "Position": [-0.348, 1.1997, -5.123],
+      "CustomRotate": [-7.82, 174.953, 0.688]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.188, 0.25, 0.547],
+      "Position": [-0.691, 0.6637, -1.237],
+      "CustomRotate": [-7.82, 174.953, 0.688]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.187, 0.063, 0.453],
+      "Position": [-0.699, 0.9607, -1.102],
+      "CustomRotate": [-7.82, 174.953, 0.688]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.031, 0.063, 2.406],
+      "Position": [-0.885, 0.7167, 1.877],
+      "CustomRotate": [7.5, -179.496, 0.066]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.063, 0.125, 1.164],
+      "Position": [0, 2.9537, -8.032],
+      "CustomRotate": [-70, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.063, 1.094, 0.281],
+      "Position": [0, 2.9967, -8.031],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.063, 0.125, 0.75],
+      "Position": [0, 1.7787, -7.562],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.063, 0.156, 0.469],
+      "Position": [0, 1.9387, -7.305],
+      "CustomRotate": [-22.5, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0, 0.469, 0.438],
+      "Position": [1.438, 1.3717, -5.125],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0, 0.375, 0.438],
+      "Position": [1.438, 2.2787, -5.125],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0, 0.469, 0.438],
+      "Position": [-1.437, 1.3717, -5.125],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0, 0.375, 0.438],
+      "Position": [-1.437, 2.2787, -5.125],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [1.438, 0.031, 0.438],
+      "Position": [0, 1.8717, -5.125],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.25, 0.219, 0.25],
+      "Position": [0, 2.9227, 0.643],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.438, 0.063, 0.469],
+      "Position": [0, 2.6537, 1.594],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.688, 0.125, 1.063],
+      "Position": [0, 1.0907, 3.125],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [1.188, 0.093, 0.406],
+      "Position": [-2.576, 1.8097, -0.16],
+      "CustomRotate": [0, -171, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [1.156, 0.094, 0.406],
+      "Position": [-2.656, 1.8097, 0.031],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.063, 0.063, 0.25],
+      "Position": [-4.187, 2.2157, -0.312],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0, 0.047, 0.25],
+      "Position": [-4.092, 2.1197, -0.312],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.125, 0.188, 0.75],
+      "Position": [-3.937, 1.9037, 0.063],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0, 0.313, 0.563],
+      "Position": [-3.937, 1.9037, -0.125],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.031, 0.188, 0.313],
+      "Position": [-3.531, 1.7157, 0.75],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.031, 0.188, 0.313],
+      "Position": [-2.969, 1.7157, 0.75],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.031, 0.094, 0.313],
+      "Position": [-3.531, 1.6217, 0.125],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.031, 0.094, 0.313],
+      "Position": [-2.156, 1.6217, 0.125],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.031, 0.094, 0.313],
+      "Position": [-2.969, 1.6217, 0.125],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.031, 0.188, 0.313],
+      "Position": [-2.156, 1.7157, 0.75],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.25, 0.375, 0.844],
+      "Position": [0.304, 1.4657, -4.982],
+      "CustomRotate": [0, -174, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0, 0.219, 0.156],
+      "Position": [0, 2.2517, -5.953],
+      "CustomRotate": [7.5, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.313, 0.25, 3.5],
+      "Position": [0, 1.0677, -4.185],
+      "CustomRotate": [-7.85, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.125, 0.25, 1.75],
+      "Position": [0.438, 0.8287, -2.452],
+      "CustomRotate": [-7.85, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.125, 0.25, 1.75],
+      "Position": [-0.437, 0.8287, -2.452],
+      "CustomRotate": [-7.85, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0, 0.313, 0.563],
+      "Position": [3.938, 1.9037, -0.125],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.031, 0.188, 0.313],
+      "Position": [2.969, 1.7157, 0.75],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.031, 0.188, 0.313],
+      "Position": [2.156, 1.7157, 0.75],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.031, 0.188, 0.313],
+      "Position": [3.531, 1.7157, 0.75],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0, 0.047, 0.25],
+      "Position": [4.092, 2.1197, -0.312],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.063, 0.063, 0.25],
+      "Position": [4.188, 2.2157, -0.312],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.031, 0.094, 0.313],
+      "Position": [2.156, 1.6217, 0.125],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.031, 0.094, 0.313],
+      "Position": [3.531, 1.6217, 0.125],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "Body",
+      "Size": [0.031, 0.094, 0.313],
+      "Position": [2.969, 1.6217, 0.125],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "MainEngine",
+      "Size": [0.25, 0.563, 1.031],
+      "Position": [1.25, 2.1537, 0.281],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "MainEngine",
+      "Size": [1, 0.875, 0.938],
+      "Position": [0, 1.8407, 0.188],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "MainEngine",
+      "Size": [0.25, 0.563, 1.031],
+      "Position": [-1.25, 2.1537, 0.281],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "MainEngine",
+      "Size": [0.188, 0.188, 0.156],
+      "Position": [-1.25, 2.4037, 1.469],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "MainEngine",
+      "Size": [0.188, 0.188, 0.156],
+      "Position": [1.25, 2.4037, 1.469],
+      "CustomRotate": [0, -180, 0]
+    },
+    {
+      "Part": "MainEngine",
+      "Size": [0.188, 0.187, 0.156],
+      "Position": [1.431, 2.4227, -0.752],
+      "CustomRotate": [0, -135, -22.5]
+    },
+    {
+      "Part": "MainEngine",
+      "Size": [0.188, 0.187, 0.156],
+      "Position": [-1.431, 2.4227, -0.752],
+      "CustomRotate": [0, 135, 22.5]
+    }
+  ],
+  "PassengerRenderScale": 0.65,
+  "MouseSensitivity": 0.35,
+  "Seats": [
+    {
+      "IsEnclosed": true,
+      "Transform": "Vehicle",
+      "Position": [0.5, 1.1657, 2.656],
+      "Sensitivity": [0, 0, 0],
+      "Pose": "Pilot",
+      "CameraPos": {
+        "Transform": "Vehicle",
+        "Position": [0.5, 2.1657, 2.85],
+        "UseFixedCameraPos": true,
+        "UseAircraftCamera": true,
+        "AircraftCameraPos": [-2.85, 2.625, -11.25]
+      },
+      "CanRotateHead": false,
+      "Weapons": ["Rocket", "AAMissile"],
+      "DismountInfo": {
+        "Transform": "Vehicle",
+        "Position": [1.875, 0.375, 2.656]
+      },
+      "HasThermalImaging": true
+    },
+    {
+      "IsEnclosed": true,
+      "Transform": "Vehicle",
+      "Position": [-0.5, 1.1657, 2.656],
+      "Pose": "Pilot",
+      "Sensitivity": [0.59, 0.8, 0.9],
+      "CameraPos": {
+        "Transform": "Vehicle",
+        "UseFixedCameraPos": true,
+        "Position": [-0.5, 2.1657, 2.85],
+        "ZoomPosition": [0, 0.6857, 4.75],
+        "ZoomDirection": "Barrel"
+      },
+      "MinPitch": -60,
+      "MaxPitch": 15,
+      "MinYaw": -60,
+      "MaxYaw": 60,
+      "Weapons": ["Cannon", "Vikhr"],
+      "DismountInfo": {
+        "Transform": "Vehicle",
+        "Position": [-1.875, 0.375, 2.656]
+      },
+      "HasThermalImaging": true
+    }
+  ],
+  "Weapons": {
+    "Cannon": {
+      "DefaultFireMode": "Auto",
+      "AvailableFireModes": "Auto",
+      "Projectile": "superbwarfare:small_cannon_shell",
+      "DefaultZoom": 2,
+      "RPM": 450,
+      "Velocity": 18,
+      "Damage": 65,
+      "ExplosionDamage": 8,
+      "ExplosionRadius": 2,
+      "HeatPerShoot": 5,
+      "NaturalCooldown": 1,
+      "RecoilTime": 31,
+      "RecoilForce": 0.62,
+      "Spread": 0.3,
+      "ProjectileLife": 40,
+      "Name": "weapon.superbwarfare.30mm_2a42_ap",
+      "SoundInfo": {
+        "Fire1P": "superbwarfare:mi_28_cannon_fire_1p",
+        "Fire3P": "superbwarfare:mi_28_cannon_fire_3p",
+        "Fire3PFar": "superbwarfare:mi_28_cannon_far",
+        "Fire3PVeryFar": "superbwarfare:mi_28_cannon_veryfar",
+        "Change": "superbwarfare:into_cannon"
+      },
+      "Crosshair": "@VehicleCommonGunDynamic",
+      "CrosshairColor": "0xFFC700",
+      "SoundRadius": 24,
+      "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/cannon_30mm_ap.png",
+      "AmmoType": [
+        "superbwarfare:small_shell_ap",
+        {
+          "Ammo": "superbwarfare:small_shell_he",
+          "Override": {
+            "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/cannon_30mm_he.png",
+            "Velocity": 15,
+            "Damage": 15,
+            "ExplosionDamage": 18,
+            "ExplosionRadius": 5,
+            "Name": "weapon.superbwarfare.30mm_2a42_he"
+          }
+        }
+      ],
+      "ShootPos": {
+        "Transform": "Barrel",
+        "Positions": [[0.031, -0.339, 2.264]],
+        "Directions": ["Barrel"]
+      }
+    },
+    "Rocket": {
+      "AmmoType": "superbwarfare:small_rocket",
+      "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/small_rocket.png",
+      "DefaultZoom": 2,
+      "DefaultFireMode": "Auto",
+      "AvailableFireModes": "Auto",
+      "Magazine": 40,
+      "EmptyReloadTime": 200,
+      "Projectile": "superbwarfare:small_rocket",
+      "Spread": 0.25,
+      "Name": "weapon.superbwarfare.80mm_rocket",
+      "RPM": 450,
+      "Damage": 85,
+      "ExplosionDamage": 42,
+      "ExplosionRadius": 6,
+      "Gravity": 0.02,
+      "Velocity": 9,
+      "ProjectileLife": 60,
+      "ShootPos": {
+        "Transform": "Vehicle",
+        "ShootPositionForHud": [0, 1.2787, 1.313],
+        "ShootDirectionForHud": [0, 0.018, 1],
+        "Positions": [[-2.156, 1.2787, 1.313], [2.156, 1.2787, 1.313]],
+        "Directions": [[0.003, 0.025, 1], [-0.003, 0.025, 1]]
+      },
+      "SoundInfo": {
+        "Fire1P": "superbwarfare:small_rocket_fire_1p",
+        "Fire3P": "superbwarfare:small_rocket_fire_3p",
+        "VehicleReload3p": "superbwarfare:missile_reload",
+        "VehicleReloadSoundTime": 7,
+        "Change": "superbwarfare:into_missile"
+      },
+      "Crosshair": "@Empty",
+      "SoundRadius": 12
+    },
+    "Vikhr": {
+      "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/missile_9m120.png",
+      "DefaultFireMode": "Semi",
+      "AvailableFireModes": "Semi",
+      "DefaultZoom": 3,
+      "RPM": 24,
+      "Magazine": 12,
+      "EmptyReloadTime": 300,
+      "AmmoType": "superbwarfare:medium_anti_ground_missile",
+      "Projectile": "superbwarfare:wire_guide_missile",
+      "Name": "weapon.superbwarfare.9k_121_missile",
+      "Damage": 620,
+      "ExplosionDamage": 75,
+      "ExplosionRadius": 8,
+      "Velocity": 4,
+      "CrosshairColor": "0xFFC700",
+      "Crosshair": "@VehicleCommonMissile",
+      "SoundInfo": {
+        "Fire1P": "superbwarfare:bomb_release",
+        "Fire3P": "superbwarfare:bomb_release",
+        "VehicleReload3p": "superbwarfare:bomb_reload",
+        "VehicleReloadSoundTime": 11,
+        "Change": "superbwarfare:into_missile"
+      },
+      "SoundRadius": 8,
+      "ShootPos": {
+        "Transform": "Vehicle",
+        "ShootPositionForHud": [0, 1.4657, 1.438],
+        "Positions": [[-2.969, 1.4057, 1.438], [2.969, 1.4057, 1.438], [-3.06, 1.4057, 1.438], [3.06, 1.4057, 1.438], [-2.878, 1.4057, 1.438], [2.878, 1.4057, 1.438], [-2.969, 1.5257, 1.438], [2.969, 1.5257, 1.438], [-3.06, 1.5257, 1.438], [3.06, 1.5257, 1.438], [-2.878, 1.5257, 1.438], [2.878, 1.5257, 1.438]],
+        "BoundUpWithAmmoAmount": true,
+        "ViewDirection": "Barrel"
+      }
+    },
+    "AAMissile": {
+      "AmmoType": "superbwarfare:medium_anti_air_missile",
+      "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/ru_9m336.png",
+      "DefaultZoom": 2,
+      "DefaultFireMode": "Semi",
+      "AvailableFireModes": "Semi",
+      "Magazine": 4,
+      "RPM": 60,
+      "EmptyReloadTime": 260,
+      "Projectile": "superbwarfare:ru_9m336_missile",
+      "Name": "weapon.superbwarfare.igla_v_missile",
+      "Damage": 240,
+      "ExplosionDamage": 80,
+      "ExplosionRadius": 6,
+      "Velocity": 3,
+      "SeekWeaponInfo": {
+        "SeekDirection": "Default",
+        "CanGuidedByRadar": false,
+        "AffectedByStealthTarget": false,
+        "SeekRange": 512,
+        "SeekAngle": 20,
+        "SeekTime": 20,
+        "MinTargetHeight": 32,
+        "MinTargetSize": 0.1,
+        "OnlyLockEntity": true
+      },
+      "ShootPos": {
+        "Transform": "Vehicle",
+        "ShootPositionForHud": [0, 1.2657, 1.438],
+        "Positions": [[-2.969, 1.2657, 1.438], [2.969, 1.2657, 1.438], [-3.06, 1.2657, 1.438], [3.06, 1.2657, 1.438]],
+        "BoundUpWithAmmoAmount": true
+      },
+      "SoundInfo": {
+        "Fire1P": "superbwarfare:bomb_release",
+        "Fire3P": "superbwarfare:bomb_release",
+        "VehicleReload3p": "superbwarfare:bomb_reload",
+        "VehicleReloadSoundTime": 11,
+        "Change": "superbwarfare:into_missile",
+        "Locking": "superbwarfare:javelin_locking",
+        "Locked": "superbwarfare:javelin_locked"
+      },
+      "CrosshairColor": "0xFFC700",
+      "Crosshair": "@VehicleCommonSeekMissile",
+      "SoundRadius": 8
+    }
+  },
+  "EngineType": "Helicopter",
+  "EngineInfo": {
+    "EnergyCostRate": 320,
+    "Increment": 0.85,
+    "Decrement": 0.85,
+    "PitchSpeed": 0.85,
+    "YawSpeed": 1.0,
+    "RollSpeed": 0.75,
+    "LiftSpeed": 1.05,
+    "Speed": 1.0,
+    "EngineStartSound": "superbwarfare:mi_28_engine_start",
+    "EngineSoundVolume": 2
+  },
+  "EngineSound": "superbwarfare:mi_28_engine",
+  "ThirdPersonCameraPos": [2.025, 3, 9.5],
+  "UpStep": 1.1,
+  "RotateOffsetHeight": 1.5157,
+  "Mass": 11,
+  "AllowFreeCam": true,
+  "HasDecoy": true,
+  "DamageModifiers": ["All - 10", "minecraft:lava + 10", "minecraft:arrow * 0.1", "minecraft:trident * 0.2", "minecraft:mob_attack * 0.3", "minecraft:mob_attack_no_aggro * 0.3", "minecraft:mob_projectile * 0.2", "minecraft:player_attack * 0.2", "minecraft:lava * 2.6", "@minecraft:tnt * 3", "@minecraft:tnt_minecart * 3", "minecraft:explosion * 3.5", "minecraft:player_explosion * 3.5", "superbwarfare:projectile_hit * 0.6", "superbwarfare:grapeshot_hit * 0.5", "#superbwarfare:projectile * 0.03", "#superbwarfare:projectile_absolute * 0.3", "superbwarfare:vehicle_strike * 6", "superbwarfare:laser * 0.35", "@superbwarfare:cannon_shell * 1.5", "@superbwarfare:small_cannon_shell * 0.75", "@superbwarfare:gun_grenade * 2.2", "@superbwarfare:c4 * 2.5", "@superbwarfare:rgo_grenade * 6", "@superbwarfare:hand_grenade * 5", "@superbwarfare:mortar_shell * 3", "@#superbwarfare:at_rocket * 1.5", "All * 0.77", "@#superbwarfare:aerial_bomb * 2"],
+  "DestroyInfo": {
+    "ParticleType": "Giant",
+    "ExplosionDamage": 400,
+    "ExplosionRadius": 14,
+    "CrashPassengers": true
+  },
+  "HUDColor": "0xFFC700",
+  "VehicleIcon": "superbwarfare:textures/vehicle_icon/ka_52_icon.png",
+  "ContainerIcon": "superbwarfare:textures/gui/vehicle/type/aircraft.png",
+  "VehicleContainerType": "Small",
+  "Type": "Helicopter",
+  "HudType": "@Helicopter",
+  "TerrainCompat": [[-0.87, -0.0043, -2.21], [0.87, -0.0043, -2.21], [0, -0.0043, 3.8]],
+  "TerrainCompatRotateRate": 0.4
+}

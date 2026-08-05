@@ -128,7 +128,7 @@
       "HeatPerShoot": 7,
       "NaturalCooldown": 1,
       "ShootAnimationTime": 3,
-      "Crosshair": "@VehicleUsApc",
+      "Crosshair": "superbwarfare:textures/overlay/vehicle/crosshair/tabs_stryker.png",
       "CrosshairColor": "0x66FF00",
       "Name": "weapon.superbwarfare.20mm_cannon_ap",
       "SoundInfo": {
@@ -136,7 +136,7 @@
         "Fire3P": "superbwarfare:lav_150_cannon_fire_3p",
         "Fire3PFar": "superbwarfare:lav_150_cannon_far",
         "Fire3PVeryFar": "superbwarfare:lav_150_cannon_veryfar",
-        "Change": "superbwarfare:into_missile"
+        "Change": "superbwarfare:into_autocannon"
       },
       "SoundRadius": 24,
       "Icon": "superbwarfare:textures/overlay/vehicle/weapon/icons/cannon_20mm_ap.png",
@@ -207,7 +207,7 @@
         "Fire3P": "superbwarfare:m_60_fire_3p",
         "Fire3PFar": "superbwarfare:m_60_far",
         "Fire3PVeryFar": "superbwarfare:m_60_veryfar",
-        "Change": "superbwarfare:into_cannon"
+        "Change": "superbwarfare:into_coax"
       },
       "SoundRadius": 12
     }
