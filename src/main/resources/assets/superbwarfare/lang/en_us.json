@@ -1204,5 +1204,13 @@
   "superbwarfare.page.resources.silver.1": "$(thing)Silver Ore$() is generated in the overworld $(thing)from Y=48 to Y=1$().",
   "superbwarfare.page.resources.silver.2": "$(thing)Deepslate Silver Ore() is generated in the overworld $(thing)from Y=0 to Y=-64$().",
   "entity.superbwarfare.pantsir_s1": "Pantsir-S1",
-  "info.superbwarfare.pantsir_s1": "A self-propelled anti-aircraft gun and missile system."
+  "info.superbwarfare.pantsir_s1": "A self-propelled anti-aircraft gun and missile system.",
+  "entity.superbwarfare.cv_90": "CV9035 Mk III",
+  "info.superbwarfare.cv_90": "The CV90 (Stridsfordon 90) is a Swedish infantry fighting vehicle built by BAE Systems Hagglunds. The Mk III variant carries a 35mm Bushmaster III autocannon and a 7.62mm coaxial machine gun, carries eight dismounts alongside its crew of three, and combines heavy frontal protection with a 70 km/h road speed",
+  "weapon.superbwarfare.35mm_cannon": "35MM CANNON %1$s",
+  "weapon.superbwarfare.35mm_cannon_ap": "35MM CANNON AP %1$s",
+  "weapon.superbwarfare.35mm_cannon_he": "35MM CANNON HE %1$s",
+  "key.superbwarfare.vehicle_ramp": "Toggle Vehicle Ramp",
+  "tips.superbwarfare.ramp.open": "RAMP: DOWN",
+  "tips.superbwarfare.ramp.closed": "RAMP: UP"
 }

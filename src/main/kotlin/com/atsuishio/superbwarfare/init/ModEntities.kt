@@ -271,6 +271,9 @@ object ModEntities {
     val BRADLEY = register("bradley", vehicle(::BradleyEntity).sized(3.6f, 2.3f))
 
     @JvmField
+    val CV_90 = register("cv_90", vehicle(::Cv90Entity).sized(3.6f, 2.4f))
+
+    @JvmField
     val ZTZ_99A = register("ztz_99a", vehicle(::Ztz99aEntity).sized(4.62f, 2.2f))
 
     @JvmField

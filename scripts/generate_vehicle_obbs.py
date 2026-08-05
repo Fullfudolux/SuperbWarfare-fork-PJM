@@ -211,7 +211,8 @@ def generate_vehicle(name, config):
 
     STEERING_WHEEL_BONES = set(config.get("steering_wheel_bones", []))
     SKIP_ROTATION_BONES = set(config.get("skip_rotation_bones", []))
-    SKIP_BONES = set()
+    SKIP_BONES = set(config.get("skip_bones", []))
+    skip_prefixes = tuple(config.get("skip_bone_prefixes", []))
 
     global config_bone_transforms
     config_bone_transforms = config.get("bone_transforms", {})
@@ -226,10 +227,16 @@ def generate_vehicle(name, config):
     def is_skipped(bone):
         """A bone is skipped if it, or ANY ancestor, is marked skip -- so decorative
         sub-parts nested under a skip bone (e.g. mirror/light detail bones) don't
-        slip through just because their own name doesn't start with 'skip'."""
+        slip through just because their own name doesn't start with 'skip'.
+
+        skip_bones / skip_bone_prefixes come from the vehicle config, which
+        survives the model being re-saved out of Blockbench -- per-cube "skip"
+        flags do not."""
         cur = bone
         while cur is not None:
-            if cur["name"].lower().startswith("skip") or cur["name"] in SKIP_BONES:
+            if (cur["name"].lower().startswith("skip")
+                    or cur["name"] in SKIP_BONES
+                    or (skip_prefixes and cur["name"].startswith(skip_prefixes))):
                 return True
             pn = cur.get("parent")
             cur = bm.get(pn) if pn else None

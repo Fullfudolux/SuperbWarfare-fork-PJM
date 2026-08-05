@@ -11,6 +11,7 @@ import com.atsuishio.superbwarfare.data.gun.GunProp
 import com.atsuishio.superbwarfare.data.vehicle.subdata.EngineInfo.Aircraft
 import com.atsuishio.superbwarfare.data.vehicle.subdata.EngineInfo.Helicopter
 import com.atsuishio.superbwarfare.data.vehicle.subdata.EngineType
+import com.atsuishio.superbwarfare.entity.vehicle.Cv90Entity
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
 import com.atsuishio.superbwarfare.init.ModItems
 import com.atsuishio.superbwarfare.init.ModKeyMappings
@@ -56,6 +57,9 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
     private const val ENERGY_ROW = 20
     private const val HP_ROW = 13
     private const val SPEED_ROW = (ENERGY_ROW + HP_ROW) / 2
+
+    // Ramp readout sits one row above energy.
+    private const val RAMP_ROW = ENERGY_ROW + 10
 
     private val ARMOR = loc("textures/overlay/vehicle/base/armor.png")
     private val ENERGY = loc("textures/overlay/vehicle/base/energy.png")
@@ -170,6 +174,32 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
                 6f,
                 60f,
                 6f
+            )
+        }
+
+        if (entity is Cv90Entity) {
+            val open = entity.rampOpen
+            val label = Component.translatable(
+                if (open) "tips.superbwarfare.ramp.open" else "tips.superbwarfare.ramp.closed"
+            )
+            // Only the driver can work it, so only he gets told which key does.
+            val line = if (entity.getSeatIndex(player) == 0) {
+                label.copy().append(
+                    Component.literal(" [")
+                        .append(ModKeyMappings.VEHICLE_RAMP.key.displayName)
+                        .append("]")
+                )
+            } else {
+                label
+            }
+
+            guiGraphics.drawString(
+                mc.font,
+                line,
+                hpEnergyX,
+                screenHeight - RAMP_ROW - compatHeight,
+                if (open) 0x39FF6A else 0xAAAAAA,
+                false
             )
         }
 

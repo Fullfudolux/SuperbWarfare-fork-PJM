@@ -101,6 +101,7 @@ object ModEntityRenderers {
             registerEntityRenderer(ModEntities.T_90A.get(), ::T90aRenderer)
             registerEntityRenderer(ModEntities.M_1A_2.get(), ::M1A2Renderer)
             registerEntityRenderer(ModEntities.BRADLEY.get(), ::BradleyRenderer)
+            registerEntityRenderer(ModEntities.CV_90.get(), ::Cv90Renderer)
             registerEntityRenderer(ModEntities.TURRET_WRECK.get(), ::TurretWreckRenderer)
             registerEntityRenderer(ModEntities.LAV_25.get(), ::Lav25Renderer)
             registerEntityRenderer(ModEntities.ZTZ_99A.get(), ::Ztz99aRenderer)

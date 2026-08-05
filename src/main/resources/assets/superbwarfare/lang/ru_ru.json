@@ -1114,5 +1114,13 @@
   "tips.superbwarfare.battle_of_wits.active": "Ваши слова добавили %1$s урона к вашему следующему выстрелу",
   "tips.superbwarfare.battle_of_wits.cooldown": "Битва умов готова",
   "entity.superbwarfare.pantsir_s1": "Панцирь-С1",
-  "info.superbwarfare.pantsir_s1": "Зенитный ракетно-пушечный комплекс."
+  "info.superbwarfare.pantsir_s1": "Зенитный ракетно-пушечный комплекс.",
+  "entity.superbwarfare.cv_90": "CV9035 Mk III",
+  "info.superbwarfare.cv_90": "CV90 (Stridsfordon 90) — шведская боевая машина пехоты производства BAE Systems Hägglunds. Модификация Mk III несёт 35-мм автоматическую пушку Bushmaster III и спаренный 7,62-мм пулемёт, перевозит восемь десантников помимо экипажа из трёх человек и сочетает мощное лобовое бронирование со скоростью 70 км/ч по шоссе",
+  "weapon.superbwarfare.35mm_cannon": "35-ММ ПУШКА %1$s",
+  "weapon.superbwarfare.35mm_cannon_ap": "35-ММ ПУШКА БР %1$s",
+  "weapon.superbwarfare.35mm_cannon_he": "35-ММ ПУШКА ОФ %1$s",
+  "key.superbwarfare.vehicle_ramp": "Опустить/поднять аппарель",
+  "tips.superbwarfare.ramp.open": "АППАРЕЛЬ: ОПУЩЕНА",
+  "tips.superbwarfare.ramp.closed": "АППАРЕЛЬ: ПОДНЯТА"
 }

@@ -11,6 +11,7 @@ import com.atsuishio.superbwarfare.data.gun.GunData
 import com.atsuishio.superbwarfare.data.gun.GunProp
 import com.atsuishio.superbwarfare.data.gun.SeekType
 import com.atsuishio.superbwarfare.entity.vehicle.MortarEntity
+import com.atsuishio.superbwarfare.entity.vehicle.Cv90Entity
 import com.atsuishio.superbwarfare.entity.vehicle.PantsirEntity
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
 import com.atsuishio.superbwarfare.init.*
@@ -309,6 +310,13 @@ object ClickEventHandler {
             if (key == ModKeyMappings.PANTSIR_RADAR_MENU.key.value) {
                 if (vehicle is PantsirEntity && vehicle.getSeatIndex(player) == 2 && vehicle.jacksProgress >= 1f) {
                     Minecraft.getInstance().setScreen(PantsirRadarScreen(vehicle))
+                    return
+                }
+            }
+
+            if (key == ModKeyMappings.VEHICLE_RAMP.key.value) {
+                if (vehicle is Cv90Entity && vehicle.getSeatIndex(player) == 0) {
+                    sendPacketToServer(ToggleVehicleRampMessage)
                     return
                 }
             }

@@ -116,6 +116,9 @@ object ModKeyMappings {
     @JvmField
     val PANTSIR_RADAR_MENU = registerKey("pantsir_radar_menu", GLFW.GLFW_KEY_Z)
 
+    @JvmField
+    val VEHICLE_RAMP = registerKey("vehicle_ramp", GLFW.GLFW_KEY_Z)
+
     private fun registerKey(
         name: String,
         code: Int,
