@@ -2,6 +2,7 @@ package com.atsuishio.superbwarfare.network.message.send
 
 import com.atsuishio.superbwarfare.data.gun.GunData.Companion.from
 import com.atsuishio.superbwarfare.data.gun.GunProp
+import com.atsuishio.superbwarfare.entity.vehicle.PantsirEntity
 import com.atsuishio.superbwarfare.init.ModItems
 import com.atsuishio.superbwarfare.init.ModSounds
 import com.atsuishio.superbwarfare.item.gun.GunItem
@@ -15,6 +16,13 @@ import net.neoforged.neoforge.capabilities.Capabilities
 data class FireModeMessage(val forward: Boolean) : ServerPacketPayload() {
     override fun PayloadContext.handler() {
         val player = sender()
+
+        val vehicle = player.vehicle as? PantsirEntity
+        if (vehicle != null && vehicle.getSeatIndex(player) == 2 && vehicle.getGunName(2) == "Missile") {
+            vehicle.missileSemiAuto = !vehicle.missileSemiAuto
+            return
+        }
+
         val stack = player.mainHandItem
 
         if (stack.item !is GunItem) return

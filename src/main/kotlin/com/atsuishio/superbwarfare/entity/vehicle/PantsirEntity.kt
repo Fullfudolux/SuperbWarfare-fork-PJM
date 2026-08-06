@@ -1,7 +1,6 @@
 package com.atsuishio.superbwarfare.entity.vehicle
 
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
-import com.atsuishio.superbwarfare.entity.vehicle.utils.VehicleWeaponUtils
 import com.atsuishio.superbwarfare.tools.EntityFindUtil
 import com.atsuishio.superbwarfare.tools.VectorTool
 import com.atsuishio.superbwarfare.tools.deltaFrameTime
@@ -199,13 +198,13 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
     private fun wheelTransform(pivot: Vec3, left: Boolean, steering: Boolean, partialTicks: Float): Matrix4d {
         val transform = getVehicleTransform(partialTicks).translate(pivot.x, pivot.y, pivot.z)
         if (steering) transform.rotate(Axis.YP.rotation(rudderRot))
-        return transform.rotate(Axis.XP.rotation(-1.5f * if (left) leftWheelRot else rightWheelRot))
+        return transform
     }
 
     private fun wheelRotation(left: Boolean, steering: Boolean, partialTicks: Float): Quaterniond {
         val rotation = VectorTool.combineRotations(partialTicks, this)
         if (steering) rotation.mul(Quaterniond(Axis.YP.rotation(rudderRot)))
-        return rotation.mul(Quaterniond(Axis.XP.rotation(-1.5f * if (left) leftWheelRot else rightWheelRot)))
+        return rotation
     }
 
     private fun steeringWheelTransform(partialTicks: Float): Matrix4d {
@@ -291,6 +290,30 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
     // baseTick(), where the freeze actually happens.
     private var missileWindupActivePrevTick = false
 
+    // ── Soft lock state ──────────────────────────────────────────────────
+    // Persistent, target-relative aim offset the gunner builds up by moving
+    // the mouse while a target is under lock. The turret tracks the locked
+    // target directly (base = barrel → target, NO lead — the 57Э6 steers
+    // itself onto the target in flight via proportional navigation, so the
+    // rail only needs to point roughly at it) and adds this offset on top,
+    // so the gunner can nudge the aim ahead/behind/above/below without
+    // losing the track. Mouse-still → offset frozen → turret keeps following
+    // the target at that same relative angle. Reset the instant the lock
+    // drops, the gunner dismounts, or the weapon switches away from Missile.
+    private var lockOffsetYaw = 0f
+    private var lockOffsetPitch = 0f
+    private var prevGunnerYaw = 0f
+    private var prevGunnerPitch = 0f
+    private var softLockArmed = false
+    // Last desired direction computed by softLockTurret — used by
+    // missileLauncherOnTarget() to check the barrel has reached its
+    // (target + offset) aim, not the raw target direction.
+    private var lastSoftLockDesired: Vec3? = null
+    // Dampened Y of the tracked target — lerps toward the real Y at
+    // Y_TRACK_DAMP_FACTOR per tick, so vertical movement is followed at
+    // 20% rate. Prevents a diving target from yanking the rail down.
+    private var softLockDampenedY: Double? = null
+
     // Turret target-tracking: once the gunner has a full radar lock (X key),
     // the turret leads the locked target itself instead of just following
     // raw mouse look — refreshed by a small heartbeat sent from the client
@@ -360,26 +383,100 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
         return result
     }
 
-    // Once the gunner has a locked target, the MISSILE's turret leads IT
-    // instead of raw mouse look — same firing-solution lead math (target
-    // velocity + gravity + this weapon's own projectile speed) already used
-    // for AI auto-aim, just driven by the gunner's own X-key lock instead of
-    // an unmanned turret's target-acquisition AI. Falls straight back to
-    // normal player aim the instant the target despawns/dies or the lock
-    // heartbeat (baseTick) expires trackedTargetUUID.
+    // Soft lock: when the gunner has a target under lock AND the Missile
+    // weapon is selected, the turret tracks the target directly (NO lead —
+    // the 57Э6 is command-guided with proportional navigation, it steers
+    // itself onto the target in flight, so the rail only needs to point
+    // roughly at it, not at a pre-computed lead point) and the gunner's
+    // mouse movement builds up a persistent offset on top of that base
+    // direction — so they can nudge the aim ahead/behind/above/below the
+    // target without losing the track. Falls back to normal mouse-look the
+    // instant the target is lost, the lock expires, or the weapon switches.
     //
-    // The Cannon does NOT get this — real CIWS-style autocannons still need
-    // the gunner to walk the reticle onto the lead point themselves; it only
-    // gets a lead-point MARKER (VehicleCrosshairOverlay.drawLeadMarker)
-    // showing where that point is, never an auto-aimed barrel.
+    // The autocannon is NEVER auto-aimed, even with a lock: real CIWS-style
+    // autocannons need the gunner to walk the reticle onto the lead point
+    // themselves; it only gets a lead-point MARKER
+    // (VehicleCrosshairOverlay.drawLeadMarker) showing where that point is,
+    // never an auto-aimed barrel.
     override fun adjustTurretAngle() {
         val uuid = trackedTargetUUID
         val gunner = getNthEntity(2) as? LivingEntity
-        if (uuid != null && gunner != null && getGunName(2) == "Missile" && EntityFindUtil.findEntity(level(), uuid) != null) {
-            VehicleWeaponUtils.turretAutoAimFromUuid(this, uuid, gunner)
-            return
+        if (uuid != null && gunner != null && getGunName(2) == "Missile") {
+            val target = EntityFindUtil.findEntity(level(), uuid)
+            if (target != null) {
+                softLockTurret(gunner, target)
+                return
+            }
         }
+        softLockReset()
         super.adjustTurretAngle()
+    }
+
+    private fun softLockReset() {
+        softLockArmed = false
+        lockOffsetYaw = 0f
+        lockOffsetPitch = 0f
+        lastSoftLockDesired = null
+        softLockDampenedY = null
+    }
+
+    /**
+     * Сопровождение с ручным отклонением: башня ведёт цель (прямо в неё, без
+     * упреждения — 57Э6 доводится пропорциональным наведением в полёте, так
+     * что направляющей достаточно смотреть на цель), а мышью стрелок
+     * накладывает поверх своё отклонение — вперёд/назад/вниз/вверх. Мышь
+     * не трогает — отклонение держится, башня едет за целью.
+     */
+    private fun softLockTurret(gunner: LivingEntity, target: Entity) {
+        val barrelRoot = getShootPos(gunner, 1f)
+        val targetCenter = target.boundingBox.center
+
+        // Dampen the Y tracking to 20%: the turret follows the target's
+        // horizontal position at full rate, but only 20% of its vertical
+        // movement per tick. A diving target can't yank the rail down —
+        // the 57Э6 corrects its trajectory in flight, so the launcher
+        // doesn't need to chase vertical movement at full speed.
+        val targetY = targetCenter.y
+        val prevY = softLockDampenedY
+        val aimY = if (prevY != null) {
+            prevY + (targetY - prevY) * Y_TRACK_DAMP_FACTOR
+        } else {
+            targetY
+        }
+        softLockDampenedY = aimY
+        val aimPos = Vec3(targetCenter.x, aimY, targetCenter.z)
+        val baseDir = barrelRoot.vectorTo(aimPos).normalize()
+
+        // First tick of soft lock: seed prev-gunner-angles from the current
+        // view so the very first mouse delta isn't a giant jump from zero.
+        if (!softLockArmed) {
+            softLockArmed = true
+            prevGunnerYaw = gunner.yRot
+            prevGunnerPitch = gunner.xRot
+        }
+
+        // Mouse delta this tick → accumulates into the persistent offset.
+        // wrapDegrees on yaw handles the ±180° seam; pitch doesn't wrap.
+        val dYaw = Mth.wrapDegrees(gunner.yRot - prevGunnerYaw)
+        val dPitch = gunner.xRot - prevGunnerPitch
+        prevGunnerYaw = gunner.yRot
+        prevGunnerPitch = gunner.xRot
+
+        lockOffsetYaw = Mth.clamp(lockOffsetYaw + dYaw, -LOCK_OFFSET_MAX_DEG, LOCK_OFFSET_MAX_DEG)
+        lockOffsetPitch = Mth.clamp(lockOffsetPitch + dPitch, -LOCK_OFFSET_MAX_DEG, LOCK_OFFSET_MAX_DEG)
+
+        // Desired turret direction: base yaw + offset, pitch + offset.
+        // Computed in ANGLE space, not by rotating the vector — Vec3.xRot
+        // rotates around the WORLD X axis, which inverts the pitch sign
+        // when the base direction faces -Z or ±X (the bug: "up/down
+        // inverts on negative coordinates"). Working in angle space is
+        // sign-safe regardless of which way the launcher is pointing.
+        val baseYawDeg = Math.toDegrees(kotlin.math.atan2(-baseDir.x, baseDir.z)).toFloat()
+        val basePitchDeg = -Math.toDegrees(kotlin.math.asin(baseDir.y.coerceIn(-1.0, 1.0))).toFloat()
+        val desired = Vec3.directionFromRotation(basePitchDeg + lockOffsetPitch, baseYawDeg + lockOffsetYaw)
+
+        lastSoftLockDesired = desired
+        turretAutoAimFromVector(desired)
     }
 
     // Guns folded to the stowed travel position (yaw 180° from the nose,
@@ -420,30 +517,37 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
      * Довёрнута ли пусковая на захваченную цель настолько, чтобы ракета сошла
      * в её сторону. Без захвата (свободный пуск по стволу) ограничения нет —
      * там куда ствол, туда и ракета, это и есть намерение стрелка.
+     *
+     * При мягком захвате ствол ведётся не на прямую до цели, а на
+     * (цель + отклонение стрелка) — проверяем доворот до этого желаемого
+     * направления, а не до самой цели, иначе намеренный уход вперёд/вбок
+     * блокировал бы пуск до таймаута.
      */
     private fun missileLauncherOnTarget(): Boolean {
         val uuid = trackedTargetUUID ?: return true
-        val target = EntityFindUtil.findEntity(level(), uuid) ?: return true
-        val living = pendingMissileLiving ?: return true
-        val toTarget = getShootPos(living, 1f).vectorTo(target.boundingBox.center)
-        return getBarrelVector(1f).angleTo(toTarget) <= MISSILE_LAUNCH_CONE_DEGREES
+        EntityFindUtil.findEntity(level(), uuid) ?: return true
+        pendingMissileLiving ?: return true
+        val reference = lastSoftLockDesired ?: return true
+        return getBarrelVector(1f).angleTo(reference) <= MISSILE_LAUNCH_CONE_DEGREES
     }
 
     /**
-     * Куда смотрит камера наводчика. В данных места задано `Direction: Barrel`,
-     * то есть камера ехала строго по стволу — а ствол при захвате наводится с
-     * УПРЕЖДЕНИЕМ, в точку встречи, а не в цель. Отсюда и ощущение, что камера
-     * ведёт куда-то мимо, как маркер упреждения у пушки. Плюс ствол
-     * доворачивается пошагово, с ограничением угловой скорости, и на каждом
-     * обновлении решения дёргается — вместе с ним дёргалась и картинка.
+     * Куда смотрит камера наводчика. При мягком захвате камера едет за
+     * башней — смотрит туда, куда башня НАЦЕЛЕНА (цель + отклонение
+     * стрелка), а не жёстко на саму цель. Двигаешь мышь — отклонение
+     * растёт — башня и камера вместе уходят в сторону, и стрелок ВИДИТ,
+     * куда направляющая смотрит.
      *
-     * Пока цель на сопровождении, смотрим на саму цель. Направление считается
-     * покадрово, с partialTicks, поэтому движение выходит плавным, а не
-     * ступенчатым по тикам.
+     * На первом кадре после захвата (lastSoftLockDesired ещё не посчитан
+     * — adjustTurretAngle не отработал) смотрим прямо на цель, как раньше.
      */
     override fun cameraDirection(entity: Entity, partialTicks: Float): Vec3 {
         val uuid = trackedTargetUUID
-        if (uuid != null && getSeatIndex(entity) == 2) {
+        if (uuid != null && getSeatIndex(entity) == 2 && getGunName(2) == "Missile") {
+            val desired = lastSoftLockDesired
+            if (desired != null) {
+                return smoothCameraDirection(uuid, desired)
+            }
             val target = EntityFindUtil.findEntity(level(), uuid)
             if (target != null) {
                 val from = getCameraPos(entity, partialTicks)
@@ -681,16 +785,23 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
         super.defineSynchedData(builder)
         builder.define(JACKS_STATE, 0.toByte())
         builder.define(TRACKED_TARGET, "none")
+        builder.define(MISSILE_SEMI_AUTO, false)
     }
+
+    var missileSemiAuto: Boolean
+        get() = entityData.get(MISSILE_SEMI_AUTO)
+        set(value) { entityData.set(MISSILE_SEMI_AUTO, value) }
 
     override fun addAdditionalSaveData(compound: net.minecraft.nbt.CompoundTag) {
         super.addAdditionalSaveData(compound)
         compound.putByte("JacksState", entityData.get(JACKS_STATE))
+        compound.putBoolean("MissileSemiAuto", entityData.get(MISSILE_SEMI_AUTO))
     }
 
     override fun readAdditionalSaveData(compound: net.minecraft.nbt.CompoundTag) {
         super.readAdditionalSaveData(compound)
         entityData.set(JACKS_STATE, compound.getByte("JacksState"))
+        entityData.set(MISSILE_SEMI_AUTO, compound.getBoolean("MissileSemiAuto"))
     }
 
     override fun baseTick() {
@@ -843,6 +954,17 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
         private const val MISSILE_WINDUP_TIMEOUT_TICKS = 60
 
         private const val TRACK_TIMEOUT_TICKS = 10
+
+        // Максимальное отклонение башни от направления на цель при мягком
+        // захвате, град. Стрелок может увести направляющую на эту величину
+        // вперёд/назад/вниз/вверх для ручного упреждения или выбора точки
+        // прицеливания, не теряя сопровождения.
+        private const val LOCK_OFFSET_MAX_DEG = 20f
+
+        // Доля вертикального движения цели, которую башня отрабатывает
+        // каждый тик (экспоненциальное приближение). 0.2 = 20% — цель
+        // может резко снижаться, а башню не утащит вниз.
+        private const val Y_TRACK_DAMP_FACTOR = 0.2
         private val FRONT_LEFT_PIVOT = Vec3(1.202, 0.6993, 1.9358)
         private val FRONT_RIGHT_PIVOT = Vec3(-1.202, 0.6993, 1.9358)
         private val CENTER_LEFT_PIVOT = Vec3(1.197, 0.6993, 0.0571)
@@ -877,5 +999,7 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
             SynchedEntityData.defineId(PantsirEntity::class.java, EntityDataSerializers.BYTE)
         val TRACKED_TARGET: EntityDataAccessor<String> =
             SynchedEntityData.defineId(PantsirEntity::class.java, EntityDataSerializers.STRING)
+        val MISSILE_SEMI_AUTO: EntityDataAccessor<Boolean> =
+            SynchedEntityData.defineId(PantsirEntity::class.java, EntityDataSerializers.BOOLEAN)
     }
 }

@@ -21,10 +21,6 @@ class PantsirRenderer<T>(manager: EntityRendererProvider.Context) :
     ) {
         super.transformCustomModelPart(vehicle, model, poseStack, entityYaw, partialTicks)
 
-        // Fix right wheels
-        model.rightWheels.forEach { it.rotation.rotateX(-3.0f * vehicle.rightWheelRot) }
-        model.rightWheelsTurn.forEach { it.rotation.rotateX(-3.0f * vehicle.rightWheelRot) }
-
         // Steering wheel
         model.getBone("Steringwhell")?.let { bone ->
             bone.rotation.mul(Quaternionf().rotationZ(12 * Mth.lerp(partialTicks, vehicle.rudderRotO, vehicle.rudderRot)))

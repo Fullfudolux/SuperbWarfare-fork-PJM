@@ -932,7 +932,7 @@
   "weapon.superbwarfare.osa_missile": "9М33М3 %1$s",
   "key.superbwarfare.active_thermal_imaging": "Активировать тепловизор",
   "key.superbwarfare.toggle_vehicle_engine": "Завести / заглушить двигатель",
-  "key.superbwarfare.pantsir_radar_menu": "Открыть экран радара Панциря",
+  "key.superbwarfare.vehicle_interact": "Взаимодействие (ТС)",
   "container.superbwarfare.pantsir_radar": "РАДАР",
   "tips.superbwarfare.vehicle_engine.start_hint": "Двигатель заглушен — нажмите %1$s, чтобы завести его",
   "tips.superbwarfare.vehicle_engine.starting": "Двигатель запускается…",
@@ -1145,7 +1145,7 @@
   "weapon.superbwarfare.35mm_cannon": "35-ММ ПУШКА %1$s",
   "weapon.superbwarfare.35mm_cannon_ap": "35-ММ ПУШКА БР %1$s",
   "weapon.superbwarfare.35mm_cannon_he": "35-ММ ПУШКА ОФ %1$s",
-  "key.superbwarfare.vehicle_ramp": "Опустить/поднять аппарель",
+  "key.superbwarfare.vehicle_ramp": "Опустить/поднять аппарель (устар.)",
   "tips.superbwarfare.ramp.open": "АППАРЕЛЬ: ОПУЩЕНА",
   "tips.superbwarfare.ramp.closed": "АППАРЕЛЬ: ПОДНЯТА"
 }

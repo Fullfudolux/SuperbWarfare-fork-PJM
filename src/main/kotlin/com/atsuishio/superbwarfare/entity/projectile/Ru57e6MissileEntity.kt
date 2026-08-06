@@ -11,6 +11,9 @@ import com.atsuishio.superbwarfare.tools.VectorTool.calculateAngle
 import com.atsuishio.superbwarfare.tools.angleTo
 import net.minecraft.sounds.SoundEvent
 import net.minecraft.sounds.SoundEvents
+import net.minecraft.network.syncher.EntityDataAccessor
+import net.minecraft.network.syncher.EntityDataSerializers
+import net.minecraft.network.syncher.SynchedEntityData
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
@@ -56,6 +59,28 @@ open class Ru57e6MissileEntity(type: EntityType<out Ru57e6MissileEntity>, level:
 
     fun setLauncherVehicle(uuid: UUID?) {
         this.launcherVehicleUUID = uuid
+    }
+
+    var semiAuto: Boolean
+        get() = entityData.get(SEMI_AUTO)
+        set(value) { entityData.set(SEMI_AUTO, value) }
+
+    var semiAutoTargetX: Float
+        get() = entityData.get(SEMI_AUTO_TARGET_X)
+        set(value) { entityData.set(SEMI_AUTO_TARGET_X, value) }
+    var semiAutoTargetY: Float
+        get() = entityData.get(SEMI_AUTO_TARGET_Y)
+        set(value) { entityData.set(SEMI_AUTO_TARGET_Y, value) }
+    var semiAutoTargetZ: Float
+        get() = entityData.get(SEMI_AUTO_TARGET_Z)
+        set(value) { entityData.set(SEMI_AUTO_TARGET_Z, value) }
+
+    override fun defineSynchedData(builder: SynchedEntityData.Builder) {
+        super.defineSynchedData(builder)
+        builder.define(SEMI_AUTO, false)
+        builder.define(SEMI_AUTO_TARGET_X, 0f)
+        builder.define(SEMI_AUTO_TARGET_Y, 0f)
+        builder.define(SEMI_AUTO_TARGET_Z, 0f)
     }
 
     private var lostSignalTicks = 0
@@ -107,6 +132,53 @@ open class Ru57e6MissileEntity(type: EntityType<out Ru57e6MissileEntity>, level:
         // actually going dead/ballistic instead of still looking powered.
         if (!fuelExhausted) {
             mediumTrail()
+        }
+
+        // Semi-auto: the missile flies in the DIRECTION the gunner is
+        // looking — not toward a fixed point or entity. Looking at blocks
+        // → missile flies toward those blocks. Looking at the sky → missile
+        // flies forward through the air. The missile NEVER turns around:
+        // it steers to match the view direction, which is always "forward"
+        // from the player. Not wire-guided ATGM (barrel vector) — this
+        // follows the raw view vector. Updates every tick: move the view
+        // → the missile follows.
+        if (semiAuto) {
+            val owner = this.owner
+            val vehicle = owner?.vehicle as? PantsirEntity
+            val gunnerPresent = owner != null && vehicle != null && launcherVehicleUUID == vehicle.uuid
+
+            if (fuelExhausted || !gunnerPresent) {
+                if (!fallSpreadApplied) {
+                    fallSpreadApplied = true
+                    val jitterDegrees = (level().random.nextFloat() - 0.5f) * 2f * FALL_SPREAD_DEGREES
+                    val horizontal = Vec3(deltaMovement.x, 0.0, deltaMovement.z)
+                        .yRot(Math.toRadians(jitterDegrees.toDouble()).toFloat())
+                    deltaMovement = Vec3(horizontal.x, deltaMovement.y, horizontal.z)
+                }
+                val fallVec = Vec3(deltaMovement.x, -deltaMovement.horizontalDistance().coerceAtLeast(1.0), deltaMovement.z)
+                turn(fallVec, 3f)
+            } else {
+                // Beam-riding: the missile rides a beam projected from the
+                // barrel. The beam is a ray: start = barrel shoot position,
+                // direction = barrel vector. The missile projects itself
+                // onto the beam and steers toward a point AHEAD of its
+                // current projection — this makes it converge onto the beam
+                // line and then fly along it, instead of just matching the
+                // barrel direction (which felt like wire-guided ATGM).
+                // If the barrel turns, the beam moves, the missile follows.
+                val beamStart = vehicle!!.getShootPos(owner, 1f)
+                val beamDir = vehicle.getBarrelVector(1f)
+                val toMissile = position().subtract(beamStart)
+                val projDist = toMissile.dot(beamDir)
+                val aimPoint = beamStart.add(beamDir.scale(projDist + 50.0))
+                val desiredDir = aimPoint.subtract(position())
+                val range = desiredDir.length()
+                if (range > 1.0E-4) {
+                    turn(desiredDir.normalize(), ((tickCount - 1) * GUIDED_TURN_RAMP).coerceIn(0f, GUIDED_TURN_CAP))
+                }
+                this.deltaMovement = this.deltaMovement.scale(0.05).add(lookAngle.scale(CRUISE_SPEED))
+            }
+            return
         }
 
         // No target at all (fired without a lock — VehicleFireMessage's
@@ -377,6 +449,7 @@ open class Ru57e6MissileEntity(type: EntityType<out Ru57e6MissileEntity>, level:
     // doesn't silently resume just because the turret happens to swing
     // back through the target's bearing.
     private fun hasCommandLink(): Boolean {
+        if (semiAuto) return true
         val owner = this.owner ?: return false
         val vehicle = owner.vehicle as? PantsirEntity ?: return false
         if (launcherVehicleUUID != vehicle.uuid) return false
@@ -403,7 +476,15 @@ open class Ru57e6MissileEntity(type: EntityType<out Ru57e6MissileEntity>, level:
     // радиусу заряда. Тот сыпал пыль и обломки по земле — на высоте, где
     // срабатывает зенитная ракета, это выглядело чужеродно.
     override fun buildExplosion(vec3: Vec3): CustomExplosion.Builder {
-        return super.buildExplosion(vec3).withParticleType(ParticleTool.ParticleType.AIRBURST)
+        val builder = super.buildExplosion(vec3).withParticleType(ParticleTool.ParticleType.AIRBURST)
+        // 5% chance: даже при попадании нанесёт часть урона (30%) или
+        // вообще не нанесёт — ракеты слишком легко сбивают.
+        if (!level().isClientSide && level().random.nextFloat() < 0.05f) {
+            val roll = level().random.nextFloat()
+            val reduced = if (roll < 0.5f) 0f else getExplosionDamage() * 0.3f
+            builder.damage(reduced)
+        }
+        return builder
     }
 
     override fun getSound(): SoundEvent {
@@ -480,5 +561,18 @@ open class Ru57e6MissileEntity(type: EntityType<out Ru57e6MissileEntity>, level:
         // предельной дальности, иначе гарантированно недосягаема — топливо
         // кончится раньше.
         private const val MAX_FLIGHT_RANGE = 2640.0
+
+        @JvmField
+        val SEMI_AUTO: EntityDataAccessor<Boolean> =
+            SynchedEntityData.defineId(Ru57e6MissileEntity::class.java, EntityDataSerializers.BOOLEAN)
+        @JvmField
+        val SEMI_AUTO_TARGET_X: EntityDataAccessor<Float> =
+            SynchedEntityData.defineId(Ru57e6MissileEntity::class.java, EntityDataSerializers.FLOAT)
+        @JvmField
+        val SEMI_AUTO_TARGET_Y: EntityDataAccessor<Float> =
+            SynchedEntityData.defineId(Ru57e6MissileEntity::class.java, EntityDataSerializers.FLOAT)
+        @JvmField
+        val SEMI_AUTO_TARGET_Z: EntityDataAccessor<Float> =
+            SynchedEntityData.defineId(Ru57e6MissileEntity::class.java, EntityDataSerializers.FLOAT)
     }
 }

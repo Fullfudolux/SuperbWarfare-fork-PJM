@@ -780,6 +780,11 @@ abstract class GunItem(properties: Properties) : Item(properties.stacksTo(1)), I
 
             if (entity is Ru57e6MissileEntity && shooter != null && shooter.vehicle != null) {
                 entity.setLauncherVehicle(shooter.vehicle!!.getUUID())
+                val pantsir = shooter.vehicle as? PantsirEntity
+                if (pantsir != null && pantsir.missileSemiAuto) {
+                    entity.semiAuto = true
+                    entity.setTargetUUID("none")
+                }
             }
 
             if (entity is SmallCannonShellEntity && data.get(GunProp.SHELL_TYPE) == "AA") {

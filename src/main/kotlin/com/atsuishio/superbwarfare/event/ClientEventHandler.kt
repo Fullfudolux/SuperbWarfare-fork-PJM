@@ -1172,12 +1172,15 @@ object ClientEventHandler {
                 if (seekKeyPressedEdge) {
                     seekFailure(player)
                 }
-                // Пока цель на сопровождении, башня ведёт её сама и мышь
-                // игнорирует (PantsirEntity.adjustTurretAngle) — а взгляд
-                // наводчика при этом оставался ровно там, где его бросили в
-                // момент захвата. Отсюда и «камера гуляет»: цель уезжает, а
-                // камера стоит. Ведём взгляд за целью.
-                lockingEntityVehicle?.let { aimViewAtTarget(player, it) }
+                // aimViewAtTarget removed: it forced the gunner's view to the
+                // target every tick, which (a) made the autocannon auto-aim
+                // (super.adjustTurretAngle follows driver.getViewVector),
+                // (b) broke the missile's soft lock — reset the offset
+                // accumulation each tick so the gunner could never nudge,
+                // and (c) hard-locked the camera to the target.
+                // cameraDirection now handles camera tracking instead: it
+                // follows the turret's actual aim (target + gunner offset
+                // for missiles, raw barrel for cannon).
             } else if (seekKeyDownNow) {
                 if (seekingEntityVehicle == null) {
                     seekingEntityVehicle = nearestEntityVehicle

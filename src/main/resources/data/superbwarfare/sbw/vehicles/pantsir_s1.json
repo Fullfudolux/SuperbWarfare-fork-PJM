@@ -83,7 +83,7 @@
       "Gravity": 0.03,
       "Damage": 26.4,
       "ExplosionDamage": 3,
-      "ExplosionRadius": 1.2,
+      "ExplosionRadius": 1.0,
       "ProjectileLife": 56,
       "Spread": 0.6,
       "RecoilTime": 15,
@@ -243,7 +243,7 @@
         "Locked": "superbwarfare:javelin_locked"
       },
       "CrosshairColor": "0x66FF00",
-      "Crosshair": "@Empty",
+      "Crosshair": "@VehicleFixedPoint",
       "SoundRadius": 12
     }
   },

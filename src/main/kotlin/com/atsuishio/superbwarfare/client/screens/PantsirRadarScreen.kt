@@ -86,7 +86,7 @@ class PantsirRadarScreen(private val vehicle: PantsirEntity) :
     // radar wouldn't otherwise do anything while it's up; catch it here
     // directly so a second press toggles the screen closed again.
     override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
-        if (keyCode == ModKeyMappings.PANTSIR_RADAR_MENU.key.value) {
+        if (keyCode == ModKeyMappings.VEHICLE_INTERACT.key.value) {
             this.minecraft?.setScreen(null)
             return true
         }
@@ -378,11 +378,11 @@ class PantsirRadarScreen(private val vehicle: PantsirEntity) :
         val radarBottom = centerY + half
 
         val ahLeft = 20
-        val ahRight = (centerX - half - 15).coerceAtLeast(ahLeft + 110)
+        val ahRight = (centerX - half - 12).coerceAtLeast(ahLeft + 110)
         val ahTop = (this.height * 0.64f).toInt()
         drawAzimuthHeightIndicator(guiGraphics, ahLeft, ahTop, ahRight, radarBottom)
 
-        val listLeft = (centerX + half + 25)
+        val listLeft = (centerX + half + 22)
         val listRight = (this.width - 20).coerceAtLeast(listLeft + 180)
         val listTop = (this.height * 0.08f).toInt()
         drawTargetList(guiGraphics, listLeft, listTop, listRight, radarBottom)

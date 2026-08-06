@@ -13,6 +13,7 @@ import com.atsuishio.superbwarfare.data.vehicle.subdata.EngineInfo.Helicopter
 import com.atsuishio.superbwarfare.data.vehicle.subdata.EngineType
 import com.atsuishio.superbwarfare.entity.vehicle.Cv90Entity
 import com.atsuishio.superbwarfare.entity.vehicle.M10BookerApsEntity
+import com.atsuishio.superbwarfare.entity.vehicle.PantsirEntity
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
 import com.atsuishio.superbwarfare.init.ModItems
 import com.atsuishio.superbwarfare.init.ModKeyMappings
@@ -196,7 +197,7 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
             val line = if (entity.getSeatIndex(player) == 0) {
                 label.copy().append(
                     Component.literal(" [")
-                        .append(ModKeyMappings.VEHICLE_RAMP.key.displayName)
+                        .append(ModKeyMappings.VEHICLE_INTERACT.key.displayName)
                         .append("]")
                 )
             } else {
@@ -211,6 +212,32 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
                 if (open) 0x39FF6A else 0xAAAAAA,
                 false
             )
+        }
+
+        if (entity is PantsirEntity && entity.getSeatIndex(player) == 2) {
+            val radarLabel = Component.literal("Радар: [")
+                .append(ModKeyMappings.VEHICLE_INTERACT.key.displayName)
+                .append("]")
+            guiGraphics.drawString(
+                mc.font,
+                radarLabel,
+                hpEnergyX,
+                screenHeight - STATUS_ROW - compatHeight,
+                if (entity.jacksDeployed && entity.jacksProgress > 0.95f) 0x39FF6A else 0xAAAAAA,
+                false
+            )
+            if (entity.getGunName(2) == "Missile") {
+                val modeText = if (entity.missileSemiAuto) "Режим: полуавто" else "Режим: авто"
+                val modeWidth = mc.font.width(modeText)
+                guiGraphics.drawString(
+                    mc.font,
+                    modeText,
+                    screenWidth - 10 - modeWidth,
+                    screenHeight - 48,
+                    0xFFAA00,
+                    false
+                )
+            }
         }
 
         val health = entity.health
@@ -491,7 +518,7 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
             Minecraft.getInstance().font,
             componentReady,
             85,
-            (h - HP_ROW - compatHeight),
+            (h - STATUS_ROW - compatHeight),
             -1,
             false
         )

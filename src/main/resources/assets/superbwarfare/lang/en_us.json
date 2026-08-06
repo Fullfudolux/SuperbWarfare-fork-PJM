@@ -724,7 +724,7 @@
   "key.superbwarfare.vehicle_seek": "Vehicle Lock Target",
   "key.superbwarfare.active_thermal_imaging": "Active Thermal Imaging",
   "key.superbwarfare.toggle_vehicle_engine": "Start / Stop Vehicle Engine",
-  "key.superbwarfare.pantsir_radar_menu": "Open Pantsir Radar Screen",
+  "key.superbwarfare.vehicle_interact": "Vehicle Interaction",
   "container.superbwarfare.pantsir_radar": "RADAR",
   "tips.superbwarfare.vehicle_engine.start_hint": "Engine is off — press %1$s to start it",
   "tips.superbwarfare.vehicle_engine.starting": "Engine starting…",

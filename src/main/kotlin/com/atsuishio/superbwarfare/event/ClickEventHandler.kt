@@ -307,14 +307,11 @@ object ClickEventHandler {
                 }
             }
 
-            if (key == ModKeyMappings.PANTSIR_RADAR_MENU.key.value) {
+            if (key == ModKeyMappings.VEHICLE_INTERACT.key.value) {
                 if (vehicle is PantsirEntity && vehicle.getSeatIndex(player) == 2 && vehicle.jacksProgress >= 1f) {
                     Minecraft.getInstance().setScreen(PantsirRadarScreen(vehicle))
                     return
                 }
-            }
-
-            if (key == ModKeyMappings.VEHICLE_RAMP.key.value) {
                 if (vehicle is Cv90Entity && vehicle.getSeatIndex(player) == 0) {
                     sendPacketToServer(ToggleVehicleRampMessage)
                     return
