@@ -82,6 +82,7 @@ private fun registerPayloads() {
     playToClient<RadarMenuOpenMessage>()
     playToClient<ResetCameraTypeMessage>()
     playToClient<ExplosionParticleMessage>()
+    playToClient<WreckageParticleMessage>()
     playToClient<ShakeClientMessage>()
     playToClient<ShootClientMessage>()
     playToClient<SoundClientMessage>()

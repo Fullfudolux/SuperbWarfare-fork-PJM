@@ -1,5 +1,6 @@
 package com.atsuishio.superbwarfare.tools
 
+import com.atsuishio.superbwarfare.client.ClientSyncedEntityHandler
 import com.atsuishio.superbwarfare.entity.vehicle.DroneEntity
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.server.level.ServerLevel
@@ -43,12 +44,23 @@ object EntityFindUtil {
                 target = level.getEntity(uuid)
             } else {
                 val clientLevel = level as ClientLevel
-                target = clientLevel.entities.get(uuid)
+                // Загоризонтная цель существует на клиенте только как копия из
+                // радарной синхронизации: в мир она не добавлена, и обычный
+                // поиск по UUID её не находит. Без этого запасного варианта
+                // клиентская половина автосопровождения башни (Pantsir
+                // .adjustTurretAngle) считала цель несуществующей, откатывалась
+                // на обычное наведение мышью и каждый тик перебивала
+                // серверное — башня просто не доворачивалась на цель.
+                target = clientLevel.entities.get(uuid) ?: findSyncedGhost(clientLevel, uuid)
             }
             return target
         } catch (_: Exception) {
         }
         return null
+    }
+
+    private fun findSyncedGhost(level: Level, uuid: UUID): Entity? {
+        return ClientSyncedEntityHandler.getSyncedEntities(level).firstOrNull { it.uuid == uuid }
     }
 
     @JvmStatic

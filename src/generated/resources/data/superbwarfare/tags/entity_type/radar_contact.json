@@ -1,0 +1,15 @@
+{
+  "values": [
+    "#superbwarfare:aa_missile",
+    "#superbwarfare:at_rocket",
+    "#superbwarfare:destroyable_projectile",
+    {
+      "id": "pjmbasemod:strategic_missile",
+      "required": false
+    },
+    {
+      "id": "wrbdrones:shahed136",
+      "required": false
+    }
+  ]
+}

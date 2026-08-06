@@ -62,11 +62,19 @@ import software.bernie.geckolib.animation.AnimationProcessor
 import software.bernie.geckolib.cache.`object`.GeoBone
 import top.theillusivec4.curios.api.CuriosApi
 import java.util.*
+import java.util.function.Predicate
 import kotlin.experimental.or
 import kotlin.math.*
 
 @EventBusSubscriber(Dist.CLIENT)
 object ClientEventHandler {
+    // Потолок на доворот башни к цели, взятой с радара. Снимается досрочно, как
+    // только ствол дошёл до цели, так что обычно расходуется лишь малая часть.
+    private const val RADAR_LOCK_GRACE_TICKS = 300
+
+    // Полсекунды: дольше этого не найденная цель считается уничтоженной.
+    private const val LOCK_TARGET_MISSING_TICKS = 10
+
     @JvmField
     var zoomTime: Double = 0.0
 
@@ -524,6 +532,7 @@ object ClientEventHandler {
         recoilForce *= 0.55
 
         ClientSyncedEntityHandler.clean()
+        ClientSyncedEntityHandler.advanceGhosts()
         isProne(player)
         handleVariableDecrease()
         aimAtVillager(player)
@@ -840,6 +849,9 @@ object ClientEventHandler {
                     .withinRangeSeekWeapon(range, maxGuidedRange, affectedByStealthTarget, canGuidedByRadar)
                     .withinAngle(seekAngle)
                     .baseFilter()
+                    // Ручной захват есть только у ПЗРК и ПТРК — пулемётов
+                    // среди них нет, так что мелкие дроны отсекаются целиком.
+                    .isNot(ModTags.EntityTypes.SMALL_DRONE)
                     .heightRange(data.get(GunProp.MIN_TARGET_HEIGHT), data.get(GunProp.MAX_TARGET_HEIGHT))
                     .smokeFilter()
                     .noVehicle()
@@ -1014,8 +1026,9 @@ object ClientEventHandler {
                 seekFailure(player)
             }
 
-            if (lockingEntity != null && !lockingEntity!!.isAlive) {
-                seekFailure(player)
+            if (lockingEntity != null) {
+                handheldTargetMissingTicks = targetMissingTicks(player, lockingEntity!!, handheldTargetMissingTicks)
+                if (handheldTargetMissingTicks > LOCK_TARGET_MISSING_TICKS) seekFailure(player)
             }
 
             if (seekingTime == 2) {
@@ -1024,8 +1037,8 @@ object ClientEventHandler {
 
             if (seekingTime > lockTime) {
                 playLockedSound(data, player)
-                if (guideType == 0 && lockingEntity != null && (!lockingEntity!!.passengers.isEmpty()
-                            || lockingEntity is VehicleEntity) && player.tickCount % 2 == 0
+                if (guideType == 0 && lockingEntity != null &&
+                    canReportLock(lockingEntity!!) && player.tickCount % 2 == 0
                 ) {
                     sendPacketToServer(
                         SeekingWeaponWarningMessage(
@@ -1042,6 +1055,18 @@ object ClientEventHandler {
         val vehicle = player.vehicle as? VehicleEntity ?: return
         val data = vehicle.getGunData(player) ?: return
         val seekWeaponInfo = data.get(GunProp.SEEK_WEAPON_INFO) ?: return
+
+        // Захват мог сесть на загоризонтного «призрака» (копию от сервера с
+        // тем же сетевым id). Как только настоящая цель попадает в прогруз,
+        // переключаемся на неё: призрак с этого момента перестаёт получать
+        // обновления и рамка на нём просто замерла бы на месте.
+        lockingEntityVehicle?.let { locked ->
+            val real = player.level().getEntity(locked.id)
+            if (real != null && real !== locked) {
+                if (seekingEntityVehicle === locked) seekingEntityVehicle = real
+                lockingEntityVehicle = real
+            }
+        }
 
         // 锁定所需时间
         val lockTime = seekWeaponInfo.seekTime
@@ -1070,6 +1095,7 @@ object ClientEventHandler {
             .withinRangeSeekWeapon(seekRange, maxGuidedRange, affectedByStealthTarget, canGuidedByRadar)
             .withinAngle(cameraPos, seekVec, seekAngle)
             .baseFilter()
+            .custom(smallDroneFilter(vehicle, player))
             .heightRange(minTargetHeight, maxTargetHeight)
             .sizeBiggerThan(minTargetSize)
             .smokeFilter()
@@ -1146,15 +1172,19 @@ object ClientEventHandler {
                 if (seekKeyPressedEdge) {
                     seekFailure(player)
                 }
+                // Пока цель на сопровождении, башня ведёт её сама и мышь
+                // игнорирует (PantsirEntity.adjustTurretAngle) — а взгляд
+                // наводчика при этом оставался ровно там, где его бросили в
+                // момент захвата. Отсюда и «камера гуляет»: цель уезжает, а
+                // камера стоит. Ведём взгляд за целью.
+                lockingEntityVehicle?.let { aimViewAtTarget(player, it) }
             } else if (seekKeyDownNow) {
                 if (seekingEntityVehicle == null) {
                     seekingEntityVehicle = nearestEntityVehicle
                 }
                 if (seekingEntityVehicle != null && lockingPosVehicle == null) {
                     seekingTimeVehicle++
-                    if ((!seekingEntityVehicle!!.getPassengers()
-                            .isEmpty() || seekingEntityVehicle is VehicleEntity) && player.tickCount % 3 == 0 && !lockOnVehicle
-                    ) {
+                    if (canReportLock(seekingEntityVehicle!!) && player.tickCount % 3 == 0 && !lockOnVehicle) {
                         sendPacketToServer(
                             SeekingWeaponWarningMessage(
                                 false,
@@ -1177,23 +1207,43 @@ object ClientEventHandler {
         // was enough to bounce across the exact seekAngle threshold and
         // flicker the lock on/off every couple ticks.
         val effectiveSeekAngle = if (lockOnVehicle && vehicle is PantsirEntity) seekAngle + 6.0 else seekAngle
-        if (seekingEntityVehicle != null &&
-            (seekVec.angleTo(
+        if (seekingEntityVehicle != null) {
+            val offBoresight = seekVec.angleTo(
                 cameraPos.vectorTo(
                     VectorTool.lerpGetEntityBoundingBoxCenter(
                         seekingEntityVehicle!!,
                         1f
                     )
                 )
-            ) > effectiveSeekAngle
-                    || !SeekTool.NOT_IN_SMOKE.test(seekingEntityVehicle)
-                    || !noClip(player, seekingEntityVehicle!!))
-        ) {
-            seekFailure(player)
+            )
+
+            // Захват, взятый с экрана радара, начинается с любого положения
+            // ствола: цель может быть хоть за кормой. Пока идёт доворот башни,
+            // угловая проверка неизбежно провалилась бы в первый же тик и
+            // сбросила бы захват, поэтому на время доворота она не работает —
+            // и снимается сама, как только ствол дошёл до цели (дальше цель
+            // удерживают уже обычные правила).
+            if (radarLockGraceTicks > 0) {
+                if (offBoresight <= effectiveSeekAngle) {
+                    radarLockGraceTicks = 0
+                } else {
+                    radarLockGraceTicks--
+                }
+            }
+
+            if (radarLockGraceTicks <= 0 &&
+                (offBoresight > effectiveSeekAngle
+                        || !SeekTool.NOT_IN_SMOKE.test(seekingEntityVehicle)
+                        || !noClip(player, seekingEntityVehicle!!))
+            ) {
+                seekFailure(player)
+            }
         }
 
-        if (lockingEntityVehicle != null && !lockingEntityVehicle!!.isAlive) {
-            seekFailure(player)
+        val trackedTarget = lockingEntityVehicle ?: seekingEntityVehicle
+        if (trackedTarget != null) {
+            lockTargetMissingTicks = targetMissingTicks(player, trackedTarget, lockTargetMissingTicks)
+            if (lockTargetMissingTicks > LOCK_TARGET_MISSING_TICKS) seekFailure(player)
         }
 
         if (seekingTimeVehicle == 2) {
@@ -1205,8 +1255,8 @@ object ClientEventHandler {
                 lockedSoundPlayed = true
                 playLockedSound(data, player)
             }
-            if (seekWeaponInfo.onlyLockEntity && lockingEntityVehicle != null && (!lockingEntityVehicle!!.passengers.isEmpty()
-                        || lockingEntityVehicle is VehicleEntity) && player.tickCount % 2 == 0
+            if (seekWeaponInfo.onlyLockEntity && lockingEntityVehicle != null &&
+                canReportLock(lockingEntityVehicle!!) && player.tickCount % 2 == 0
             ) {
                 sendPacketToServer(
                     SeekingWeaponWarningMessage(
@@ -1217,6 +1267,119 @@ object ClientEventHandler {
             }
         }
     }
+
+    // Кому вообще имеет смысл слать SeekingWeaponWarningMessage — пакет
+    // «тебя ведут». Раньше условие было жёстким: цель либо везёт пассажиров,
+    // либо сама VehicleEntity. Для беспилотной цели (ракета — своя или из
+    // стороннего мода) пакет не уходил, а вместе с ним не работал и его
+    // ВТОРОЙ, куда более важный эффект: именно этот heartbeat выставляет
+    // PantsirEntity.trackedTargetUUID, от которого зависят и автосопровождение
+    // башни, и командное радиоуправление 57Э6 (Ru57e6MissileEntity.hasCommandLink).
+    // Без него захват ракеты жил только на клиенте, а выпущенный снаряд сразу
+    // сваливался в ручное ПТУР-наведение.
+    // Сколько тиков ещё разрешено держать захват, взятый с экрана радара, без
+    // проверки «цель в пределах SeekAngle от ствола» — см. vehicleWeaponSeeking.
+    private var radarLockGraceTicks = 0
+
+    // Сколько тиков подряд захваченную цель не удаётся найти. Счётчики
+    // раздельные: захват техники и захват ручного оружия — независимые
+    // состояния, и общий счётчик они бы затирали друг другу.
+    private var lockTargetMissingTicks = 0
+    private var handheldTargetMissingTicks = 0
+
+    /**
+     * Сколько тиков подряд цель не находится. Проверки `!isAlive` для этого
+     * мало: у загоризонтной цели клиент держит не саму сущность, а её копию из
+     * радарной синхронизации, и копию эту никто не убивает — при уничтожении
+     * цели сервер просто перестаёт её присылать, и копия сама пропадает из
+     * списка спустя client_sync_expire_time. Пока этого не произошло, копия
+     * остаётся «живой», и рамка захвата висела на уже сбитой цели.
+     *
+     * Поэтому цель перепроверяется поиском по UUID: он смотрит и в мир, и в
+     * список копий. Отсрочка в [LOCK_TARGET_MISSING_TICKS] гасит мигание на
+     * разрывах синхронизации, не давая захвату слетать от одного пропущенного
+     * пакета.
+     */
+    private fun targetMissingTicks(player: Player, target: Entity, current: Int): Int {
+        val present = target.isAlive && EntityFindUtil.findEntity(player.level(), target.stringUUID) != null
+        return if (present) 0 else current + 1
+    }
+
+    /**
+     * Взять цель на сопровождение по отметке на радаре ([PantsirRadarScreen]),
+     * минуя обычную процедуру «навести ствол и подержать клавишу захвата».
+     * Захват сразу считается состоявшимся: башня Панциря дальше ведёт цель
+     * сама, а heartbeat из vehicleWeaponSeeking подтверждает его серверу.
+     */
+    @JvmStatic
+    fun lockTargetFromRadar(player: Player, target: Entity) {
+        val vehicle = player.vehicle as? PantsirEntity ?: return
+        if (vehicle.getSeatIndex(player) != 2) return
+        val data = vehicle.getGunData(player) ?: return
+        val seekWeaponInfo = data.get(GunProp.SEEK_WEAPON_INFO) ?: return
+        if (!seekWeaponInfo.onlyLockEntity) return
+
+        seekingEntityVehicle = target
+        lockingEntityVehicle = target
+        lockingPosVehicle = null
+        lockOnVehicle = true
+        // Достаточно, чтобы vehicleWeaponSeeking сразу пошёл по ветке
+        // «захват состоялся» и начал слать heartbeat.
+        seekingTimeVehicle = seekWeaponInfo.seekTime + 3
+        radarLockGraceTicks = RADAR_LOCK_GRACE_TICKS
+
+        if (!lockedSoundPlayed) {
+            lockedSoundPlayed = true
+            playLockedSound(data, player)
+        }
+    }
+
+    /**
+     * Ланцеты, Mavic и FPV берутся на сопровождение только пулемётной
+     * установкой. Цель размером с табуретку не стоит зенитной ракеты, да и
+     * головке наведения на ней не за что зацепиться — по такой работают
+     * стволом. Шахед под это правило не подпадает: он в теге радарных
+     * контактов, а не мелких дронов.
+     */
+    fun smallDroneFilter(vehicle: VehicleEntity, player: Player): Predicate<Entity> {
+        val weapon = vehicle.getGunName(vehicle.getSeatIndex(player)).orEmpty()
+        val machineGun = weapon.contains("MachineGun", ignoreCase = true) || weapon.startsWith("MG")
+        return Predicate { !it.type.`is`(ModTags.EntityTypes.SMALL_DRONE) || machineGun }
+    }
+
+    /**
+     * Наводит взгляд игрока точно на цель. Именно на саму цель, а не по стволу
+     * (как делает [VehicleVecUtils.setDriverAngle] при сбросе захвата): ствол
+     * доворачивается с упреждением и на быстрой цели смотрит заметно в сторону
+     * от неё — в точку встречи. Оператору же нужна цель в центре.
+     */
+    private fun aimViewAtTarget(player: Player, target: Entity) {
+        val direction = VectorTool.lerpGetEntityBoundingBoxCenter(target, 1f).subtract(player.eyePosition)
+        if (direction.lengthSqr() < 1.0E-6) return
+
+        val xRot = -VehicleVecUtils.getXRotFromVector(direction).toFloat()
+        var yRot = -VehicleVecUtils.getYRotFromVector(direction).toFloat()
+
+        // xRotO/yRotO — значения на прошлом тике, из них рендер интерполирует
+        // кадр. Раньше сюда клали то же самое, что и в текущий угол, из-за
+        // чего интерполировать было не между чем: взгляд переставлялся
+        // ступеньками двадцать раз в секунду — это и есть дёрганье. Трогаем
+        // только текущий угол, старый оставляем игре.
+        //
+        // Курс при этом держим непрерывным: без этого переход через ±180°
+        // давал бы разворот через всю окружность за один кадр.
+        while (yRot - player.yRotO > 180f) yRot -= 360f
+        while (yRot - player.yRotO < -180f) yRot += 360f
+
+        player.xRot = xRot
+        player.yRot = yRot
+        player.setYHeadRot(yRot)
+    }
+
+    private fun canReportLock(target: Entity): Boolean =
+        !target.passengers.isEmpty() ||
+                target is VehicleEntity ||
+                target.type.`is`(ModTags.EntityTypes.RADAR_CONTACT)
 
     fun seekFailure(player: Player) {
         // Pantsir's turret auto-tracks the locked target the whole time
@@ -1250,6 +1413,9 @@ object ClientEventHandler {
         seekingTimeVehicle = 0
         lockOnVehicle = false
         lockedSoundPlayed = false
+        radarLockGraceTicks = 0
+        lockTargetMissingTicks = 0
+        handheldTargetMissingTicks = 0
         lockingEntityVehicle = null
         seekingEntityVehicle = null
         lockingPosVehicle = null
@@ -1275,6 +1441,13 @@ object ClientEventHandler {
     }
 
     fun noClip(entity: Entity, e: Entity): Boolean {
+        // Загоризонтная цель, известная только из радарной синхронизации: её
+        // окружение на клиенте не прогружено, проверять по нему видимость
+        // нечем — это уже сделал сервер. Иначе захват срывался бы этой же
+        // проверкой сразу после того, как состоялся (см. vehicleWeaponSeeking).
+        val level = entity.level()
+        if (level.isClientSide && level.getEntity(e.id) == null) return true
+
         return entity.level()
             .clip(
                 ClipContext(

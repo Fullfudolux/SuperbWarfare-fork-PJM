@@ -1,0 +1,20 @@
+{
+  "values": [
+    {
+      "id": "wrbdrones:zala_lancet",
+      "required": false
+    },
+    {
+      "id": "wrbdrones:fpv_drone",
+      "required": false
+    },
+    {
+      "id": "wrbdrones:mavic_drone_with_drop",
+      "required": false
+    },
+    {
+      "id": "wrbdrones:mavic_drone_no_drop",
+      "required": false
+    }
+  ]
+}

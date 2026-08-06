@@ -9,6 +9,7 @@ import com.atsuishio.superbwarfare.client.particle.ExplosionDebrisOption
 import com.atsuishio.superbwarfare.init.ModParticleTypes
 import com.atsuishio.superbwarfare.init.ModSounds
 import com.atsuishio.superbwarfare.network.message.receive.ExplosionParticleMessage
+import com.atsuishio.superbwarfare.network.message.receive.WreckageParticleMessage
 import com.atsuishio.superbwarfare.network.message.receive.ShakeClientMessage
 import com.atsuishio.superbwarfare.tools.SoundTool.playDistantSound
 import com.google.gson.annotations.SerializedName
@@ -69,6 +70,7 @@ object ParticleTool {
     @JvmStatic
     fun spawnExplosionParticlesClient(type: ParticleType, level: Level, pos: Vec3) {
         when (type) {
+            ParticleType.AIRBURST -> spawnAirburstExplosionParticlesInternal(level, pos)
             ParticleType.MINI -> spawnMiniExplosionParticlesInternal(level, pos)
             ParticleType.SMALL -> spawnSmallExplosionParticlesInternal(level, pos)
             ParticleType.MEDIUM -> spawnMediumExplosionParticlesInternal(level, pos)
@@ -84,6 +86,11 @@ object ParticleTool {
     // за 1000+ блоков; HUGE/GIANT/EPIC уже перекрывают эту дистанцию и не тронуты.
     private fun playExplosionSounds(type: ParticleType, level: ServerLevel, pos: Vec3) {
         when (type) {
+            ParticleType.AIRBURST -> {
+                playDistantSound(level, ModSounds.EXPLOSION_CLOSE.get(), pos, 4f, 1.15f, null)
+                playDistantSound(level, ModSounds.EXPLOSION_FAR.get(), pos, 16f, 1.15f, null)
+            }
+
             ParticleType.MINI -> {
                 level.playSound(
                     null,
@@ -214,6 +221,157 @@ object ParticleTool {
     }
 
     // ---- Internal client-side particle spawning ----
+
+    /**
+     * Воздушный подрыв зенитной боевой части. От наземных пресетов отличается
+     * тем, чего в нём НЕТ: ни пыли по земле, ни разлёта грунта, ни оседающих
+     * обломков — на высоте им взяться неоткуда, а именно они и делали прежний
+     * взрыв «наземным». Вместо этого три слоя, разнесённые по времени, чтобы
+     * это читалось как процесс, а не как одна вспышка на кадр:
+     *
+     *  1. вспышка и корона огня — 2–3 тика;
+     *  2. сфера осколков, расходящаяся во все стороны (у осколочно-стержневой
+     *     БЧ поле именно сферическое, а не кольцевое);
+     *  3. чёрное облако, которое остаётся висеть и медленно всплывает —
+     *     собственно то, что видно с земли после подрыва зенитной ракеты.
+     */
+    /**
+     * Падающие обломки сбитой воздушной цели. Отдельно от взрыва: взрыв — это
+     * вспышка на месте подрыва, а это то, что от цели осталось и что теперь
+     * валится вниз, дымя. Вызывается только когда цель действительно
+     * уничтожена, поэтому служит и понятным подтверждением попадания.
+     */
+    @JvmStatic
+    fun spawnWreckageFallParticles(level: Level, pos: Vec3) {
+        if (level is ServerLevel) {
+            WreckageParticleMessage.sendToNearbyPlayers(level, pos)
+        } else {
+            spawnWreckageFallParticlesClient(level, pos)
+        }
+    }
+
+    @JvmStatic
+    fun spawnWreckageFallParticlesClient(level: Level, pos: Vec3) {
+        val x = pos.x; val y = pos.y; val z = pos.z
+        val random = level.random
+
+        // Крупные куски: у ExplosionDebrisParticle своя гравитация и коллизия,
+        // так что они честно падают и гаснут о землю.
+        repeat(WRECKAGE_CHUNKS) {
+            val dir = Vec3(
+                random.nextGaussian() * 0.35,
+                random.nextGaussian() * 0.2 + 0.15,
+                random.nextGaussian() * 0.35
+            )
+            sendDirectionalParticleClient(
+                level,
+                ExplosionDebrisOption(0.32f, 0.3f, 0.29f, 90 + random.nextInt(50), 0.94f, 6, 0.004f, size = 0.3f + 0.25f * random.nextFloat()),
+                x, y, z, dir.x, dir.y, dir.z
+            )
+        }
+
+        // Мелочь — её больше и она разлетается шире
+        repeat(WRECKAGE_SCRAPS) {
+            val dir = Vec3(
+                random.nextGaussian() * 0.7,
+                random.nextGaussian() * 0.35,
+                random.nextGaussian() * 0.7
+            )
+            sendDirectionalParticleClient(
+                level,
+                ExplosionDebrisOption(0.45f, 0.4f, 0.35f, 60 + random.nextInt(40), 0.92f, 8, 0.006f, size = 0.12f),
+                x, y, z, dir.x, dir.y, dir.z
+            )
+        }
+
+        // Дымный шлейф падения: несколько клубов, выпускаемых с задержкой и
+        // всё ниже — получается тянущийся вниз след, а не облако на месте.
+        for (i in 0..7) {
+            Mod.queueClientWork(i * 3) {
+                val drop = 0.9 * i
+                sendParticleClient(
+                    level, CustomCloudOption(0.22f, 0.21f, 0.2f, 70, 1.6f, -0.002f, false, false),
+                    x, y - drop, z, 2, 0.7, 0.4, 0.7, 0.02
+                )
+                if (i < 4) {
+                    sendParticleClient(
+                        level, CustomFlareOption(0.6f, 0.32f, 0.06f, 16, 0.88f, 3, 0.1f, size = 0.8f),
+                        x, y - drop, z, 1, 0.5, 0.3, 0.5, 0.02
+                    )
+                }
+            }
+        }
+    }
+
+    private const val WRECKAGE_CHUNKS = 22
+    private const val WRECKAGE_SCRAPS = 45
+
+    private const val FRAGMENT_COUNT = 90
+    private const val FRAGMENT_TRAIL_COUNT = 40
+
+    private fun spawnAirburstExplosionParticlesInternal(level: Level, pos: Vec3) {
+        val x = pos.x; val y = pos.y; val z = pos.z
+        val random = level.random
+
+        // ── 1. Вспышка ────────────────────────────────────────────────────
+        sendParticleClient(level, CustomFlareOption(1f, 1f, 1f, 8, 0.22f, 1, 0.5f, size = 13f), x, y, z, 1, 0.0, 0.0, 0.0, 0.0)
+        sendParticleClient(level, CustomFlareOption(1f, 0.88f, 0.62f, 12, 0.26f, 1, 0.9f, size = 20f), x, y, z, 1, 0.0, 0.0, 0.0, 0.0)
+        sendParticleClient(level, ParticleTypes.EXPLOSION, x, y, z, 8, 1.6, 1.6, 1.6, 0.0)
+        sendParticleClient(level, ModParticleTypes.FIRE_STAR.get(), x, y, z, 40, 0.0, 0.0, 0.0, 1.6)
+
+        // ── 2. Сфера осколков ─────────────────────────────────────────────
+        // Направления берём равномерно по сфере, а не гауссовым разбросом:
+        // разброс даёт сгусток в центре, а нужна именно расходящаяся оболочка.
+        repeat(FRAGMENT_COUNT) {
+            val theta = random.nextDouble() * 2.0 * Math.PI
+            val cosPhi = random.nextDouble() * 2.0 - 1.0
+            val sinPhi = kotlin.math.sqrt(1.0 - cosPhi * cosPhi)
+            val speed = 9.0 + random.nextDouble() * 7.0
+            val dir = Vec3(sinPhi * kotlin.math.cos(theta), cosPhi, sinPhi * kotlin.math.sin(theta)).scale(speed)
+
+            sendDirectionalParticleClient(
+                level,
+                ExplosionDebrisOption(0.95f, 0.72f, 0.32f, 14 + random.nextInt(10), 0.9f, 6, 0.02f, size = 0.09f),
+                x, y, z, dir.x, dir.y, dir.z
+            )
+        }
+
+        // Дымные усы по следам осколков — оболочка становится видимой
+        repeat(FRAGMENT_TRAIL_COUNT) {
+            val theta = random.nextDouble() * 2.0 * Math.PI
+            val cosPhi = random.nextDouble() * 2.0 - 1.0
+            val sinPhi = kotlin.math.sqrt(1.0 - cosPhi * cosPhi)
+            val dir = Vec3(sinPhi * kotlin.math.cos(theta), cosPhi, sinPhi * kotlin.math.sin(theta)).scale(5.0 + random.nextDouble() * 4.0)
+
+            sendDirectionalParticleClient(
+                level,
+                CustomCloudOption(0.85f, 0.85f, 0.85f, 12, 1.4f, 0f, false, false),
+                x, y, z, dir.x, dir.y, dir.z
+            )
+        }
+
+        // ── 3. Висящее облако ─────────────────────────────────────────────
+        sendParticleClient(level, CustomCloudOption(0.13f, 0.13f, 0.14f, 110, 4.2f, -0.004f, false, false), x, y, z, 9, 1.5, 1.2, 1.5, 0.06)
+        sendParticleClient(level, CustomCloudOption(0.27f, 0.26f, 0.25f, 90, 3.0f, -0.003f, false, false), x, y, z, 7, 2.4, 1.6, 2.4, 0.09)
+        sendParticleClient(level, ParticleTypes.CAMPFIRE_COSY_SMOKE, x, y, z, 12, 1.2, 1.0, 1.2, 0.03)
+
+        // Догорающие клочья: выпускаются с задержкой, поэтому облако
+        // распухает на глазах, а не появляется целиком
+        for (i in 1..4) {
+            Mod.queueClientWork(i * 2) {
+                sendParticleClient(
+                    level,
+                    CustomFlareOption(0.55f - 0.1f * i, 0.3f - 0.06f * i, 0.05f, 14 + 6 * i, 0.87f, 3, 0.18f, size = 1.1f + 0.35f * i),
+                    x, y + 0.3 * i, z, 3, 1.4, 1.0, 1.4, 0.05
+                )
+                sendParticleClient(
+                    level,
+                    CustomCloudOption(0.2f, 0.19f, 0.19f, 80, 2.2f + 0.5f * i, -0.003f, false, false),
+                    x, y + 0.35 * i, z, 3, 1.8, 1.1, 1.8, 0.05
+                )
+            }
+        }
+    }
 
     private fun spawnMiniExplosionParticlesInternal(level: Level, pos: Vec3) {
         val x = pos.x; val y = pos.y; val z = pos.z
@@ -681,6 +839,10 @@ object ParticleTool {
 
     @Serializable
     enum class ParticleType {
+        @SerializedName("Airburst")
+        @SerialName("Airburst")
+        AIRBURST,
+
         @SerializedName("Mini")
         @SerialName("Mini")
         MINI,

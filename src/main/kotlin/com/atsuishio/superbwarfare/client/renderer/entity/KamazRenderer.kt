@@ -17,6 +17,12 @@ import org.joml.Quaternionf
 class KamazRenderer<T>(manager: EntityRendererProvider.Context) :
     SbmVehicleRenderer<T>(manager) where T : VehicleEntity, T : BasicGeoVehicleEntity {
 
+    // Чисто визуальное увеличение модели: хитбокс, OBB, посадочные места и
+    // точки выстрела считаются от данных сущности и не масштабируются.
+    override fun renderScale(): Float {
+        return 1.2f
+    }
+
     override fun transformCustomModelPart(
         vehicle: T,
         model: BedrockVehicleModel,

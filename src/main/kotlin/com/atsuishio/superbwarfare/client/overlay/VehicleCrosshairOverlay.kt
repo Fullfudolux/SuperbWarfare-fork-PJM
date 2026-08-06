@@ -10,6 +10,7 @@ import com.atsuishio.superbwarfare.data.gun.GunProp
 import com.atsuishio.superbwarfare.data.vehicle.subdata.VehicleType
 import com.atsuishio.superbwarfare.entity.vehicle.PantsirEntity
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
+import com.atsuishio.superbwarfare.entity.vehicle.utils.VehicleWeaponUtils
 import com.atsuishio.superbwarfare.event.ClientEventHandler
 import com.atsuishio.superbwarfare.init.ModKeyMappings
 import com.atsuishio.superbwarfare.tools.*
@@ -84,11 +85,7 @@ object VehicleCrosshairOverlay : CommonOverlay("vehicle_crosshair") {
         val poseStack = guiGraphics.pose()
 
         var crosshairPath = data.get(GunProp.CROSSHAIR)
-
-        if (crosshairPath == CrossHairOverlay.CROSSHAIR_EMPTY) {
-            resetScale()
-            return
-        }
+        val emptyCrosshair = crosshairPath == CrossHairOverlay.CROSSHAIR_EMPTY
 
         if (ClientEventHandler.zoomVehicle && data.get(GunProp.CROSSHAIR_ZOOMING) != CrossHairOverlay.CROSSHAIR_EMPTY) {
             crosshairPath = data.get(GunProp.CROSSHAIR_ZOOMING)
@@ -119,6 +116,14 @@ object VehicleCrosshairOverlay : CommonOverlay("vehicle_crosshair") {
                     drawLeadMarker(guiGraphics, entity, player, target, partialTick)
                 }
             }
+        }
+
+        // Выход по пустому прицелу — здесь, а НЕ до рамки цели: иначе вместе
+        // с текстурой прицела пропадала бы и рамка захвата с маркером
+        // упреждения, которые к прицельной сетке отношения не имеют.
+        if (emptyCrosshair) {
+            resetScale()
+            return
         }
 
         val color = data.get(GunProp.CROSSHAIR_COLOR).get()
@@ -550,13 +555,21 @@ object VehicleCrosshairOverlay : CommonOverlay("vehicle_crosshair") {
         val targetCenter = VectorTool.lerpGetEntityBoundingBoxCenter(target, partialTick)
         val shootPos = vehicle.getShootPos(player, partialTick)
 
-        val aimVec = RangeTool.calculateFiringSolution(
+        val muzzleVelocity = vehicle.getProjectileVelocity(player).toDouble()
+        val solution = RangeTool.calculateFiringSolution(
             shootPos,
             targetCenter,
             target.deltaMovement,
-            vehicle.getProjectileVelocity(player).toDouble(),
+            muzzleVelocity,
             vehicle.getProjectileGravity(player).toDouble()
-        ).normalize()
+        )
+        // Против цели быстрее самого снаряда точки встречи не существует, и
+        // численное решение вырождается — маркер уезжал вдоль вектора движения
+        // цели куда-то далеко в сторону. Показывать нечего: упреждения, которое
+        // приведёт к попаданию, просто нет.
+        if (!VehicleWeaponUtils.isSolutionSane(solution, muzzleVelocity, targetCenter.subtract(shootPos))) return
+
+        val aimVec = solution.normalize()
         val leadPoint = shootPos.add(aimVec.scale(shootPos.distanceTo(targetCenter)))
         if (!leadPoint.canBeSeen()) return
 

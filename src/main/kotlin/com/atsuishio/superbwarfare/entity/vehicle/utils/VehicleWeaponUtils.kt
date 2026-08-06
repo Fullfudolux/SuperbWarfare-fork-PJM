@@ -15,7 +15,9 @@ import net.minecraft.util.Mth
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.entity.player.Player
+import com.atsuishio.superbwarfare.tools.angleTo
 import net.minecraft.world.phys.Vec3
+import kotlin.math.abs
 
 /**
  * 用于处理载具武器瞄准或其他战斗相关方法的工具类
@@ -125,16 +127,75 @@ object VehicleWeaponUtils {
             targetVel = targetVel.multiply(2.0, 1.0, 2.0)
         }
 
-        val targetVec = calculateFiringSolution(
-            vehicle.getShootPos(pLiving, 1f).subtract(
-                vehicle.getShootVec(pLiving, 1f).scale(vehicle.getShootPos(pLiving, 1f).distanceTo(pLiving.position()))
-            ),
-            targetPos,
-            targetVel,
-            vehicle.getProjectileVelocity(pLiving).toDouble(),
-            vehicle.getProjectileGravity(pLiving).toDouble()
+        val launchPos = vehicle.getShootPos(pLiving, 1f).subtract(
+            vehicle.getShootVec(pLiving, 1f).scale(vehicle.getShootPos(pLiving, 1f).distanceTo(pLiving.position()))
         )
-        vehicle.turretAutoAimFromVector(targetVec)
+        val muzzleVelocity = vehicle.getProjectileVelocity(pLiving).toDouble()
+        val gravity = vehicle.getProjectileGravity(pLiving).toDouble()
+
+        val toTarget = targetPos.subtract(launchPos)
+        val targetVec = calculateFiringSolution(launchPos, targetPos, targetVel, muzzleVelocity, gravity)
+        vehicle.turretAutoAimFromVector(
+            if (isSolutionSane(targetVec, muzzleVelocity, toTarget)) targetVec
+            else pursuitVector(launchPos, targetPos, muzzleVelocity, gravity)
+        )
+    }
+
+    /**
+     * Годится ли решение задачи встречи. Оно ищется численно (Ньютон) как
+     * корень уравнения «снаряд и цель окажутся в одной точке», и корень
+     * существует далеко не всегда: против цели быстрее самого снаряда встречи
+     * нет вовсе. Итерация в этом случае всё равно возвращает какое-то число, но
+     * упреждение получается абсурдным — башню уводит вдоль вектора движения
+     * цели куда-то за горизонт. Ровно это и происходило при захвате быстрой
+     * ракеты: у ЗУР 57Э6 стартовая скорость 3.6 бл/тик, а маршевая у цели —
+     * втрое выше.
+     *
+     * Проверок две: длина вектора (у настоящего решения она равна дульной
+     * скорости — именно это уравнение и решалось) и направление относительно
+     * цели, см. ниже.
+     */
+    @JvmStatic
+    fun isSolutionSane(solution: Vec3, muzzleVelocity: Double, toTarget: Vec3): Boolean {
+        if (muzzleVelocity <= 0.0) return false
+        val speed = solution.length()
+        if (!speed.isFinite()) return false
+        // Допуск ужат с половины до четверти: у быстрой цели скорость сама по
+        // себе близка к дульной, и посторонний корень легко проходил прежний
+        // порог, а вектор при этом получался направленным ВДОЛЬ ДВИЖЕНИЯ ЦЕЛИ,
+        // а не в неё.
+        if (abs(speed - muzzleVelocity) > muzzleVelocity * 0.25) return false
+
+        // Главная проверка — геометрическая. Упреждение по самой своей природе
+        // ограничено: sin(угла упреждения) = (скорость цели / скорость снаряда)
+        // * sin(угла между ними), и для достижимой цели, то есть более
+        // медленной, чем снаряд, этот угол строго меньше прямого. Решение,
+        // требующее отвернуть от цели дальше, — не упреждение, а посторонний
+        // корень. Именно он разворачивал башню в противоположную сторону от
+        // цели, где она и застревала.
+        return solution.angleTo(toTarget) < MAX_LEAD_ANGLE_DEGREES
+    }
+
+    /** Предельный физически осмысленный угол упреждения, град. */
+    private const val MAX_LEAD_ANGLE_DEGREES = 75.0
+
+    /**
+     * Наведение прямо в цель, без упреждения, но с поправкой на падение снаряда
+     * за время полёта по прямой. Запасной вариант, когда встречи не существует.
+     * Для ЗУР это к тому же единственно верное поведение: она наводится сама,
+     * командами с земли, и уводить пусковую в точку встречи незачем.
+     */
+    private fun pursuitVector(launchPos: Vec3, targetPos: Vec3, muzzleVelocity: Double, gravity: Double): Vec3 {
+        val direct = targetPos.subtract(launchPos)
+        val distance = direct.length()
+        if (distance < 1.0E-4 || muzzleVelocity <= 0.0) return direct
+
+        val flightTime = distance / muzzleVelocity
+        return Vec3(
+            direct.x / flightTime,
+            (direct.y + 0.5 * gravity * flightTime * flightTime) / flightTime,
+            direct.z / flightTime
+        )
     }
 
     /**

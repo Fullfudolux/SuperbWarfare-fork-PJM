@@ -6,6 +6,7 @@ import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
 import com.atsuishio.superbwarfare.init.ModDamageTypes.causeProjectileHitDamage
 import com.atsuishio.superbwarfare.init.ModItems
 import com.atsuishio.superbwarfare.init.ModSounds
+import com.atsuishio.superbwarfare.init.ModTags
 import com.atsuishio.superbwarfare.network.message.receive.ClientIndicatorMessage
 import com.atsuishio.superbwarfare.tools.CustomExplosion
 import com.atsuishio.superbwarfare.tools.forceHurt
@@ -14,6 +15,7 @@ import com.atsuishio.superbwarfare.world.phys.ExtendedEntityRayTraceResult
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.sounds.SoundSource
+import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.projectile.Projectile
@@ -105,7 +107,7 @@ open class SmallCannonShellEntity(type: EntityType<out SmallCannonShellEntity>, 
         if (aa) {
             crushProjectile(deltaMovement)
         }
-        if (owner != null && distanceToSqr(owner!!) > 1048576) {
+        if (owner != null && distanceToSqr(owner!!) > MAX_RANGE_FROM_SHOOTER_SQR) {
             if (level() is ServerLevel) {
                 causeExplode(position())
             }
@@ -114,44 +116,67 @@ open class SmallCannonShellEntity(type: EntityType<out SmallCannonShellEntity>, 
     }
 
     open fun crushProjectile(velocity: Vec3) {
-        if (this.level() is ServerLevel) {
-            val frontBox = boundingBox.inflate(0.5).expandTowards(velocity)
+        if (this.level() !is ServerLevel) return
 
-            val target = level().getEntities(
-                EntityTypeTest.forClass(Projectile::class.java),
-                frontBox,
-            ) { it !== this }
-                .filter { it !is SmallCannonShellEntity && (it.bbWidth >= 0.3 || it.bbHeight >= 0.3) }
-                .minByOrNull { it.position().distanceTo(this.position()) }
+        val frontBox = boundingBox.inflate(PROXIMITY_RADIUS).expandTowards(velocity)
+        val shooter = this.owner
 
-            if (target != null) {
-                causeExplode(target.position(), false)
-                if (target is DestroyableProjectile) {
-                    val owner = this.owner
-                    if (owner is LivingEntity) {
-                        if (owner is ServerPlayer) {
-                            owner.level().playSound(
-                                null,
-                                owner.blockPosition(),
-                                ModSounds.INDICATION.get(),
-                                SoundSource.VOICE,
-                                1f,
-                                1f
-                            )
-                            sendPacketTo(owner, ClientIndicatorMessage(0, 5))
-                        }
-                    }
-                    target.forceHurt(
-                        causeProjectileHitDamage(this.level().registryAccess(), this, owner),
-                        damageValue
-                    )
-                } else {
-                    target.discard()
-                }
+        // Ищем среди ВСЕХ сущностей, а не только среди наследников Projectile.
+        // Прежний поиск по Projectile отсекал ровно то, ради чего зенитный
+        // снаряд и нужен: Shahed136 и стратегическая ракета pjmbasemod
+        // наследуют обычный Entity, и очередь проходила сквозь них, не видя
+        // их вообще.
+        val target = level().getEntities(EntityTypeTest.forClass(Entity::class.java), frontBox) { it !== this }
+            .asSequence()
+            .filter { isProximityTarget(it) }
+            .filter { it !== shooter && (shooter == null || it !== shooter.vehicle) }
+            .filter { !isOwnOrdnance(it, shooter) }
+            .minByOrNull { it.position().distanceTo(this.position()) }
+            ?: return
 
-                this.discard()
-            }
+        causeExplode(target.position(), false)
+
+        // Тупой боеприпас без здоровья просто снимаем, всё остальное —
+        // дроны, ракеты сторонних модов, сбиваемые снаряды — честно бьём
+        // уроном, чтобы отработали их собственные смерть и взрыв, а живучая
+        // цель не падала с одного случайного снаряда.
+        if (target is Projectile && target !is DestroyableProjectile) {
+            target.discard()
+        } else {
+            target.forceHurt(causeProjectileHitDamage(this.level().registryAccess(), this, shooter), damageValue)
         }
+
+        if (shooter is ServerPlayer) {
+            shooter.level().playSound(
+                null, shooter.blockPosition(), ModSounds.INDICATION.get(), SoundSource.VOICE, 1f, 1f
+            )
+            sendPacketTo(shooter, ClientIndicatorMessage(0, 5))
+        }
+
+        this.discard()
+    }
+
+    /**
+     * По кому зенитный снаряд срабатывает бесконтактно. Технику сюда
+     * НАМЕРЕННО не включаем: у неё крупный габарит, снаряд попадает по ней
+     * прямым попаданием, а оно даёт полный урон — бесконтактный подрыв рядом
+     * заменил бы его слабым осколочным и обернулся бы понижением пушки.
+     */
+    private fun isProximityTarget(entity: Entity): Boolean {
+        if (entity is SmallCannonShellEntity) return false
+        if (entity is VehicleEntity) return false
+        if (entity.bbWidth < 0.3 && entity.bbHeight < 0.3) return false
+
+        return entity is Projectile ||
+                entity.type.`is`(ModTags.EntityTypes.RADAR_CONTACT) ||
+                entity.type.`is`(ModTags.EntityTypes.SMALL_DRONE)
+    }
+
+    /** Свой же боеприпас: собственную сходящую ракету сбивать не надо. */
+    private fun isOwnOrdnance(entity: Entity, shooter: Entity?): Boolean {
+        if (shooter == null) return false
+        val entityOwner = (entity as? Projectile)?.owner ?: return false
+        return entityOwner === shooter || (shooter.vehicle != null && entityOwner.vehicle === shooter.vehicle)
     }
 
     fun antiAir(antiAir: Boolean) {
@@ -165,5 +190,17 @@ open class SmallCannonShellEntity(type: EntityType<out SmallCannonShellEntity>, 
     companion object {
         // Tune to taste — applies only when firedFromPantsir is true.
         private const val PANTSIR_AIRBORNE_DAMAGE_MULTIPLIER = 1.5f
+
+        // Радиус бесконтактного срабатывания. Прежние 0.5 блока по цели
+        // размером с дрон на скорости 26 блоков/тик означали, что попасть
+        // можно было только буквально в неё саму. Двух блоков хватает, чтобы
+        // очередь работала как зенитная: чем она плотнее, тем выше шанс, что
+        // хоть один снаряд пройдёт в радиусе.
+        private const val PROXIMITY_RADIUS = 2.0
+
+        // Жёсткая отсечка по удалению от стрелка. Раньше 1024 блока — она
+        // срабатывала РАНЬШЕ времени жизни снаряда и молча ограничивала
+        // дальность, сколько бы ProjectileLife ни стоял в данных.
+        private const val MAX_RANGE_FROM_SHOOTER_SQR = 1500.0 * 1500.0
     }
 }

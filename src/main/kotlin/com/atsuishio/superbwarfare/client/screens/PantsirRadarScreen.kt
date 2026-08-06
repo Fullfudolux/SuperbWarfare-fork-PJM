@@ -4,6 +4,7 @@ import com.atsuishio.superbwarfare.client.ClientSyncedEntityHandler
 import com.atsuishio.superbwarfare.data.vehicle.subdata.VehicleType
 import com.atsuishio.superbwarfare.entity.vehicle.PantsirEntity
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
+import com.atsuishio.superbwarfare.event.ClientEventHandler
 import com.atsuishio.superbwarfare.init.ModKeyMappings
 import com.atsuishio.superbwarfare.init.ModTags
 import com.atsuishio.superbwarfare.tools.SeekTool
@@ -40,6 +41,13 @@ import kotlin.math.sqrt
 class PantsirRadarScreen(private val vehicle: PantsirEntity) :
     Screen(Component.translatable("container.superbwarfare.pantsir_radar")) {
 
+    // Форма отметки. По подтипам не дробим: все ракеты, снаряды и бомбы —
+    // одна иконка.
+    private enum class ContactKind { AIRPLANE, HELICOPTER, MISSILE }
+
+    // Насколько клетка на пути луча мешает наблюдению.
+    private enum class RadarCover { CLEAR, SOFT, SOLID }
+
     private class Blip(
         // Derived from the entity's UUID, not its network id — network ids
         // are handed out sequentially per session, so two of the same
@@ -48,16 +56,27 @@ class PantsirRadarScreen(private val vehicle: PantsirEntity) :
         // of a real contact identifier.
         val displayId: Int,
         val typeName: String,
+        val kind: ContactKind,
         var bearing: Float,
         var range: Double,
         var height: Double,
         var friendly: Boolean,
         var lastHitTick: Int,
         var tracked: Boolean,
+        // Нужен, чтобы отметку можно было взять на сопровождение прямо с
+        // экрана — клик по ней передаёт эту цель в ClientEventHandler.
+        var entity: net.minecraft.world.entity.Entity,
     )
 
     private val blips = LinkedHashMap<Int, Blip>()
     private var ticks = 0
+
+    // Верх шкалы высот подстраивается под самый высокий контакт (с шагом в
+    // AH_HEIGHT_STEP), а не сидит на фиксированных 100 блоках: крылатые и
+    // баллистические ракеты идут на высотах в сотни блоков и на прежней шкале
+    // все до единой упирались в верхнюю кромку индикатора, теряя всю разницу
+    // по высоте между собой.
+    private var ahMaxHeight = AH_MIN_SCALE
 
     override fun isPauseScreen() = false
 
@@ -102,8 +121,20 @@ class PantsirRadarScreen(private val vehicle: PantsirEntity) :
         val radarPos = vehicle.radarWorldPos()
         val seen = HashSet<Int>()
 
-        val nearbyVehicles = level.getEntitiesOfClass(VehicleEntity::class.java, vehicle.boundingBox.inflate(RANGE))
-        val syncedVehicles = ClientSyncedEntityHandler.getSyncedEntities(level).filterIsInstance<VehicleEntity>()
+        val nearbyVehicles = level.getEntitiesOfClass(VehicleEntity::class.java, vehicle.boundingBox.inflate(LOCAL_QUERY_RANGE))
+        // Загоризонтные контакты (сервер шлёт их через EntitySyncMessage из
+        // VehicleEntity.vehicleRadar) — БЕЗ фильтра по VehicleEntity: ракеты
+        // приходят тем же каналом, и раньше именно этот filterIsInstance
+        // выбрасывал их, из-за чего за пределами прогруза чанков радар видел
+        // только технику. Отдельно запоминаем их id: у таких целей луч видимости
+        // уже проверен на сервере от самой антенны, а клиентский raycast по
+        // невыгруженным чанкам всё равно ничего осмысленного не даст.
+        // Призраки, чей настоящий entity уже прогружен, отбрасываются: их
+        // координаты — снимок на момент последнего пакета, и захват, севший на
+        // такую копию, тянул бы рамку по устаревшей позиции.
+        val syncedContacts = ClientSyncedEntityHandler.getSyncedEntities(level)
+            .filter { level.getEntity(it.id) == null }
+        val syncedIds = syncedContacts.mapTo(HashSet()) { it.id }
         // In-flight missiles/rockets show up as their own contacts too, not
         // just aircraft/helicopters — a real search radar tracks incoming
         // ordnance as threats in their own right. Not just AA_MISSILE (this
@@ -113,10 +144,10 @@ class PantsirRadarScreen(private val vehicle: PantsirEntity) :
         // show up, not only the AA-specific ones.
         val nearbyMissiles = level.getEntitiesOfClass(
             net.minecraft.world.entity.Entity::class.java,
-            vehicle.boundingBox.inflate(RANGE)
+            vehicle.boundingBox.inflate(LOCAL_QUERY_RANGE)
         ) { isMissileLike(it) }
 
-        for (candidate in nearbyVehicles.asSequence() + syncedVehicles.asSequence() + nearbyMissiles.asSequence()) {
+        for (candidate in nearbyVehicles.asSequence() + nearbyMissiles.asSequence() + syncedContacts.asSequence()) {
             if (candidate === vehicle) continue
             val isMissile = isMissileLike(candidate)
             val isAircraft = candidate is VehicleEntity &&
@@ -144,8 +175,9 @@ class PantsirRadarScreen(private val vehicle: PantsirEntity) :
             if (range > RANGE) continue
 
             // Solid terrain/obstacles block the radar return — fences,
-            // leaves and other non-full blocks don't.
-            if (!hasLineOfSight(level, radarPos, candidate.boundingBox.center)) continue
+            // leaves and other non-full blocks don't. Загоризонтные контакты
+            // пропускаем: их видимость сервер уже проверил.
+            if (candidate.id !in syncedIds && !hasLineOfSight(level, radarPos, candidate.boundingBox.center)) continue
 
             seen.add(candidate.id)
             val bearing = Mth.wrapDegrees(Math.toDegrees(kotlin.math.atan2(-dx, dz)).toFloat())
@@ -161,6 +193,12 @@ class PantsirRadarScreen(private val vehicle: PantsirEntity) :
                 SeekTool.IS_FRIENDLY.test(player, candidate)
             }
 
+            val kind = when {
+                isMissile -> ContactKind.MISSILE
+                (candidate as? VehicleEntity)?.vehicleType == VehicleType.HELICOPTER -> ContactKind.HELICOPTER
+                else -> ContactKind.AIRPLANE
+            }
+
             val existing = blips[candidate.id]
             if (existing != null) {
                 existing.bearing = bearing
@@ -168,10 +206,11 @@ class PantsirRadarScreen(private val vehicle: PantsirEntity) :
                 existing.height = height
                 existing.friendly = friendly
                 existing.tracked = true
+                existing.entity = candidate
             } else {
                 val displayId = (candidate.uuid.hashCode() and 0x7FFFFFFF) % 100
                 val typeName = if (isMissile) "РАКЕТА" else (candidate.displayName?.string ?: candidate.type.description.string)
-                blips[candidate.id] = Blip(displayId, typeName, bearing, range, height, friendly, -1, true)
+                blips[candidate.id] = Blip(displayId, typeName, kind, bearing, range, height, friendly, -1, true, candidate)
             }
         }
 
@@ -190,19 +229,23 @@ class PantsirRadarScreen(private val vehicle: PantsirEntity) :
         }
 
         blips.values.removeIf { !it.tracked && ticks - it.lastHitTick > FADE_TICKS }
+
+        val highest = blips.values.maxOfOrNull { it.height } ?: 0.0
+        ahMaxHeight = (ceil(highest / AH_HEIGHT_STEP) * AH_HEIGHT_STEP).coerceAtLeast(AH_MIN_SCALE)
     }
 
-    private fun isMissileLike(entity: net.minecraft.world.entity.Entity): Boolean {
-        val type = entity.type
-        return type.`is`(ModTags.EntityTypes.AA_MISSILE) ||
-                type.`is`(ModTags.EntityTypes.AT_ROCKET) ||
-                type.`is`(ModTags.EntityTypes.DESTROYABLE_PROJECTILE)
-    }
+    // Один тег вместо перечисления трёх: RADAR_CONTACT включает в себя
+    // AA_MISSILE/AT_ROCKET/DESTROYABLE_PROJECTILE и дополнительно — боеприпасы
+    // сторонних модов (pjmbasemod:strategic_missile), которые сами по себе ни
+    // в один из этих трёх тегов не входят.
+    private fun isMissileLike(entity: net.minecraft.world.entity.Entity): Boolean =
+        entity.type.`is`(ModTags.EntityTypes.RADAR_CONTACT)
 
     // Steps along the segment in ~1-block increments, checking each
     // distinct block for obstruction. A real full-cube obstacle (terrain,
     // walls, a hull) blocks the return; fences, leaves and other non-full
-    // blocks are transparent to it.
+    // blocks are transparent one at a time, but they accumulate — see
+    // SOFT_COVER_LIMIT.
     private fun hasLineOfSight(level: Level, from: Vec3, to: Vec3): Boolean {
         val diff = to.subtract(from)
         val dist = diff.length()
@@ -212,26 +255,101 @@ class PantsirRadarScreen(private val vehicle: PantsirEntity) :
         val step = diff.scale(1.0 / steps)
         var pos = from
         var lastPos: BlockPos? = null
+        var softCover = 0
         for (i in 1 until steps) {
             pos = pos.add(step)
             val blockPos = BlockPos.containing(pos)
             if (blockPos == lastPos) continue
             lastPos = blockPos
-            if (isObstacleBlock(level, blockPos)) return false
+
+            when (coverAt(level, blockPos)) {
+                RadarCover.SOLID -> return false
+                RadarCover.SOFT -> {
+                    // Каждая такая клетка сама по себе прозрачна, но не
+                    // бесплатна: набралось SOFT_COVER_LIMIT — луч считается
+                    // погашенным. Иначе достаточно было выстроить цель за
+                    // лесополосой любой глубины, и радар всё равно видел её
+                    // насквозь, будто там чистое поле.
+                    softCover++
+                    if (softCover >= SOFT_COVER_LIMIT) return false
+                }
+
+                RadarCover.CLEAR -> {}
+            }
         }
         return true
     }
 
-    private fun isObstacleBlock(level: Level, pos: BlockPos): Boolean {
+    /**
+     * Насколько клетка мешает лучу: SOLID гасит сразу, SOFT копится в счётчике
+     * (см. [SOFT_COVER_LIMIT]), CLEAR не мешает вовсе.
+     */
+    private fun coverAt(level: Level, pos: BlockPos): RadarCover {
         val state = level.getBlockState(pos)
-        if (state.isAir) return false
-        if (state.`is`(BlockTags.LEAVES)) return false
-        if (state.`is`(BlockTags.FENCES)) return false
-        if (state.`is`(BlockTags.FENCE_GATES)) return false
-        if (state.`is`(BlockTags.WALLS)) return false
+        if (state.isAir) return RadarCover.CLEAR
+
+        // Листва, заборы, стенки: по отдельности сквозь них видно.
+        if (state.`is`(BlockTags.LEAVES) ||
+            state.`is`(BlockTags.FENCES) ||
+            state.`is`(BlockTags.FENCE_GATES) ||
+            state.`is`(BlockTags.WALLS)
+        ) {
+            return RadarCover.SOFT
+        }
 
         val shape = state.getCollisionShape(level, pos)
-        return !shape.isEmpty && Block.isShapeFullBlock(shape)
+        // Трава, цветы, факелы и прочее без коллизии для луча не существуют —
+        // в счётчик они не идут, иначе густой луг «закрывал» бы небо.
+        if (shape.isEmpty) return RadarCover.CLEAR
+        return if (Block.isShapeFullBlock(shape)) RadarCover.SOLID else RadarCover.SOFT
+    }
+
+    private fun icoRadius(): Int = (((this.height - 80) / 2).coerceIn(150, 420) / 1.1f).toInt()
+
+    // Экранная позиция отметки на круговом индикаторе — одна и та же формула
+    // для отрисовки и для попадания курсором, чтобы кликалось ровно туда, куда
+    // нарисовано.
+    private fun blipScreenPos(blip: Blip, cx: Int, cy: Int, half: Int): Pair<Int, Int> {
+        val rad = Math.toRadians(relativeBearing(blip.bearing).toDouble())
+        val fraction = (blip.range / RANGE).coerceIn(0.0, 1.0)
+        return Pair(
+            cx + (sin(rad) * fraction * half).toInt(),
+            cy - (cos(rad) * fraction * half).toInt()
+        )
+    }
+
+    /**
+     * Захват прямо с экрана радара: клик по вражеской отметке передаёт цель в
+     * систему наведения. Обычный захват требует навести ствол на цель в пределах
+     * SeekAngle — на дальностях в сотни блоков цель не видно даже как точку,
+     * поэтому единственный практичный способ взять её на сопровождение — выбрать
+     * контакт на индикаторе, а дальше башня доворачивается сама.
+     */
+    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        if (button != 0) return super.mouseClicked(mouseX, mouseY, button)
+
+        val player = this.minecraft?.player ?: return false
+        val cx = this.width / 2
+        val cy = this.height / 2
+        val half = icoRadius()
+
+        var best: Blip? = null
+        var bestDistSq = CLICK_RADIUS * CLICK_RADIUS
+        for (blip in blips.values) {
+            if (blip.friendly || blip.lastHitTick < 0) continue
+            val (px, py) = blipScreenPos(blip, cx, cy, half)
+            val dx = mouseX - px
+            val dy = mouseY - py
+            val distSq = dx * dx + dy * dy
+            if (distSq <= bestDistSq) {
+                bestDistSq = distSq
+                best = blip
+            }
+        }
+
+        val target = best?.entity ?: return super.mouseClicked(mouseX, mouseY, button)
+        ClientEventHandler.lockTargetFromRadar(player, target)
+        return true
     }
 
     override fun render(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float) {
@@ -244,7 +362,7 @@ class PantsirRadarScreen(private val vehicle: PantsirEntity) :
         // left.
         val centerX = this.width / 2
         val centerY = this.height / 2
-        val half = (((this.height - 80) / 2).coerceIn(150, 420) / 1.1f).toInt()
+        val half = icoRadius()
 
         // Background disc's edge now matches the outer ring exactly (was
         // half+10, spilling a visible halo past the actual grid).
@@ -351,17 +469,23 @@ class PantsirRadarScreen(private val vehicle: PantsirEntity) :
             val alpha = ((1f - (ticks - blip.lastHitTick).toFloat() / FADE_TICKS).coerceIn(0f, 1f) * 255).toInt()
             if (alpha <= 0 || blip.lastHitTick < 0) continue
 
-            val rad = Math.toRadians(relativeBearing(blip.bearing).toDouble())
-            val fraction = (blip.range / RANGE).coerceIn(0.0, 1.0)
-            val px = cx + (sin(rad) * fraction * half).toInt()
-            val py = cy - (cos(rad) * fraction * half).toInt()
+            val (px, py) = blipScreenPos(blip, cx, cy, half)
 
             val dotColor = (alpha shl 24) or iffColor(blip.friendly)
-            guiGraphics.fill(px - 2, py - 2, px + 2, py + 2, dotColor)
+            drawContactIcon(guiGraphics, px, py, blip.kind, dotColor)
+            // Взятая на сопровождение отметка обводится рамкой — чтобы было
+            // видно, какой именно контакт сейчас ведёт ЗРК.
+            // Сравнение по сетевому id, а не по ссылке: у загоризонтной копии
+            // и настоящей цели id одинаковый, а какая из них сейчас лежит в
+            // захвате — зависит от того, прогружена ли цель.
+            val lockedId = (ClientEventHandler.lockingEntityVehicle ?: ClientEventHandler.seekingEntityVehicle)?.id
+            if (lockedId != null && lockedId == blip.entity.id) {
+                drawSelectionBox(guiGraphics, px, py, (alpha shl 24) or 0xFFFFFF)
+            }
             // Same short numeric ID the Азимут-Высота indicator uses, not
             // the entity's full display name — matches a real search
             // radar's target-number readout instead of naming contacts.
-            guiGraphics.drawCenteredString(this.font, blip.displayId.toString(), px, py - 10, (alpha shl 24) or 0xFFFFFF)
+            guiGraphics.drawCenteredString(this.font, blip.displayId.toString(), px, py - 14, (alpha shl 24) or 0xFFFFFF)
         }
     }
 
@@ -395,7 +519,7 @@ class PantsirRadarScreen(private val vehicle: PantsirEntity) :
         for (i in 0..RING_COUNT) {
             val y = bottom - (i.toFloat() / RING_COUNT * height).toInt()
             guiGraphics.fill(left, y, right, y + 1, gridColor)
-            val label = ((i.toFloat() / RING_COUNT) * AH_MAX_HEIGHT).toInt().toString()
+            val label = ((i.toFloat() / RING_COUNT) * ahMaxHeight).toInt().toString()
             guiGraphics.drawString(this.font, label, left - this.font.width(label) - 3, y - this.font.lineHeight / 2, textColor)
         }
         guiGraphics.drawString(this.font, "m", left - 12, top - 10, textColor)
@@ -407,12 +531,53 @@ class PantsirRadarScreen(private val vehicle: PantsirEntity) :
             val relBearing = relativeBearing(blip.bearing)
             val azNorm = if (relBearing < 0f) relBearing + 360f else relBearing
             val px = left + (azNorm / 360f * width).toInt()
-            val heightFraction = (blip.height / AH_MAX_HEIGHT).coerceIn(0.0, 1.0)
+            val heightFraction = (blip.height / ahMaxHeight).coerceIn(0.0, 1.0)
             val py = bottom - (heightFraction * height).toInt()
 
             val dotColor = (alpha shl 24) or iffColor(blip.friendly)
-            fillTriangleUp(guiGraphics, px, py - 3, 3, dotColor)
-            guiGraphics.drawString(this.font, blip.displayId.toString(), px + 5, py - 4, (alpha shl 24) or 0xFFFFFF)
+            drawContactIcon(guiGraphics, px, py, blip.kind, dotColor)
+            guiGraphics.drawString(this.font, blip.displayId.toString(), px + 7, py - 4, (alpha shl 24) or 0xFFFFFF)
+        }
+    }
+
+    // Отметка контакта. Иконка зависит только от рода цели, без дробления на
+    // подтипы: самолёт — треугольник, вертолёт — «винт» (крест с втулкой),
+    // ракета (любая, включая снаряды и бомбы) — ромб. Все три рисуются
+    // вписанными в один и тот же квадрат ICON_HALF, поэтому одинаково читаются
+    // и на круговом ИКО, и на индикаторе азимут-высота.
+    private fun drawContactIcon(guiGraphics: GuiGraphics, cx: Int, cy: Int, kind: ContactKind, color: Int) {
+        when (kind) {
+            ContactKind.AIRPLANE -> fillTriangleUp(guiGraphics, cx, cy, ICON_HALF, color)
+            ContactKind.MISSILE -> fillDiamond(guiGraphics, cx, cy, ICON_HALF, color)
+            ContactKind.HELICOPTER -> {
+                for (i in -ICON_HALF..ICON_HALF) {
+                    guiGraphics.fill(cx + i, cy + i, cx + i + 1, cy + i + 1, color)
+                    guiGraphics.fill(cx + i, cy - i, cx + i + 1, cy - i + 1, color)
+                }
+                guiGraphics.fill(cx - 1, cy - 1, cx + 2, cy + 2, color)
+            }
+        }
+    }
+
+    // Ромб: ширина строки линейно убывает от центра к вершинам.
+    private fun fillDiamond(guiGraphics: GuiGraphics, cx: Int, cy: Int, halfSize: Int, color: Int) {
+        for (dy in -halfSize..halfSize) {
+            val rowWidth = halfSize - abs(dy)
+            guiGraphics.fill(cx - rowWidth, cy + dy, cx + rowWidth + 1, cy + dy + 1, color)
+        }
+    }
+
+    // Уголки вокруг отметки, взятой на сопровождение.
+    private fun drawSelectionBox(guiGraphics: GuiGraphics, cx: Int, cy: Int, color: Int) {
+        val r = ICON_HALF + 3
+        val len = 3
+        for (sx in intArrayOf(-1, 1)) {
+            for (sy in intArrayOf(-1, 1)) {
+                val x = cx + sx * r
+                val y = cy + sy * r
+                guiGraphics.fill(minOf(x, x - sx * len), y, maxOf(x, x - sx * len) + 1, y + 1, color)
+                guiGraphics.fill(x, minOf(y, y - sy * len), x + 1, maxOf(y, y - sy * len) + 1, color)
+            }
         }
     }
 
@@ -496,12 +661,34 @@ class PantsirRadarScreen(private val vehicle: PantsirEntity) :
     }
 
     companion object {
-        private const val RANGE = 500.0
+        // Совпадает с SeekRange ракеты 57Э6 в pantsir_s1.json: ровно на этой
+        // дальности сервер и отдаёт загоризонтные контакты, так что показывать
+        // меньше — терять уже полученные цели
+        private const val RANGE = 1680.0
+
+        // Радиус выборки сущностей ИЗ САМОГО клиентского мира. Намеренно
+        // меньше RANGE: запрос по AABB перебирает секции в коробке, и на
+        // 1400 блоках это сотни тысяч проверок каждый тик, дважды. Смысла в
+        // них нет — дальше зоны прогруза сущностей на клиенте не бывает в
+        // принципе, всё остальное приходит готовым списком из радарной
+        // синхронизации. Отсечение по настоящей дальности (RANGE) делается
+        // ниже, уже по расстоянию.
+        private const val LOCAL_QUERY_RANGE = 512.0
         private const val MIN_TARGET_HEIGHT = 10.0
-        private const val AH_MAX_HEIGHT = 100.0
+        private const val AH_MIN_SCALE = 100.0
+        private const val AH_HEIGHT_STEP = 100.0
         private const val RING_COUNT = 4
+        private const val ICON_HALF = 4
+
+        // Сколько «прозрачных» клеток луч переживает. Одно дерево или забор
+        // радару не помеха, семь подряд — уже сплошная преграда.
+        private const val SOFT_COVER_LIMIT = 7
+        private const val CLICK_RADIUS = 12.0
         private const val SWEEP_HALF_WIDTH = 6f
-        private const val FADE_TICKS = 120
+        // Один оборот антенны при PantsirEntity.RADAR_SPIN_SPEED = 4.5 град/тик.
+        // Отметка гаснет ровно за оборот, поэтому эти два числа связаны: если
+        // менять скорость вращения, менять и здесь.
+        private const val FADE_TICKS = 80
         // Below this the dot is already imperceptibly dim (out of 255) —
         // used to hide the target-list row in step with it.
         private const val ALPHA_VISIBLE_THRESHOLD = 30

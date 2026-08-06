@@ -11,6 +11,7 @@ import net.minecraft.network.syncher.SynchedEntityData
 import net.minecraft.util.Mth
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
+import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
@@ -80,12 +81,36 @@ class Cv90Entity(type: EntityType<Cv90Entity>, world: Level) : VehicleEntity(typ
         rampProgress = Mth.lerp(0.07f, rampProgress, if (rampOpen) 1f else 0f)
     }
 
+    // ── Пересадка ─────────────────────────────────────────────────────────────
+    /**
+     * Экипаж и десант — два изолированных отсека, между собой не сообщающиеся.
+     * Механик-водитель может пересесть за пушку и обратно (места 0 и 1 — одна
+     * боевая рубка), но не в десантное отделение; десант ходит только между
+     * своими местами и за органы управления машиной не садится. Попасть в
+     * «чужой» отсек можно лишь честно: выйти и зайти через нужную дверь — через
+     * аппарель в десант, через люки экипажа в рубку (см. interactAt).
+     *
+     * Та же схема, что у [KamazEntity] с его кабиной и кузовом.
+     */
+    override fun changeSeat(entity: Entity, index: Int): Boolean {
+        val currentSeat = getSeatIndex(entity)
+        if (currentSeat >= 0 && isTroopSeat(currentSeat) != isTroopSeat(index)) return false
+        return super.changeSeat(entity, index)
+    }
+
+    private fun isTroopSeat(index: Int): Boolean = index >= DISMOUNT_FIRST_SEAT
+
     // ── Boarding ──────────────────────────────────────────────────────────────
     override fun interactAt(player: Player, pVec: Vec3, hand: InteractionHand): InteractionResult {
         if (hand != InteractionHand.MAIN_HAND) return super.interactAt(player, pVec, hand)
         // Let shift-click fall through to interact() for the crowbar and menus.
         if (player.isShiftKeyDown) return InteractionResult.PASS
         if (this.passengers.contains(player)) return InteractionResult.PASS
+
+        // Посадкой распоряжается только сервер — разбор в KamazEntity.interactAt.
+        // Здесь на стороны расходится и попадание по аппарели (её OBB едет
+        // вместе с анимацией rampProgress), и выбор свободного места.
+        if (this.level().isClientSide) return InteractionResult.CONSUME
 
         if (isLookingAtRamp(player)) {
             // The ramp is raised and lowered by the driver on the ramp key, not

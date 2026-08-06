@@ -202,6 +202,22 @@ object ModTags {
         @JvmField
         val SEEK_BLACKLIST = modEntityTag("seek_blacklist")
 
+        // Всё, что радар обязан видеть как самостоятельный контакт и что ЗРК
+        // разрешено брать на сопровождение, даже если это не VehicleEntity и
+        // не носитель пассажиров: собственные ракеты мода плюс — через
+        // addOptional — боеприпасы сторонних модов (pjmbasemod и т.п.).
+        // Именно этот тег, а не жёсткая проверка класса, решает, попадёт ли
+        // цель в загоризонтную синхронизацию (VehicleEntity.vehicleRadar) и
+        // в heartbeat захвата.
+        @JvmField
+        val RADAR_CONTACT = modEntityTag("radar_contact")
+
+        // Малоразмерные дроны (Ланцет, Mavic, FPV). Захват по ним разрешён
+        // только пулемётам: ЗУР по такой цели — стрельба из пушки по воробьям,
+        // да и головке наведения там не за что зацепиться.
+        @JvmField
+        val SMALL_DRONE = modEntityTag("small_drone")
+
         @JvmField
         val BIOGAS_GENERATOR_WHITELIST = modEntityTag("biogas_generator_whitelist")
     }

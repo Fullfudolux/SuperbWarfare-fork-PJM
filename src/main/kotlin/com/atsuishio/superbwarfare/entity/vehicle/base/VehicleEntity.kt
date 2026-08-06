@@ -2346,10 +2346,17 @@ open class VehicleEntity(pEntityType: EntityType<*>, pLevel: Level) : Entity(pEn
             val hostileList = level.allEntities
                 .asSequence()
                 .mapNotNull {
-                    val flag = (it is VehicleEntity || VehicleConfig.inScanList(it.type))
+                    // RADAR_CONTACT — ракеты (свои и из сторонних модов): у них
+                    // нет ни пассажиров, ни VehicleEntity, поэтому без тега они
+                    // не попадали в загоризонтную выдачу вообще и существовали
+                    // для прицела только внутри прогруза чанков.
+                    val isRadarContact = it.type.`is`(ModTags.EntityTypes.RADAR_CONTACT)
+                    val flag = (it is VehicleEntity || isRadarContact || VehicleConfig.inScanList(it.type))
                             && SeekTool.NOT_IN_SMOKE.test(it)
                             && it.distanceToSqr(this) <= seekRange * seekRange
-                            && SeekTool.IN_HEIGHT_RANGE.test(it, minTargetHeight, maxTargetHeight)
+                            // Летящий боеприпас не обязан проходить нижнюю
+                            // границу высоты цели: он угроза на любой высоте.
+                            && (isRadarContact || SeekTool.IN_HEIGHT_RANGE.test(it, minTargetHeight, maxTargetHeight))
                             && !SeekTool.IS_FRIENDLY.test(player, it)
                             && VectorTool.checkNoClip(eyePosition, it.eyePosition, level())
                     if (!flag) return@mapNotNull null

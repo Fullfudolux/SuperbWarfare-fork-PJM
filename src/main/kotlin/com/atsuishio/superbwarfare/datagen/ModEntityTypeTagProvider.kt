@@ -73,6 +73,22 @@ class ModEntityTypeTagProvider(
             ModEntities.RU_9M100_MISSILE.get()
         )
 
+        // Контакты радара: свои ракеты (через уже существующие теги) плюс
+        // боеприпасы сторонних модов — addOptional, чтобы тег грузился и без
+        // этих модов.
+        this.tag(ModTags.EntityTypes.RADAR_CONTACT)
+            .addTag(ModTags.EntityTypes.AA_MISSILE)
+            .addTag(ModTags.EntityTypes.AT_ROCKET)
+            .addTag(ModTags.EntityTypes.DESTROYABLE_PROJECTILE)
+            .addOptional(ResourceLocation.fromNamespaceAndPath("pjmbasemod", "strategic_missile"))
+            .addOptional(ResourceLocation.fromNamespaceAndPath("wrbdrones", "shahed136"))
+
+        this.tag(ModTags.EntityTypes.SMALL_DRONE)
+            .addOptional(ResourceLocation.fromNamespaceAndPath("wrbdrones", "zala_lancet"))
+            .addOptional(ResourceLocation.fromNamespaceAndPath("wrbdrones", "fpv_drone"))
+            .addOptional(ResourceLocation.fromNamespaceAndPath("wrbdrones", "mavic_drone_with_drop"))
+            .addOptional(ResourceLocation.fromNamespaceAndPath("wrbdrones", "mavic_drone_no_drop"))
+
         this.tag(ModTags.EntityTypes.SEEK_BLACKLIST).add(
             EntityType.ITEM,
             EntityType.ARMOR_STAND,

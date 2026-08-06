@@ -53,12 +53,45 @@ object ClientSyncedEntityHandler {
             }
 
             val pos = syncedEntity.pos
-            entity.xo = pos.x
-            entity.yo = pos.y
-            entity.zo = pos.z
+            // xo/yo/zo — позиция ПРОШЛОГО тика, из неё рендер интерполирует
+            // текущий кадр. Раньше сюда клали новую позицию, то есть призрак
+            // телепортировался: между пакетами (sync_entity_interval, по
+            // умолчанию 10 тиков) он стоял на месте, а потом прыгал. Для
+            // быстрой цели это ровно та самая рамка захвата, которая замирает
+            // ПОЗАДИ цели. Теперь оставляем реальную предыдущую позицию, и
+            // поправка от сервера доезжает плавно за один тик.
+            if (existedEntity != null) {
+                entity.xo = entity.x
+                entity.yo = entity.y
+                entity.zo = entity.z
+            } else {
+                entity.xo = pos.x
+                entity.yo = pos.y
+                entity.zo = pos.z
+            }
             entity.setPos(syncedEntity.pos)
             entity.deltaMovement = syncedEntity.motion
             SYNCED_ENTITIES[key] = ClientSyncedEntity(entity, time)
+        }
+    }
+
+    /**
+     * Экстраполяция призраков между пакетами синхронизации. Сами они не тикают
+     * (в мир не добавлены), поэтому без этого их позиция обновляется только
+     * раз в sync_entity_interval — цель едет, а отметка на радаре и рамка
+     * захвата стоят. Ведём их по последней известной скорости; следующий пакет
+     * работает как коррекция счисления.
+     */
+    fun advanceGhosts() {
+        for (synced in SYNCED_ENTITIES.values) {
+            val entity = synced.entity
+            entity.xo = entity.x
+            entity.yo = entity.y
+            entity.zo = entity.z
+
+            val motion = entity.deltaMovement
+            if (motion.lengthSqr() < 1.0E-6) continue
+            entity.setPos(entity.x + motion.x, entity.y + motion.y, entity.z + motion.z)
         }
     }
 

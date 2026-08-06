@@ -4,6 +4,9 @@ import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
 import com.atsuishio.superbwarfare.entity.vehicle.utils.VehicleWeaponUtils
 import com.atsuishio.superbwarfare.tools.EntityFindUtil
 import com.atsuishio.superbwarfare.tools.VectorTool
+import com.atsuishio.superbwarfare.tools.deltaFrameTime
+import com.atsuishio.superbwarfare.tools.mc
+import com.atsuishio.superbwarfare.tools.angleTo
 import com.mojang.math.Axis
 import net.minecraft.network.syncher.EntityDataAccessor
 import net.minecraft.network.syncher.EntityDataSerializers
@@ -255,6 +258,10 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
     var ladderProgress = 0f; var ladderProgressO = 0f
     var radarSpin = 0f
 
+    // Состояние сглаживания камеры наводчика, только клиентское.
+    private var smoothedCameraDirection: Vec3? = null
+    private var smoothedCameraTarget: String? = null
+
     // Extra pitch (position-space sign convention: negative = up, same as
     // turretXRot) added ON TOP of the current turretXRot/barrel pitch, ONLY
     // for the missile rail — the gun's own pitch/reticle never moves for
@@ -409,6 +416,80 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
     // legs are fully, visibly stowed before driving unlocks.
     override fun engineReady(): Boolean = super.engineReady() && turretHome && !jacksDeployed && jacksProgress <= 0f
 
+    /**
+     * Довёрнута ли пусковая на захваченную цель настолько, чтобы ракета сошла
+     * в её сторону. Без захвата (свободный пуск по стволу) ограничения нет —
+     * там куда ствол, туда и ракета, это и есть намерение стрелка.
+     */
+    private fun missileLauncherOnTarget(): Boolean {
+        val uuid = trackedTargetUUID ?: return true
+        val target = EntityFindUtil.findEntity(level(), uuid) ?: return true
+        val living = pendingMissileLiving ?: return true
+        val toTarget = getShootPos(living, 1f).vectorTo(target.boundingBox.center)
+        return getBarrelVector(1f).angleTo(toTarget) <= MISSILE_LAUNCH_CONE_DEGREES
+    }
+
+    /**
+     * Куда смотрит камера наводчика. В данных места задано `Direction: Barrel`,
+     * то есть камера ехала строго по стволу — а ствол при захвате наводится с
+     * УПРЕЖДЕНИЕМ, в точку встречи, а не в цель. Отсюда и ощущение, что камера
+     * ведёт куда-то мимо, как маркер упреждения у пушки. Плюс ствол
+     * доворачивается пошагово, с ограничением угловой скорости, и на каждом
+     * обновлении решения дёргается — вместе с ним дёргалась и картинка.
+     *
+     * Пока цель на сопровождении, смотрим на саму цель. Направление считается
+     * покадрово, с partialTicks, поэтому движение выходит плавным, а не
+     * ступенчатым по тикам.
+     */
+    override fun cameraDirection(entity: Entity, partialTicks: Float): Vec3 {
+        val uuid = trackedTargetUUID
+        if (uuid != null && getSeatIndex(entity) == 2) {
+            val target = EntityFindUtil.findEntity(level(), uuid)
+            if (target != null) {
+                val from = getCameraPos(entity, partialTicks)
+                val to = VectorTool.lerpGetEntityBoundingBoxCenter(target, partialTicks)
+                val direction = to.subtract(from)
+                if (direction.lengthSqr() > 1.0E-6) return smoothCameraDirection(uuid, direction.normalize())
+            }
+        }
+        smoothedCameraTarget = null
+        return super.cameraDirection(entity, partialTicks)
+    }
+
+    /**
+     * Сглаживание хода камеры. Позиция цели на клиенте меняется рывками, и
+     * ничего с этим не сделать: у прогруженной цели её присылает трекинг
+     * порциями, у загоризонтной — пакет радарной синхронизации раз в несколько
+     * тиков, а между ними позиция экстраполируется по скорости и на очередном
+     * пакете скачком поправляется. Для быстрой цели вроде Искандера, идущей по
+     * дуге, экстраполяция по прямой за эти тики успевает набрать ощутимую
+     * ошибку — вот эту поправку и видно как подёргивание.
+     *
+     * Гасим её сервоприводом: камера идёт не строго в цель, а подтягивается к
+     * ней с постоянной скоростью. Настоящая оптическая станция ведёт цель ровно
+     * так же — приводом с конечной скоростью, а не мгновенным перебросом.
+     */
+    private fun smoothCameraDirection(targetUuid: String, desired: Vec3): Vec3 {
+        val previous = smoothedCameraDirection
+        // Смена цели или первый кадр сопровождения — встаём на неё сразу, без
+        // проезда через полнеба.
+        if (previous == null || smoothedCameraTarget != targetUuid) {
+            smoothedCameraDirection = desired
+            smoothedCameraTarget = targetUuid
+            return desired
+        }
+
+        // Доля за кадр, приведённая к времени кадра: на 20 к/с шаг крупнее, на
+        // 120 — мельче, скорость наведения от частоты кадров не зависит.
+        val step = (CAMERA_SMOOTHING * mc.deltaFrameTime).coerceIn(0f, 1f).toDouble()
+        val smoothed = previous.add(desired.subtract(previous).scale(step))
+        if (smoothed.lengthSqr() < 1.0E-6) return desired
+
+        val result = smoothed.normalize()
+        smoothedCameraDirection = result
+        return result
+    }
+
     // Absolute world-space compass bearing the radar dish is CURRENTLY
     // pointing — the turret's own aim direction (hull yaw + turretYRot,
     // approximated via the turret transform's own local +Z axis, ignoring
@@ -525,6 +606,12 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
             // Shift+click is never door/board — let it fall through to interact()
             // (crowbar pack-away, menu, name tag, key, etc.), same as every other vehicle.
             if (player.isShiftKeyDown) return InteractionResult.PASS
+
+            // Двери, трап и посадка — только сервер, см. подробный разбор в
+            // KamazEntity.interactAt: клиент выполнял этот же код для
+            // предсказания, и на открывающейся створке его решение расходилось
+            // с серверным — игрок оказывался севшим только на своём экране.
+            if (this.level().isClientSide) return InteractionResult.CONSUME
 
             val hitObb = com.atsuishio.superbwarfare.tools.OBB.getLookingObb(player, 6.0)
             if (hitObb != null) {
@@ -658,8 +745,20 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
         // Hard timeout (1.5s) as a safety net on top of the frozen target —
         // fires anyway once it's close enough OR it's simply taken too
         // long, so a wind-up can never hang indefinitely.
+        // Пуск разрешён, когда направляющая поднялась И пусковая довёрнута на
+        // цель. Второе условие появилось вместе с захватом по отметке радара:
+        // захват теперь можно взять с любого положения ствола, хоть по цели за
+        // кормой, и башня после этого доворачивается несколько секунд. Раньше
+        // выстрел в этот момент уходил ТУДА, КУДА СТВОЛ СМОТРИТ СЕЙЧАС — то
+        // есть в сторону от цели и, поскольку точка схода задана относительно
+        // башни, ещё и с той трубы, которая в этот момент оказалась не с той
+        // стороны. Дальше ракета доворачивала на цель, но крюк получался
+        // огромный. Таймаут ниже остался страховкой: если довернуть физически
+        // не выходит (упор по углам, цель за спиной у ограниченного сектора),
+        // пуск всё равно состоится, как и раньше.
+        val railReady = missileExtraPitch <= missileTargetExtra + 0.3f
         if (missileWindupActive && !level().isClientSide &&
-            (missileExtraPitch <= missileTargetExtra + 0.3f || missileWindupTicks > 30)
+            ((railReady && missileLauncherOnTarget()) || missileWindupTicks > MISSILE_WINDUP_TIMEOUT_TICKS)
         ) {
             val living = pendingMissileLiving
             val uuid = pendingMissileUuid
@@ -686,13 +785,13 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
                 turretYRot += Mth.clamp(yawDiff, -turretTurnYSpeed, turretTurnYSpeed)
                 turretXRot -= Mth.clamp(turretXRot, -turretTurnXSpeed, turretTurnXSpeed)
             } else if (radarSpin != 0f) {
-                radarSpin += 3f
+                radarSpin += RADAR_SPIN_SPEED
                 if (radarSpin >= 360f) radarSpin = 0f
             } else {
                 jacksDeployed = false
             }
         } else if (jacksProgress > 0.95f && jacksDeployed) {
-            radarSpin += 3f
+            radarSpin += RADAR_SPIN_SPEED
             if (radarSpin > 360f) radarSpin -= 360f
         } else if (!jacksDeployed && getNthEntity(2) == null && !turretHome) {
             // No gunner ever sat down (jacksDeployed never went true, so the
@@ -721,6 +820,28 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
     }
 
     companion object {
+        // Скорость вращения антенны, град/тик. Полный оборот — 360/4.5 = 80
+        // тиков (было 3 град/тик, то есть 120 тиков): в 1.5 раза быстрее.
+        // Вместе с ней меняется и время затухания отметок на экране радара —
+        // PantsirRadarScreen.FADE_TICKS, там отметка гаснет ровно за один
+        // оборот развёртки.
+        private const val RADAR_SPIN_SPEED = 4.5f
+
+        // Скорость подтягивания камеры к цели, долей рассогласования за тик.
+        // 0.5 — камера догоняет цель примерно за три тика: рывки синхронизации
+        // размазываются, а отставание на глаз незаметно.
+        private const val CAMERA_SMOOTHING = 0.5f
+
+        // Допустимое рассогласование пусковой с направлением на цель в момент
+        // схода, град.
+        private const val MISSILE_LAUNCH_CONE_DEGREES = 8.0
+
+        // Предохранитель на случай, если доворот невозможен (упор по углам,
+        // цель ушла за сектор): пуск состоится и без выполнения условий. Три
+        // секунды — компромисс: хватает на доворот башни почти из любого
+        // положения, но зависанием «поднял направляющую и ждёт» не выглядит.
+        private const val MISSILE_WINDUP_TIMEOUT_TICKS = 60
+
         private const val TRACK_TIMEOUT_TICKS = 10
         private val FRONT_LEFT_PIVOT = Vec3(1.202, 0.6993, 1.9358)
         private val FRONT_RIGHT_PIVOT = Vec3(-1.202, 0.6993, 1.9358)

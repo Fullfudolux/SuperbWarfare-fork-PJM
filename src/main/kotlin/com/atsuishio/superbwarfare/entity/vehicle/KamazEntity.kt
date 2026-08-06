@@ -162,6 +162,24 @@ class KamazEntity(type: EntityType<KamazEntity>, world: Level) : VehicleEntity(t
     override fun interactAt(player: Player, pVec: Vec3, hand: InteractionHand): InteractionResult {
         if (hand == InteractionHand.MAIN_HAND) {
             if (this.passengers.contains(player)) return InteractionResult.PASS
+            // Shift+click — не двери и не посадка: пропускаем в interact()
+            // (лом, меню, бирка, ключ), как это уже делает PantsirEntity.
+            if (player.isShiftKeyDown) return InteractionResult.PASS
+
+            // Дальше — ТОЛЬКО сервер. Ванильный клиент вызывает interactAt
+            // локально для предсказания, уже отправив пакет взаимодействия, то
+            // есть тот же самый код исполнялся дважды, по одному разу на
+            // сторону. Решение «сесть или нет» зависит от положения створок:
+            // isOpen плюс расстояние от точки клика до центра OBB двери, а OBB
+            // движется вместе с анимацией. Пока дверь открывается, клиент и
+            // сервер считают её положение из своих значений прогресса и
+            // расходятся на кадр-другой — достаточно, чтобы дистанция по одну
+            // сторону влезла в порог, а по другую нет. Клиент делал
+            // startRiding локально и считал игрока севшим, сервер уходил в
+            // FAIL и не сажал никого: игрок «сидит» только у себя на экране.
+            // Клик по створке страдал тем же — leftDoorOpen это synched data,
+            // и клиентская запись всё равно затиралась ближайшей синхронизацией.
+            if (this.level().isClientSide) return InteractionResult.CONSUME
 
             // Use OBB.getLookingObb to find which OBB the player clicked
             val hitObb = com.atsuishio.superbwarfare.tools.OBB.getLookingObb(player, 6.0)
@@ -297,17 +315,29 @@ class KamazEntity(type: EntityType<KamazEntity>, world: Level) : VehicleEntity(t
     }
 
     companion object {
-        private val FRONT_LEFT_PIVOT = Vec3(1.018551, 0.594431, 2.499643)
-        private val FRONT_RIGHT_PIVOT = Vec3(-0.994887, 0.594431, 2.499643)
-        private val CENTER_LEFT_PIVOT = Vec3(1.013238, 0.594431, -0.953482)
-        private val CENTER_RIGHT_PIVOT = Vec3(-0.994887, 0.594431, -0.953482)
-        private val REAR_LEFT_PIVOT = Vec3(1.013238, 0.594431, -2.228482)
-        private val REAR_RIGHT_PIVOT = Vec3(-0.994887, 0.594431, -2.228482)
-        private val STEERING_WHEEL_PIVOT = Vec3(0.630, 2.090, 3.248)
+        /**
+         * Модель рисуется увеличенной (см. KamazRenderer.renderScale), а
+         * координаты опорных точек ниже сняты с исходной. Растягиваем их тем
+         * же множителем, иначе колёса, руль и створки крутились бы вокруг
+         * точек, которых на увеличенной модели уже нет: хитбоксы дверей
+         * разъезжались бы с самими дверями.
+         */
+        private const val MODEL_SCALE = 1.2
+
+        private fun pivot(x: Double, y: Double, z: Double) =
+            Vec3(x * MODEL_SCALE, y * MODEL_SCALE, z * MODEL_SCALE)
+
+        private val FRONT_LEFT_PIVOT = pivot(1.018551, 0.594431, 2.499643)
+        private val FRONT_RIGHT_PIVOT = pivot(-0.994887, 0.594431, 2.499643)
+        private val CENTER_LEFT_PIVOT = pivot(1.013238, 0.594431, -0.953482)
+        private val CENTER_RIGHT_PIVOT = pivot(-0.994887, 0.594431, -0.953482)
+        private val REAR_LEFT_PIVOT = pivot(1.013238, 0.594431, -2.228482)
+        private val REAR_RIGHT_PIVOT = pivot(-0.994887, 0.594431, -2.228482)
+        private val STEERING_WHEEL_PIVOT = pivot(0.630, 2.090, 3.248)
         // Door pivots: original SBW convention (same as wheel pivots)
-        private val REAR_DOOR_PIVOT = Vec3(0.001, 1.461, -3.825)
-        private val LEFT_DOOR_PIVOT = Vec3(1.071, 2.005, 3.597)
-        private val RIGHT_DOOR_PIVOT = Vec3(-1.071, 2.005, 3.597)
+        private val REAR_DOOR_PIVOT = pivot(0.001, 1.461, -3.825)
+        private val LEFT_DOOR_PIVOT = pivot(1.071, 2.005, 3.597)
+        private val RIGHT_DOOR_PIVOT = pivot(-1.071, 2.005, 3.597)
 
         val DOOR_STATE: EntityDataAccessor<Byte> =
             SynchedEntityData.defineId(KamazEntity::class.java, EntityDataSerializers.BYTE)

@@ -18,6 +18,7 @@ import com.atsuishio.superbwarfare.entity.projectile.RpgRocketTBGEntity
 import com.atsuishio.superbwarfare.entity.projectile.SmallCannonShellEntity
 import com.atsuishio.superbwarfare.entity.projectile.SmallRocketEntity
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
+import com.atsuishio.superbwarfare.init.ModTags
 import com.atsuishio.superbwarfare.item.gun.GunItem
 import com.atsuishio.superbwarfare.network.message.receive.DistantVehiclesMessage
 import com.atsuishio.superbwarfare.network.message.receive.EntitySyncMessage
@@ -131,10 +132,14 @@ object DistantVehicleTracker {
                 val hostileList = level.allEntities
                     .asSequence()
                     .mapNotNull {
-                        val flag = (it is VehicleEntity || VehicleConfig.inScanList(it.type))
+                        // См. VehicleEntity.vehicleRadar: ракеты попадают в
+                        // выдачу по тегу RADAR_CONTACT и без ограничения снизу
+                        // по высоте
+                        val isRadarContact = it.type.`is`(ModTags.EntityTypes.RADAR_CONTACT)
+                        val flag = (it is VehicleEntity || isRadarContact || VehicleConfig.inScanList(it.type))
                                 && SeekTool.NOT_IN_SMOKE.test(it)
                                 && it.distanceToSqr(player) <= seekRange * seekRange
-                                && SeekTool.IN_HEIGHT_RANGE.test(it, minTargetHeight, maxTargetHeight)
+                                && (isRadarContact || SeekTool.IN_HEIGHT_RANGE.test(it, minTargetHeight, maxTargetHeight))
                                 && !SeekTool.IS_FRIENDLY.test(player, it)
                                 && VectorTool.checkNoClip(player.eyePosition, it.eyePosition, level)
                         if (!flag) return@mapNotNull null

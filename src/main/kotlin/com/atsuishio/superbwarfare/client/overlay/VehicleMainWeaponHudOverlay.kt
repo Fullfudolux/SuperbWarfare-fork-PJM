@@ -82,6 +82,9 @@ object VehicleMainWeaponHudOverlay : CommonOverlay("vehicle_main_weapon_hud") {
             )
             .withinAngle(cameraPos, seekVec, seekInfo.seekAngle)
             .baseFilter()
+            // Тот же отбор, что и в самом захвате: иначе прицел рисовал бы
+            // рамки по целям, взять которые это оружие всё равно не может.
+            .custom(ClientEventHandler.smallDroneFilter(vehicle, player))
             .heightRange(seekInfo.minTargetHeight, seekInfo.maxTargetHeight)
             .sizeBiggerThan(seekInfo.minTargetSize)
             .smokeFilter()

@@ -327,10 +327,7 @@ public class SeekTool {
             var entities = EntityFindUtil.getEntities(entity.level()).getAll().spliterator();
             var stream = StreamSupport.stream(entities, false);
             if (entity.level().isClientSide) {
-                var clientEntities = ClientSyncedEntityHandler.getSyncedHostileEntities(entity.level());
-                if (!clientEntities.isEmpty()) {
-                    stream = Stream.concat(stream, clientEntities.stream());
-                }
+                stream = Stream.concat(stream, syncedGhosts());
             }
             return stream.filter(e -> {
                         for (var f : this.filters) {
@@ -345,10 +342,7 @@ public class SeekTool {
             var entities = EntityFindUtil.getEntities(entity.level()).getAll().spliterator();
             var stream = StreamSupport.stream(entities, false);
             if (entity.level().isClientSide && canGuidedByRadar) {
-                var clientEntities = ClientSyncedEntityHandler.getSyncedHostileEntities(entity.level());
-                if (!clientEntities.isEmpty()) {
-                    stream = Stream.concat(stream, clientEntities.stream());
-                }
+                stream = Stream.concat(stream, syncedGhosts());
             }
             return stream.filter(e -> {
                         for (var f : this.filters) {
@@ -364,10 +358,7 @@ public class SeekTool {
             var entities = EntityFindUtil.getEntities(entity.level()).getAll().spliterator();
             var stream = StreamSupport.stream(entities, false);
             if (entity.level().isClientSide && canGuidedByRadar) {
-                var clientEntities = ClientSyncedEntityHandler.getSyncedHostileEntities(entity.level());
-                if (!clientEntities.isEmpty()) {
-                    stream = Stream.concat(stream, clientEntities.stream());
-                }
+                stream = Stream.concat(stream, syncedGhosts());
             }
             return stream.filter(e -> {
                         for (var f : this.filters) {
@@ -384,10 +375,7 @@ public class SeekTool {
             var entities = EntityFindUtil.getEntities(entity.level()).getAll().spliterator();
             var stream = StreamSupport.stream(entities, false);
             if (entity.level().isClientSide) {
-                var clientEntities = ClientSyncedEntityHandler.getSyncedHostileEntities(entity.level());
-                if (!clientEntities.isEmpty()) {
-                    stream = Stream.concat(stream, clientEntities.stream());
-                }
+                stream = Stream.concat(stream, syncedGhosts());
             }
             return stream.filter(e -> {
                         for (var f : this.filters) {
@@ -404,10 +392,7 @@ public class SeekTool {
             var entities = EntityFindUtil.getEntities(entity.level()).getAll().spliterator();
             var stream = StreamSupport.stream(entities, false);
             if (entity.level().isClientSide && canGuidedByRadar) {
-                var clientEntities = ClientSyncedEntityHandler.getSyncedHostileEntities(entity.level());
-                if (!clientEntities.isEmpty()) {
-                    stream = Stream.concat(stream, clientEntities.stream());
-                }
+                stream = Stream.concat(stream, syncedGhosts());
             }
             return stream.filter(e -> {
                         for (var f : this.filters) {
@@ -417,6 +402,21 @@ public class SeekTool {
                     })
                     .min(Comparator.comparingDouble(e -> calculateAngle(pos, vec3, e)))
                     .orElse(null);
+        }
+
+        /**
+         * Загоризонтные «призраки» от сервера, ИСКЛЮЧАЯ те, чей настоящий
+         * entity уже прогружен на клиенте. Иначе одна и та же цель попадала в
+         * выборку дважды, и выбор между копиями был случайным — а призрак
+         * знает позицию только на момент последнего пакета синхронизации.
+         * Захват, севший на такую копию, вёл рамку по устаревшим координатам,
+         * отставая от цели. Настоящий, тикающий entity всегда точнее.
+         */
+        private Stream<Entity> syncedGhosts() {
+            var level = this.entity.level();
+            var clientEntities = ClientSyncedEntityHandler.getSyncedHostileEntities(level);
+            if (clientEntities.isEmpty()) return Stream.empty();
+            return clientEntities.stream().filter(e -> level.getEntity(e.getId()) == null);
         }
 
         public Builder notItsVehicle() {
@@ -562,12 +562,36 @@ public class SeekTool {
         }
 
         public Builder noClip() {
-            this.filters.add(e ->
-                    this.entity.level()
-                            .clip(new ClipContext(entity.getEyePosition(), e.getEyePosition(), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity))
-                            .getType() != HitResult.Type.BLOCK
-            );
+            this.filters.add(e -> {
+                // Загоризонтную цель клиент проверять на видимость не может и
+                // не должен. Не может — потому что чанки вокруг неё не
+                // прогружены: getBlockState отдаёт там воздух, и луч летит
+                // сквозь любой рельеф, которого клиент просто не знает (Voxy
+                // рисует даль из своего хранилища, ванильной геометрии в мире
+                // от этого не появляется). Не должен — потому что видимость от
+                // антенны уже проверил сервер, у которого мир есть целиком, и
+                // только цели, прошедшие его проверку, вообще попали в
+                // синхронизацию. А вот прогруженная часть трассы у самого
+                // игрока обычно упирается в ближайший холм или склон — и
+                // именно этот бессмысленный отрезок зарубал захват всего, что
+                // дальше зоны прогруза.
+                if (isRadarGhost(e)) return true;
+
+                return this.entity.level()
+                        .clip(new ClipContext(entity.getEyePosition(), e.getEyePosition(), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity))
+                        .getType() != HitResult.Type.BLOCK;
+            });
             return this;
+        }
+
+        /**
+         * Цель, которую клиент знает ТОЛЬКО из радарной синхронизации: в самом
+         * клиентском мире сущности с таким id нет. Тот же признак, по которому
+         * отличают загоризонтную цель withinRange и IN_HEIGHT_RANGE.
+         */
+        private boolean isRadarGhost(Entity e) {
+            var level = this.entity.level();
+            return level.isClientSide() && level.getEntity(e.getId()) == null;
         }
 
         public Builder vehicleNoClip(Entity entity) {

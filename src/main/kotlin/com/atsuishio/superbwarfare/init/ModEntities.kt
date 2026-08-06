@@ -350,7 +350,7 @@ object ModEntities {
     val TRUCK = register("truck", vehicle(::TruckEntity).sized(2.6f, 3f))
 
     @JvmField
-    val KAMAZ = register("kamaz", vehicle(::KamazEntity).sized(2.4f, 3f))
+    val KAMAZ = register("kamaz", vehicle(::KamazEntity).sized(2.88f, 3.6f))
 
     @JvmField
     val PANTSIR_S1 = register("pantsir_s1", vehicle(::PantsirEntity).sized(2.6f, 3.5f))

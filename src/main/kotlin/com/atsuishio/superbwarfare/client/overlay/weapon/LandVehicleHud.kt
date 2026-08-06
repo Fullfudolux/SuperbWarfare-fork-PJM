@@ -4,6 +4,7 @@ import com.atsuishio.superbwarfare.Mod.Companion.loc
 import com.atsuishio.superbwarfare.client.RenderHelper
 import com.atsuishio.superbwarfare.client.overlay.VehicleMainWeaponHudOverlay
 import com.atsuishio.superbwarfare.client.overlay.VehicleMainWeaponHudOverlay.renderEnergyInfo
+import com.atsuishio.superbwarfare.entity.vehicle.Cv90Entity
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
 import com.atsuishio.superbwarfare.event.ClientEventHandler
 import com.atsuishio.superbwarfare.init.ModKeyMappings
@@ -30,6 +31,8 @@ import org.joml.Math
 object LandVehicleHud {
     const val ID: String = "@Land"
 
+    private const val DRIVER_SEAT = 0
+
     private val COMPASS = loc("textures/overlay/vehicle/base/compass.png")
     private val ROLL_IND = loc("textures/overlay/vehicle/helicopter/roll_ind.png")
 
@@ -54,7 +57,12 @@ object LandVehicleHud {
     ) {
         val mc = Minecraft.getInstance()
 
-        if (vehicle.getSeatIndex(player) != vehicle.computed().turretControllerIndex) return
+        if (vehicle.getSeatIndex(player) != vehicle.computed().turretControllerIndex) {
+            // Не наводчик — рисуем то, что нужно механику-водителю, и выходим:
+            // всё, что ниже, завязано на оружие места и на прицел.
+            renderDriver(vehicle, player, gui, partialTick, screenWidth, screenHeight)
+            return
+        }
 
         val poseStack = gui.pose()
 
@@ -152,89 +160,10 @@ object LandVehicleHud {
                 color
             )
 
-            val turretHeal = (100 - (100 * vehicle.turretHealth / vehicle.getTurretMaxHealth())).toInt()
-            RenderHelper.preciseBlitWithColor(
-                gui,
-                BARREL,
-                screenWidth / 2f + 112,
-                (screenHeight - 71).toFloat(),
-                0f,
-                0f,
-                1f,
-                16f,
-                1f,
-                16f,
-                getGradientColor(color, 0xFF0000, turretHeal, 2)
-            )
-
-            // 车身方向
-            poseStack.pushPose()
-            poseStack.rotateAround(
-                Axis.ZP.rotationDegrees(
-                    Mth.lerp(
-                        partialTick,
-                        vehicle.turretYRotO,
-                        vehicle.turretYRot
-                    )
-                ), screenWidth / 2f + 112, (screenHeight - 56).toFloat(), 0f
-            )
+            // Считается и здесь: ниже по коду им красится строка здоровья
+            // корпуса, а сама мнемосхема уехала в отдельную функцию.
             val bodyHeal = (100 - (100 * vehicle.health / vehicle.getMaxHealth())).toInt()
-            RenderHelper.preciseBlitWithColor(
-                gui,
-                BODY,
-                screenWidth / 2f + 96,
-                (screenHeight - 72).toFloat(),
-                0f,
-                0f,
-                32f,
-                32f,
-                32f,
-                32f,
-                getGradientColor(color, 0xFF0000, bodyHeal, 2)
-            )
-            val leftWheelHeal = (100 - (100 * vehicle.leftWheelHealth / vehicle.getWheelMaxHealth())).toInt()
-            RenderHelper.preciseBlitWithColor(
-                gui,
-                LEFT_WHEEL,
-                screenWidth / 2f + 96,
-                (screenHeight - 72).toFloat(),
-                0f,
-                0f,
-                32f,
-                32f,
-                32f,
-                32f,
-                getGradientColor(color, 0xFF0000, leftWheelHeal, 2)
-            )
-            val rightWheelHeal = (100 - (100 * vehicle.rightWheelHealth / vehicle.getWheelMaxHealth())).toInt()
-            RenderHelper.preciseBlitWithColor(
-                gui,
-                RIGHT_WHEEL,
-                screenWidth / 2f + 96,
-                (screenHeight - 72).toFloat(),
-                0f,
-                0f,
-                32f,
-                32f,
-                32f,
-                32f,
-                getGradientColor(color, 0xFF0000, rightWheelHeal, 2)
-            )
-            val engineHeal = (100 - (100 * vehicle.mainEngineHealth / vehicle.getEngineMaxHealth())).toInt()
-            RenderHelper.preciseBlitWithColor(
-                gui,
-                ENGINE,
-                screenWidth / 2f + 96,
-                (screenHeight - 72).toFloat(),
-                0f,
-                0f,
-                32f,
-                32f,
-                32f,
-                32f,
-                getGradientColor(color, 0xFF0000, engineHeal, 2)
-            )
-            poseStack.popPose()
+            renderHullIcon(vehicle, gui, poseStack, partialTick, screenWidth, screenHeight, color)
 
             // 时速
             gui.drawString(
@@ -359,4 +288,175 @@ object LandVehicleHud {
         }
         poseStack.popPose()
     }
+
+    /**
+     * Мнемосхема машины: неподвижный ствол вверх и корпус, который под ним
+     * поворачивается. Именно она отвечает на вопрос «куда сейчас смотрит
+     * орудие относительно машины». Вынесена из общей отрисовки, потому что
+     * нужна не только наводчику, но и механику-водителю — см. [renderDriver].
+     */
+    private fun renderHullIcon(
+        vehicle: VehicleEntity,
+        gui: GuiGraphics,
+        poseStack: com.mojang.blaze3d.vertex.PoseStack,
+        partialTick: Float,
+        screenWidth: Int,
+        screenHeight: Int,
+        color: Int
+    ) {
+        val turretHeal = (100 - (100 * vehicle.turretHealth / vehicle.getTurretMaxHealth())).toInt()
+        RenderHelper.preciseBlitWithColor(
+            gui,
+            BARREL,
+            screenWidth / 2f + 112,
+            (screenHeight - 71).toFloat(),
+            0f,
+            0f,
+            1f,
+            16f,
+            1f,
+            16f,
+            getGradientColor(color, 0xFF0000, turretHeal, 2)
+        )
+
+        // 车身方向
+        poseStack.pushPose()
+        poseStack.rotateAround(
+            Axis.ZP.rotationDegrees(
+                Mth.lerp(
+                    partialTick,
+                    vehicle.turretYRotO,
+                    vehicle.turretYRot
+                )
+            ), screenWidth / 2f + 112, (screenHeight - 56).toFloat(), 0f
+        )
+        val bodyHeal = (100 - (100 * vehicle.health / vehicle.getMaxHealth())).toInt()
+        RenderHelper.preciseBlitWithColor(
+            gui,
+            BODY,
+            screenWidth / 2f + 96,
+            (screenHeight - 72).toFloat(),
+            0f,
+            0f,
+            32f,
+            32f,
+            32f,
+            32f,
+            getGradientColor(color, 0xFF0000, bodyHeal, 2)
+        )
+        val leftWheelHeal = (100 - (100 * vehicle.leftWheelHealth / vehicle.getWheelMaxHealth())).toInt()
+        RenderHelper.preciseBlitWithColor(
+            gui,
+            LEFT_WHEEL,
+            screenWidth / 2f + 96,
+            (screenHeight - 72).toFloat(),
+            0f,
+            0f,
+            32f,
+            32f,
+            32f,
+            32f,
+            getGradientColor(color, 0xFF0000, leftWheelHeal, 2)
+        )
+        val rightWheelHeal = (100 - (100 * vehicle.rightWheelHealth / vehicle.getWheelMaxHealth())).toInt()
+        RenderHelper.preciseBlitWithColor(
+            gui,
+            RIGHT_WHEEL,
+            screenWidth / 2f + 96,
+            (screenHeight - 72).toFloat(),
+            0f,
+            0f,
+            32f,
+            32f,
+            32f,
+            32f,
+            getGradientColor(color, 0xFF0000, rightWheelHeal, 2)
+        )
+        val engineHeal = (100 - (100 * vehicle.mainEngineHealth / vehicle.getEngineMaxHealth())).toInt()
+        RenderHelper.preciseBlitWithColor(
+            gui,
+            ENGINE,
+            screenWidth / 2f + 96,
+            (screenHeight - 72).toFloat(),
+            0f,
+            0f,
+            32f,
+            32f,
+            32f,
+            32f,
+            getGradientColor(color, 0xFF0000, engineHeal, 2)
+        )
+        poseStack.popPose()
+    }
+
+    /**
+     * Приборы механика-водителя: то же окно обзора, что у наводчика, азимут
+     * сверху и мнемосхема поворота орудия относительно корпуса. Прицельная
+     * часть и всё, что связано с оружием, сюда не идёт — у водителя оружия нет.
+     */
+    private fun renderDriver(
+        vehicle: VehicleEntity,
+        player: LocalPlayer,
+        gui: GuiGraphics,
+        partialTick: Float,
+        screenWidth: Int,
+        screenHeight: Int
+    ) {
+        // Пока только CV-90 — по остальной технике приборы водителя не
+        // размечались, и рамка обзора там может не совпасть с посадкой.
+        if (vehicle !is Cv90Entity) return
+        // И только само место механика-водителя: в десанте обзор идёт от
+        // третьего лица, рамка смотрового прибора там ни к чему.
+        if (vehicle.getSeatIndex(player) != DRIVER_SEAT) return
+        if (Minecraft.getInstance().options.cameraType != CameraType.FIRST_PERSON && !ClientEventHandler.zoomVehicle) return
+
+        val color = vehicle.hudColor
+        val poseStack = gui.pose()
+        poseStack.pushPose()
+
+        val recoil = Mth.lerp(partialTick, vehicle.recoilShakeO.toFloat(), vehicle.recoilShake.toFloat())
+        val pitch = Mth.lerp(partialTick, vehicle.fakePitchO, vehicle.fakePitch)
+        poseStack.translate(screenWidth * 0.025f * recoil, recoil * 3 + screenHeight * 0.025f * recoil - pitch, 0f)
+        poseStack.rotateAround(
+            Axis.ZP.rotationDegrees(-0.3f * ClientEventHandler.cameraRoll),
+            screenWidth / 2f,
+            screenHeight / 2f,
+            0f
+        )
+
+        RenderSystem.disableDepthTest()
+        RenderSystem.depthMask(false)
+        RenderSystem.enableBlend()
+        RenderSystem.setShader { GameRenderer.getPositionTexShader() }
+        RenderSystem.blendFuncSeparate(
+            GlStateManager.SourceFactor.SRC_ALPHA,
+            GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+            GlStateManager.SourceFactor.ONE,
+            GlStateManager.DestFactor.ZERO
+        )
+        RenderSystem.setShaderColor(1f, 1f, 1f, 1f)
+
+        // Окно обзора — та же рамка, что у наводчика
+        val addW = (screenWidth / screenHeight) * 48
+        val addH = (screenWidth / screenHeight) * 27
+        RenderHelper.preciseBlit(
+            gui, FRAME,
+            -addW.toFloat() / 2, -addH.toFloat() / 2, 10f, 0f, 0f,
+            (screenWidth + addW).toFloat(), (screenHeight + addH).toFloat(),
+            (screenWidth + addW).toFloat(), (screenHeight + addH).toFloat()
+        )
+
+        // Азимут сверху
+        RenderHelper.preciseBlitWithColor(
+            gui, COMPASS,
+            screenWidth.toFloat() / 2 - 128, 10f,
+            128 + (64f / 45 * player.yRot), 0f,
+            256f, 16f, 512f, 16f, color
+        )
+
+        renderHullIcon(vehicle, gui, poseStack, partialTick, screenWidth, screenHeight, color)
+
+        poseStack.popPose()
+    }
+
 }

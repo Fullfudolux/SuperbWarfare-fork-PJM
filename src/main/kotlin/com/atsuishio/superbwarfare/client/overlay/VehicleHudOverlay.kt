@@ -59,8 +59,9 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
     private const val HP_ROW = 13
     private const val SPEED_ROW = (ENERGY_ROW + HP_ROW) / 2
 
-    // Ramp readout sits one row above energy.
-    private const val RAMP_ROW = ENERGY_ROW + 10
+    // One shared row above energy for whichever status line the vehicle has:
+    // landing gear on aircraft, troop ramp on the CV-90. No vehicle has both.
+    private const val STATUS_ROW = ENERGY_ROW + 10
 
     // PJM: цвета кольца перезарядки КАЗ
     private val APS_COLOR_READY = floatArrayOf(1f, 0.78f, 0.3f, 0.9f)
@@ -206,7 +207,7 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
                 mc.font,
                 line,
                 hpEnergyX,
-                screenHeight - RAMP_ROW - compatHeight,
+                screenHeight - STATUS_ROW - compatHeight,
                 if (open) 0x39FF6A else 0xAAAAAA,
                 false
             )
@@ -257,7 +258,7 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
 
         renderWeaponInfo(guiGraphics, entity, screenWidth, screenHeight)
         renderPassengerInfo(guiGraphics, entity, screenWidth, screenHeight, compatHeight)
-        renderGearInfo(guiGraphics, entity, screenWidth, screenHeight, partialTick, compatHeight)
+        renderGearInfo(guiGraphics, entity, screenWidth, screenHeight, partialTick, compatHeight, hpEnergyX)
         renderHoverInfo(guiGraphics, entity, screenWidth, screenHeight, partialTick, compatHeight)
         renderSpeedInfo(guiGraphics, entity, screenWidth, screenHeight, partialTick, compatHeight, speedX)
         // PJM: остаток зарядов КАЗ
@@ -421,7 +422,8 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
         w: Int,
         h: Int,
         partialTick: Float,
-        compatHeight: Int
+        compatHeight: Int,
+        x: Int
     ) {
         val engineType = vehicle.computed().engineType
         if (engineType != EngineType.AIRCRAFT) return
@@ -454,8 +456,8 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
         guiGraphics.drawString(
             Minecraft.getInstance().font,
             componentReady,
-            85,
-            (h - HP_ROW - compatHeight),
+            x,
+            (h - STATUS_ROW - compatHeight),
             -1,
             false
         )
