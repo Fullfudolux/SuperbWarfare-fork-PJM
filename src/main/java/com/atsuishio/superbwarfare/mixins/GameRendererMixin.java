@@ -48,6 +48,10 @@ public abstract class GameRendererMixin {
     @Final
     private Camera mainCamera;
 
+    // Render-thread single-threaded — pooled scratch eliminates per-frame alloc (SHOCK RNG seed-init + eye-offset vector)
+    private static final RandomSource SHOCK_RNG = RandomSource.create();
+    private static final Vector3f EYE_OFFSET_SCRATCH = new Vector3f();
+
     @SuppressWarnings("ConstantValue")
     @Inject(method = "bobHurt(Lcom/mojang/blaze3d/vertex/PoseStack;F)V", at = @At("HEAD"))
     public void superbWarfare$renderWorld(PoseStack matrices, float tickDelta, CallbackInfo ci) {
@@ -60,7 +64,7 @@ public abstract class GameRendererMixin {
         if (entity instanceof Player player && !player.isSpectator() && player.hasEffect(ModMobEffects.SHOCK)) {
             float shakeStrength = (float) DisplayConfig.SHOCK_SCREEN_SHAKE.get() / 100.0f;
             if (shakeStrength <= 0.0f) return;
-            matrices.mulPose(Axis.ZP.rotationDegrees((float) Mth.nextDouble(RandomSource.create(), 8, 12) * shakeStrength));
+            matrices.mulPose(Axis.ZP.rotationDegrees((float) Mth.nextDouble(SHOCK_RNG, 8, 12) * shakeStrength));
         }
 
         if (entity != null && entity.getRootVehicle() instanceof VehicleEntity vehicle && (!mainCamera.isDetached() || ClientEventHandler.zoomVehicle)) {
@@ -100,7 +104,7 @@ public abstract class GameRendererMixin {
                 float eye = entity.getEyeHeight();
 
                 // transform eye offset to match aircraft rotation
-                Vector3f offset = new Vector3f(0, -eye, 0);
+                Vector3f offset = EYE_OFFSET_SCRATCH.set(0, -eye, 0);
                 Quaternionf quaternion = Axis.XP.rotationDegrees(0.0f);
                 quaternion.mul(Axis.YP.rotationDegrees(-vehicle.getViewYRot(tickDelta)));
                 quaternion.mul(Axis.XP.rotationDegrees(vehicle.getViewXRot(tickDelta)));
