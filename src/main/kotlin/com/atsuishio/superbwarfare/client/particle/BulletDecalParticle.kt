@@ -41,6 +41,11 @@ class BulletDecalParticle @JvmOverloads constructor(
     private var uOffset = 0
     private var vOffset = 0
     private var textureDensity = 0f
+    // Reused per-frame quad corners — eliminates arrayOf(4×Vector3f) allocation per render call.
+    private val point0 = Vector3f()
+    private val point1 = Vector3f()
+    private val point2 = Vector3f()
+    private val point3 = Vector3f()
 
     init {
         this.setSprite(this.getSprite(pos)!!)
@@ -108,20 +113,18 @@ class BulletDecalParticle @JvmOverloads constructor(
         val particleY = (Mth.lerp(partialTicks.toDouble(), this.yo, this.y) - view.y()).toFloat()
         val particleZ = (Mth.lerp(partialTicks.toDouble(), this.zo, this.z) - view.z()).toFloat()
         val quaternion = this.direction.rotation
-        val points = arrayOf( // Y 值稍微大一点点，防止 z-fight
-            Vector3f(-1f, 0.01f, -1f),
-            Vector3f(-1f, 0.01f, 1f),
-            Vector3f(1f, 0.01f, 1f),
-            Vector3f(1f, 0.01f, -1f)
-        )
         val scale = this.getQuadSize(partialTicks)
 
-        for (i in 0..3) {
-            val vector3f = points[i]
-            vector3f.rotate(quaternion)
-            vector3f.mul(scale)
-            vector3f.add(particleX, particleY, particleZ)
-        }
+        // Reset reused corner points to base offsets, then rotate/scale/translate in place.
+        // Y slightly above 0 to prevent z-fighting (matches original arrayOf base values).
+        point0.set(-1f, 0.01f, -1f)
+        point1.set(-1f, 0.01f, 1f)
+        point2.set(1f, 0.01f, 1f)
+        point3.set(1f, 0.01f, -1f)
+        point0.rotate(quaternion).mul(scale).add(particleX, particleY, particleZ)
+        point1.rotate(quaternion).mul(scale).add(particleX, particleY, particleZ)
+        point2.rotate(quaternion).mul(scale).add(particleX, particleY, particleZ)
+        point3.rotate(quaternion).mul(scale).add(particleX, particleY, particleZ)
 
         // UV 坐标
         val u0 = this.u0
@@ -144,13 +147,13 @@ class BulletDecalParticle @JvmOverloads constructor(
         val fade = 1.0f - (max(this.age - threshold, 0.0) / (this.lifetime - threshold)).toFloat()
         val alphaFade = this.alpha * fade
 
-        buffer.addVertex(points[0].x(), points[0].y(), points[0].z()).setUv(u1, v1)
+        buffer.addVertex(point0.x(), point0.y(), point0.z()).setUv(u1, v1)
             .setColor(red, green, blue, alphaFade).setLight(lightColor)
-        buffer.addVertex(points[1].x(), points[1].y(), points[1].z()).setUv(u1, v0)
+        buffer.addVertex(point1.x(), point1.y(), point1.z()).setUv(u1, v0)
             .setColor(red, green, blue, alphaFade).setLight(lightColor)
-        buffer.addVertex(points[2].x(), points[2].y(), points[2].z()).setUv(u0, v0)
+        buffer.addVertex(point2.x(), point2.y(), point2.z()).setUv(u0, v0)
             .setColor(red, green, blue, alphaFade).setLight(lightColor)
-        buffer.addVertex(points[3].x(), points[3].y(), points[3].z()).setUv(u0, v1)
+        buffer.addVertex(point3.x(), point3.y(), point3.z()).setUv(u0, v1)
             .setColor(red, green, blue, alphaFade).setLight(lightColor)
     }
 
