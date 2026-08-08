@@ -137,16 +137,27 @@ public class BedrockAnimation extends BasicAnimation {
             } else {
                 vecInterpolator = Vector3fLinearInterpolator.INSTANCE;
             }
-            MolangExpression[] preFunctions;
-            MolangExpression[] postFunctions;
+            String[] preExprs;
+            String[] postExprs;
             if (keyframe.getDataExpressions() != null) {
-                preFunctions = postFunctions = compileMolangExpressions(molangEngine, keyframe.getDataExpressions());
+                preExprs = postExprs = keyframe.getDataExpressions();
             } else {
-                String[] preExprs = keyframe.getPreExpressions() != null ? keyframe.getPreExpressions() : keyframe.getPostExpressions();
-                String[] postExprs = keyframe.getPostExpressions() != null ? keyframe.getPostExpressions() : keyframe.getPreExpressions();
-                preFunctions = compileMolangExpressions(molangEngine, preExprs);
-                postFunctions = (preExprs == postExprs) ? preFunctions : compileMolangExpressions(molangEngine, postExprs);
+                preExprs = keyframe.getPreExpressions() != null ? keyframe.getPreExpressions() : keyframe.getPostExpressions();
+                postExprs = keyframe.getPostExpressions() != null ? keyframe.getPostExpressions() : keyframe.getPreExpressions();
             }
+            double[] preVals = tryParseNumericLiterals(preExprs);
+            if (preVals != null) {
+                double[] postVals = tryParseNumericLiterals(postExprs);
+                if (postVals != null) {
+                    Vector3f preTransformed = new Vector3f((float) preVals[0], (float) preVals[1], (float) preVals[2]).mul(x, y, z).mul(DEGREE_TO_ANGLE);
+                    Vector3f postTransformed = (preExprs == postExprs) ? preTransformed
+                            : new Vector3f((float) postVals[0], (float) postVals[1], (float) postVals[2]).mul(x, y, z).mul(DEGREE_TO_ANGLE);
+                    return new RotationKeyframe(timeS, new Rotation(preTransformed), new Rotation(postTransformed),
+                            new EulerAnglesRotationInterpolator(vecInterpolator));
+                }
+            }
+            MolangExpression[] preFunctions = compileMolangExpressions(molangEngine, preExprs);
+            MolangExpression[] postFunctions = (preExprs == postExprs) ? preFunctions : compileMolangExpressions(molangEngine, postExprs);
             return new MolangRotationKeyframe(timeS, preFunctions, postFunctions, x, y, z,
                     new EulerAnglesRotationInterpolator(vecInterpolator));
         }
@@ -201,23 +212,28 @@ public class BedrockAnimation extends BasicAnimation {
             } else {
                 interpolator = Vector3fLinearInterpolator.INSTANCE;
             }
-            MolangExpression[] preFunctions;
-            MolangExpression[] postFunctions;
+            String[] preExprs;
+            String[] postExprs;
             if (keyframe.getDataExpressions() != null) {
-                MolangExpression[] dataFunctions = compileMolangExpressions(molangEngine, keyframe.getDataExpressions());
-                preFunctions = postFunctions = wrapWithMultiplier(dataFunctions, x, y, z);
+                preExprs = postExprs = keyframe.getDataExpressions();
             } else {
-                String[] preExprs = keyframe.getPreExpressions() != null ? keyframe.getPreExpressions() : keyframe.getPostExpressions();
-                String[] postExprs = keyframe.getPostExpressions() != null ? keyframe.getPostExpressions() : keyframe.getPreExpressions();
-                MolangExpression[] preRaw = compileMolangExpressions(molangEngine, preExprs);
-                preFunctions = wrapWithMultiplier(preRaw, x, y, z);
-                if (preExprs == postExprs) {
-                    postFunctions = preFunctions;
-                } else {
-                    MolangExpression[] postRaw = compileMolangExpressions(molangEngine, postExprs);
-                    postFunctions = wrapWithMultiplier(postRaw, x, y, z);
+                preExprs = keyframe.getPreExpressions() != null ? keyframe.getPreExpressions() : keyframe.getPostExpressions();
+                postExprs = keyframe.getPostExpressions() != null ? keyframe.getPostExpressions() : keyframe.getPreExpressions();
+            }
+            double[] preVals = tryParseNumericLiterals(preExprs);
+            if (preVals != null) {
+                double[] postVals = tryParseNumericLiterals(postExprs);
+                if (postVals != null) {
+                    Vector3f preTransformed = new Vector3f((float) preVals[0], (float) preVals[1], (float) preVals[2]).mul(x, y, z);
+                    Vector3f postTransformed = (preExprs == postExprs) ? preTransformed
+                            : new Vector3f((float) postVals[0], (float) postVals[1], (float) postVals[2]).mul(x, y, z);
+                    return new Vector3fKeyframe(timeS, preTransformed, postTransformed, interpolator);
                 }
             }
+            MolangExpression[] preRaw = compileMolangExpressions(molangEngine, preExprs);
+            MolangExpression[] preFunctions = wrapWithMultiplier(preRaw, x, y, z);
+            MolangExpression[] postFunctions = (preExprs == postExprs) ? preFunctions
+                    : wrapWithMultiplier(compileMolangExpressions(molangEngine, postExprs), x, y, z);
             return new MolangVector3fKeyframe(timeS, preFunctions, postFunctions, interpolator);
         }
 
@@ -272,5 +288,26 @@ public class BedrockAnimation extends BasicAnimation {
             }
         }
         return wrapped;
+    }
+
+    // Pure numeric-literal detection for constant fast-path: pre-bake at load, skip per-frame Molang eval/alloc.
+    // Strict decimal regex is a safe subset of any Molang lexer; rejected forms (exponents, expressions, queries) fall through to Molang.
+    private static double[] tryParseNumericLiterals(String[] exprs) {
+        if (exprs == null || exprs.length != 3) return null;
+        double[] out = new double[3];
+        for (int i = 0; i < 3; i++) {
+            String e = exprs[i];
+            if (e == null) return null;
+            String t = e.trim();
+            if (!t.matches("-?\\d+(\\.\\d+)?")) return null;
+            try {
+                double v = Double.parseDouble(t);
+                if (!Double.isFinite(v)) return null;
+                out[i] = v;
+            } catch (NumberFormatException ex) {
+                return null;
+            }
+        }
+        return out;
     }
 }

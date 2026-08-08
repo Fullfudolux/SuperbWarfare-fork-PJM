@@ -36,6 +36,9 @@ public class GeoArmorRenderer extends HumanoidModel implements IFPArmorHandRende
     @Nullable
     protected HumanoidModel<?> original;
 
+    // Render-thread single-threaded — pooled scratch eliminates per-call Matrix4f allocation (mirrors BedrockPolyMesh/BedrockCubeBox)
+    private static final Matrix4f GLOBAL_TRANSFORM_SCRATCH = new Matrix4f();
+
     public GeoArmorRenderer(BedrockArmorModel origin, ResourceLocation texture) {
         super(Minecraft.getInstance().getEntityModels().bakeLayer(ModelLayers.PLAYER_INNER_ARMOR));
         this.model = origin;
@@ -172,7 +175,8 @@ public class GeoArmorRenderer extends HumanoidModel implements IFPArmorHandRende
     }
 
     private static Matrix4f getGlobalTransform(@NotNull BedrockBone targetBone) {
-        Matrix4f matrix = new Matrix4f();
+        Matrix4f matrix = GLOBAL_TRANSFORM_SCRATCH;
+        matrix.identity();
         for (BedrockBone bone = targetBone.parent; bone != null; bone = bone.parent) {
             matrix.scaleLocal(bone.xScale, bone.yScale, bone.zScale);
             matrix.rotateLocal(bone.rotation);

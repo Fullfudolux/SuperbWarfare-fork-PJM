@@ -53,6 +53,10 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
      */
     private final Pose bindingPose;
 
+    // locator name → result index (built once at construction; locators are immutable after load — setLocators only called in initialWithBoneItems).
+    // Replaces O(boneCount) scan per findLocator call with O(1) lookup. First bone in boneIndex order wins (matches old scan).
+    private final Map<String, LocatorResult> locatorIndex = new HashMap<>();
+
     public BedrockModel(BedrockModelPOJO pojo) {
         if (BedrockVersion.isLegacyVersion(pojo)) {
             loadLegacyModel(pojo);
@@ -61,6 +65,17 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
             loadNewModel(pojo);
         }
         bindingPose = initializeBindingPose();
+        buildLocatorIndex();
+    }
+
+    private void buildLocatorIndex() {
+        for (BedrockBone bone : boneIndex) {
+            Map<String, LocatorData> locators = bone.getLocators();
+            if (locators.isEmpty()) continue;
+            for (Map.Entry<String, LocatorData> entry : locators.entrySet()) {
+                locatorIndex.putIfAbsent(entry.getKey(), new LocatorResult(bone, entry.getValue()));
+            }
+        }
     }
 
     protected Pose initializeBindingPose() {
@@ -455,13 +470,7 @@ public class BedrockModel implements Skeleton, BoneIndexProvider {
      */
     @Nullable
     public LocatorResult findLocator(String locatorName) {
-        for (BedrockBone bone : boneIndex) {
-            Map<String, LocatorData> locators = bone.getLocators();
-            if (locators.containsKey(locatorName)) {
-                return new LocatorResult(bone, locators.get(locatorName));
-            }
-        }
-        return null;
+        return locatorIndex.get(locatorName);
     }
 
     /**

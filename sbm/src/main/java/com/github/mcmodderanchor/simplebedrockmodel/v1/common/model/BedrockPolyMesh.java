@@ -16,6 +16,10 @@ import java.util.List;
 public class BedrockPolyMesh implements BedrockMesh {
     private static final float INV_BLOCK = 1.0f / 16.0f;
 
+    // Render thread is single-threaded — pooled scratch reused per vertex (mirrors BedrockCubeBox.VERTICES/EDGE_*)
+    private static final Vector3f SCRATCH_POSITION = new Vector3f();
+    private static final Vector3f SCRATCH_NORMAL = new Vector3f();
+
     protected final Triangle[] triangles;
     private final float x;
     private final float y;
@@ -223,27 +227,27 @@ public class BedrockPolyMesh implements BedrockMesh {
         Matrix3f normalMatrix = pose.normal();
         for (Triangle triangle : triangles) {
             for (Vertex vertex : triangle.vertices) {
-                emit(consumer, transform(vertex, positionMatrix, normalMatrix), red, green, blue, alpha, overlay, lightmap);
+                transformVertex(vertex, positionMatrix, normalMatrix);
+                emitVertex(consumer, vertex, red, green, blue, alpha, overlay, lightmap);
             }
         }
     }
 
-    private TransformedVertex transform(Vertex vertex, Matrix4f positionMatrix, Matrix3f normalMatrix) {
-        Vector3f position = new Vector3f(vertex.x, vertex.y, vertex.z).mulPosition(positionMatrix);
-        Vector3f normal = new Vector3f(vertex.nx, vertex.ny, vertex.nz).mul(normalMatrix);
-        if (normal.lengthSquared() > 1.0E-12f) {
-            normal.normalize();
+    private void transformVertex(Vertex vertex, Matrix4f positionMatrix, Matrix3f normalMatrix) {
+        SCRATCH_POSITION.set(vertex.x, vertex.y, vertex.z).mulPosition(positionMatrix);
+        SCRATCH_NORMAL.set(vertex.nx, vertex.ny, vertex.nz).mul(normalMatrix);
+        if (SCRATCH_NORMAL.lengthSquared() > 1.0E-12f) {
+            SCRATCH_NORMAL.normalize();
         }
-        return new TransformedVertex(position.x, position.y, position.z, vertex.u, vertex.v, normal.x, normal.y, normal.z);
     }
 
-    private void emit(VertexConsumer consumer, TransformedVertex vertex, float red, float green, float blue, float alpha, int overlay, int lightmap) {
-        consumer.addVertex(vertex.x, vertex.y, vertex.z)
+    private void emitVertex(VertexConsumer consumer, Vertex vertex, float red, float green, float blue, float alpha, int overlay, int lightmap) {
+        consumer.addVertex(SCRATCH_POSITION.x, SCRATCH_POSITION.y, SCRATCH_POSITION.z)
                 .setColor(red, green, blue, alpha)
                 .setUv(vertex.u, vertex.v)
                 .setOverlay(overlay)
                 .setLight(lightmap)
-                .setNormal(vertex.nx, vertex.ny, vertex.nz);
+                .setNormal(SCRATCH_NORMAL.x, SCRATCH_NORMAL.y, SCRATCH_NORMAL.z);
     }
 
     @Override
@@ -297,8 +301,5 @@ public class BedrockPolyMesh implements BedrockMesh {
         public Vertex[] vertices() {
             return vertices;
         }
-    }
-
-    private record TransformedVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) {
     }
 }
