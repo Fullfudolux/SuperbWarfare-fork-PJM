@@ -22,12 +22,20 @@ import net.minecraft.world.entity.Entity
 open class BasicProjectileRenderer<T>(manager: EntityRendererProvider.Context) :
     EntityRenderer<T>(manager) where T : Entity, T : BasicGeoProjectileEntity {
     override fun getTextureLocation(entity: T): ResourceLocation {
-        val (_, namespace, id) = entity.type.descriptionId.split(".")
+        val d = entity.type.descriptionId
+        val first = d.indexOf('.')
+        val second = d.indexOf('.', first + 1)
+        val namespace = d.substring(first + 1, second)
+        val id = d.substring(second + 1)
         return ResourceLocation.fromNamespaceAndPath(namespace, "textures/bedrock/projectile/$id.png")
     }
 
     fun getModelLocation(entity: T): ResourceLocation {
-        val (_,  namespace, id) = entity.type.descriptionId.split(".")
+        val d = entity.type.descriptionId
+        val first = d.indexOf('.')
+        val second = d.indexOf('.', first + 1)
+        val namespace = d.substring(first + 1, second)
+        val id = d.substring(second + 1)
         return ResourceLocation.fromNamespaceAndPath(namespace, "models/bedrock/projectile/$id.geo.json")
     }
 
@@ -68,11 +76,12 @@ open class BasicProjectileRenderer<T>(manager: EntityRendererProvider.Context) :
             flare.visible = false
         }
 
+        val baseTex = getTextureLocation(entity)
         model.renderToBuffer(
             poseStack,
             buffer,
-            RenderType.entityCutout(getTextureLocation(entity)),
-            BedrockModelRenderTypes.polyMeshCutout(getTextureLocation(entity)),
+            RenderType.entityCutout(baseTex),
+            BedrockModelRenderTypes.polyMeshCutout(baseTex),
             packedLight,
             OverlayTexture.NO_OVERLAY
         )
@@ -82,8 +91,8 @@ open class BasicProjectileRenderer<T>(manager: EntityRendererProvider.Context) :
             model.renderToBuffer(
                 poseStack,
                 buffer,
-                RenderType.entityCutout(getTextureLocation(entity)),
-                BedrockModelRenderTypes.polyMeshCutout(getTextureLocation(entity)),
+                RenderType.entityCutout(baseTex),
+                BedrockModelRenderTypes.polyMeshCutout(baseTex),
                 packedLight,
                 OverlayTexture.NO_OVERLAY
             )
