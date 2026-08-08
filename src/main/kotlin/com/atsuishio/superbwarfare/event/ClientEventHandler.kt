@@ -270,6 +270,9 @@ object ClientEventHandler {
     var zoomVehicle: Boolean = false
 
     @JvmField
+    var pantsirZoom: Double = 1.0
+
+    @JvmField
     var burstFireAmount: Int = 0
 
     @JvmField
@@ -2931,7 +2934,12 @@ object ClientEventHandler {
 
         val vehicle = player.vehicle
         if (vehicle is VehicleEntity && vehicle.banHand(player) && zoomVehicle) {
-            event.fov /= vehicle.getDefaultZoom(player)
+            val zoom = if (vehicle is PantsirEntity) {
+                vehicle.getDefaultZoom(player) * pantsirZoom
+            } else {
+                vehicle.getDefaultZoom(player)
+            }
+            event.fov /= zoom
             currentFov = event.fov
             return
         }

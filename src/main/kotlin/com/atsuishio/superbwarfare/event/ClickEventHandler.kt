@@ -212,6 +212,13 @@ object ClickEventHandler {
             return
         }
 
+        // Pantsir zoom: scroll wheel adjusts zoom multiplier when zoomed
+        if (ClientEventHandler.zoomVehicle && vehicle is PantsirEntity) {
+            ClientEventHandler.pantsirZoom = (ClientEventHandler.pantsirZoom + scroll * 0.25).coerceIn(0.5, 4.0)
+            event.isCanceled = true
+            return
+        }
+
         // 未按下shift时，为有武器的载具切换武器
         if (!Screen.hasShiftDown()
             && vehicle is VehicleEntity

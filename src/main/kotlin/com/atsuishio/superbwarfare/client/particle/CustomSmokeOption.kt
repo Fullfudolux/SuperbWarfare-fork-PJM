@@ -9,7 +9,7 @@ import net.minecraft.core.particles.ParticleType
 
 @GenerateMapCodec
 @Serializable
-class CustomSmokeOption(val red: Float, val green: Float, val blue: Float) : ParticleOptions {
+class CustomSmokeOption(val red: Float, val green: Float, val blue: Float, val maxLifetime: Int = 0, val alpha: Float = 1.0f) : ParticleOptions {
     override fun getType(): ParticleType<*> = ModParticleTypes.CUSTOM_SMOKE.get()
 
     companion object {

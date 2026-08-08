@@ -18,12 +18,15 @@ open class CustomSmokeParticle protected constructor(
     private val spriteSet: SpriteSet,
     rCol: Float,
     gCol: Float,
-    bCol: Float
+    bCol: Float,
+    maxLifetime: Int = 0,
+    alphaVal: Float = 1.0f
 ) : TextureSheetParticle(level, x, y, z) {
     init {
         this.setSize(0.4f, 0.4f)
         this.quadSize *= 10f
-        this.lifetime = this.random.nextInt(200) + 600
+        this.lifetime = if (maxLifetime > 0) maxLifetime else this.random.nextInt(200) + 600
+        this.alpha = alphaVal
         this.gravity = 0.001f
         this.hasPhysics = true
         this.xd = vx * 0.5
@@ -58,7 +61,9 @@ open class CustomSmokeParticle protected constructor(
                 this.spriteSet,
                 pType.red,
                 pType.green,
-                pType.blue
+                pType.blue,
+                pType.maxLifetime,
+                pType.alpha
             )
         }
     }

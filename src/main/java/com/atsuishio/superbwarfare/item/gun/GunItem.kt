@@ -785,6 +785,18 @@ abstract class GunItem(properties: Properties) : Item(properties.stacksTo(1)), I
                     entity.semiAuto = true
                     entity.setTargetUUID("none")
                 }
+                // Launch particles — smoke and flash at the rail
+                if (level is net.minecraft.server.level.ServerLevel) {
+                    val pos = entity.position()
+                    (level as net.minecraft.server.level.ServerLevel).sendParticles(
+                        net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE,
+                        pos.x, pos.y, pos.z, 15, 0.3, 0.3, 0.3, 0.05
+                    )
+                    (level as net.minecraft.server.level.ServerLevel).sendParticles(
+                        net.minecraft.core.particles.ParticleTypes.FLAME,
+                        pos.x, pos.y, pos.z, 10, 0.2, 0.2, 0.2, 0.1
+                    )
+                }
             }
 
             if (entity is SmallCannonShellEntity && data.get(GunProp.SHELL_TYPE) == "AA") {

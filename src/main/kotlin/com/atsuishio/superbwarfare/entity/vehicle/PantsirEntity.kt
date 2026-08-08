@@ -2,6 +2,7 @@ package com.atsuishio.superbwarfare.entity.vehicle
 
 import com.atsuishio.superbwarfare.entity.vehicle.base.VehicleEntity
 import com.atsuishio.superbwarfare.tools.EntityFindUtil
+import com.atsuishio.superbwarfare.tools.ParticleTool
 import com.atsuishio.superbwarfare.tools.VectorTool
 import com.atsuishio.superbwarfare.tools.deltaFrameTime
 import com.atsuishio.superbwarfare.tools.mc
@@ -285,6 +286,7 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
     // some other edge case still stalls it.
     private var missileWindupTargetExtra = 0f
     private var missileWindupTicks = 0
+    private var missilePreFireParticles = false
     // Edge-detects missileWindupActive's rising edge independently on
     // whichever side is running this tick (client or server) — see
     // baseTick(), where the freeze actually happens.
@@ -544,17 +546,11 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
     override fun cameraDirection(entity: Entity, partialTicks: Float): Vec3 {
         val uuid = trackedTargetUUID
         if (uuid != null && getSeatIndex(entity) == 2 && getGunName(2) == "Missile") {
-            val desired = lastSoftLockDesired
-            if (desired != null) {
-                return smoothCameraDirection(uuid, desired)
-            }
-            val target = EntityFindUtil.findEntity(level(), uuid)
-            if (target != null) {
-                val from = getCameraPos(entity, partialTicks)
-                val to = VectorTool.lerpGetEntityBoundingBoxCenter(target, partialTicks)
-                val direction = to.subtract(from)
-                if (direction.lengthSqr() > 1.0E-6) return smoothCameraDirection(uuid, direction.normalize())
-            }
+            // Follow the actual BARREL direction, not the desired aim —
+            // the barrel turns at limited speed (turretTurnYSpeed), so the
+            // camera doesn't snap to the target when the lock is acquired.
+            // It follows the barrel's gradual turn.
+            return smoothCameraDirection(uuid, getBarrelVector(1f))
         }
         smoothedCameraTarget = null
         return super.cameraDirection(entity, partialTicks)
@@ -842,6 +838,7 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
         if (missileWindupActive && !missileWindupActivePrevTick) {
             missileWindupTargetExtra = minOf(0f, -25f - turretXRot)
             missileWindupTicks = 0
+            missilePreFireParticles = false
         }
         missileWindupActivePrevTick = missileWindupActive
 
@@ -868,6 +865,28 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
         // не выходит (упор по углам, цель за спиной у ограниченного сектора),
         // пуск всё равно состоится, как и раньше.
         val railReady = missileExtraPitch <= missileTargetExtra + 0.3f
+
+        // Pre-fire smoke: spawn 10 ticks into the windup (~0.5 sec before fire)
+        if (missileWindupActive && !missilePreFireParticles && railReady && !level().isClientSide) {
+            missilePreFireParticles = true
+            val gunner = pendingMissileLiving
+            if (gunner != null) {
+                val shootPos = getShootPos(gunner, 1f)
+                val barrelDir = getBarrelVector(1f)
+                val serverLevel = level()
+                if (serverLevel is net.minecraft.server.level.ServerLevel) {
+                    for (i in 0 until 3) {
+                        ParticleTool.sendParticle(
+                            serverLevel,
+                            com.atsuishio.superbwarfare.client.particle.CustomSmokeOption(1.0f, 1.0f, 1.0f, 280, 0.7f),
+                            shootPos.x, shootPos.y, shootPos.z,
+                            8, barrelDir.x, barrelDir.y, barrelDir.z, 0.08, true
+                        )
+                    }
+                }
+            }
+        }
+
         if (missileWindupActive && !level().isClientSide &&
             ((railReady && missileLauncherOnTarget()) || missileWindupTicks > MISSILE_WINDUP_TIMEOUT_TICKS)
         ) {
@@ -928,6 +947,25 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
         // flat and the stowed one folds fully home.
         if (jacksDeployed && jacksProgress > 0.96f) jacksProgress = 1f
         if (!jacksDeployed && jacksProgress < 0.02f) jacksProgress = 0f
+
+        // Wreck smoke — continuous fire/smoke from the hull when destroyed
+        if (isWreck && level().isClientSide && tickCount % 5 == 0) {
+            val rx = (Math.random() - 0.5) * 4.0
+            val ry = Math.random() * 2.5 + 0.5
+            val rz = (Math.random() - 0.5) * 4.0
+            level().addParticle(
+                net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE,
+                x + rx, y + ry, z + rz,
+                0.0, 0.05, 0.0
+            )
+            if (Math.random() < 0.3) {
+                level().addParticle(
+                    net.minecraft.core.particles.ParticleTypes.FLAME,
+                    x + rx, y + ry, z + rz,
+                    0.0, 0.02, 0.0
+                )
+            }
+        }
     }
 
     companion object {

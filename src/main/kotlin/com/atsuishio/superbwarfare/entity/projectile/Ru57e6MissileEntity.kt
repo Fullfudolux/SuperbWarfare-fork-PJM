@@ -65,6 +65,8 @@ open class Ru57e6MissileEntity(type: EntityType<out Ru57e6MissileEntity>, level:
         get() = entityData.get(SEMI_AUTO)
         set(value) { entityData.set(SEMI_AUTO, value) }
 
+    private var accelTick = 0
+
     var semiAutoTargetX: Float
         get() = entityData.get(SEMI_AUTO_TARGET_X)
         set(value) { entityData.set(SEMI_AUTO_TARGET_X, value) }
@@ -115,6 +117,7 @@ open class Ru57e6MissileEntity(type: EntityType<out Ru57e6MissileEntity>, level:
 
     override fun tick() {
         super.tick()
+        accelTick++
 
         if (launchPos == null) launchPos = position()
         if (!fuelExhausted && launchPos!!.distanceTo(position()) > MAX_FLIGHT_RANGE) {
@@ -176,7 +179,8 @@ open class Ru57e6MissileEntity(type: EntityType<out Ru57e6MissileEntity>, level:
                 if (range > 1.0E-4) {
                     turn(desiredDir.normalize(), ((tickCount - 1) * GUIDED_TURN_RAMP).coerceIn(0f, GUIDED_TURN_CAP))
                 }
-                this.deltaMovement = this.deltaMovement.scale(0.05).add(lookAngle.scale(CRUISE_SPEED))
+                val accel = (accelTick * ACCEL_RAMP).coerceIn(0f, 1f)
+                this.deltaMovement = this.deltaMovement.scale(1.0 - accel * 0.95f).add(lookAngle.scale((CRUISE_SPEED * accel).toDouble()))
             }
             return
         }
@@ -348,7 +352,8 @@ open class Ru57e6MissileEntity(type: EntityType<out Ru57e6MissileEntity>, level:
 
         if (!isLostTarget()) {
             turn(toVec, ((tickCount - 1) * GUIDED_TURN_RAMP).coerceIn(0f, GUIDED_TURN_CAP))
-            this.deltaMovement = this.deltaMovement.scale(0.05).add(lookAngle.scale(CRUISE_SPEED))
+            val accel = (accelTick * ACCEL_RAMP).coerceIn(0f, 1f)
+            this.deltaMovement = this.deltaMovement.scale(1.0 - accel * 0.95f).add(lookAngle.scale((CRUISE_SPEED * accel).toDouble()))
         }
 
         if (isLostTarget()) {
@@ -417,6 +422,17 @@ open class Ru57e6MissileEntity(type: EntityType<out Ru57e6MissileEntity>, level:
 
         if (miss > FUZE_RADIUS) return false
 
+        // Бросок промаха — один раз, ДО взрыва, через Math.random
+        // (не level().random — у него были проблемы с детерминированным сидом).
+        hitAircraft = target is MissileProjectile ||
+            target.javaClass.simpleName.contains("Missile")
+        if (hitAircraft && !level().isClientSide && !damageRollDone) {
+            damageRollDone = true
+            if (Math.random() < 0.05) {
+                damageMultiplier = 0f
+            }
+        }
+
         causeExplode(position().add(deltaMovement.scale(t)))
 
         // Взрыв уже разошёлся и урон посчитан — проверяем, пережила ли его
@@ -475,16 +491,20 @@ open class Ru57e6MissileEntity(type: EntityType<out Ru57e6MissileEntity>, level:
     // Воздушный подрыв вместо наземного пресета, который подбирается по
     // радиусу заряда. Тот сыпал пыль и обломки по земле — на высоте, где
     // срабатывает зенитная ракета, это выглядело чужеродно.
+    private var damageRollDone = false
+    private var damageMultiplier = 1.0f
+    private var hitAircraft = false
+
     override fun buildExplosion(vec3: Vec3): CustomExplosion.Builder {
         val builder = super.buildExplosion(vec3).withParticleType(ParticleTool.ParticleType.AIRBURST)
-        // 5% chance: даже при попадании нанесёт часть урона (30%) или
-        // вообще не нанесёт — ракеты слишком легко сбивают.
-        if (!level().isClientSide && level().random.nextFloat() < 0.05f) {
-            val roll = level().random.nextFloat()
-            val reduced = if (roll < 0.5f) 0f else getExplosionDamage() * 0.3f
-            builder.damage(reduced)
+        if (damageMultiplier < 1.0f) {
+            builder.damage(getExplosionDamage() * damageMultiplier)
         }
         return builder
+    }
+
+    override fun afterHitEntity(result: net.minecraft.world.phys.EntityHitResult) {
+        super.afterHitEntity(result)
     }
 
     override fun getSound(): SoundEvent {
@@ -508,7 +528,12 @@ open class Ru57e6MissileEntity(type: EntityType<out Ru57e6MissileEntity>, level:
         // значений — радиокомандное наведение, нижняя — ручное довождение по
         // стволу после потери захвата.
         /** Маршевая скорость, блоков/тик. */
-        private const val CRUISE_SPEED = 11.4
+        private const val CRUISE_SPEED = 6.05f
+
+        // Прирост доли маршевой скорости за тик после схода. 0.05 = полная
+        // скорость за ~20 тиков (1 секунду). До этого ракета летит на
+        // стартовой скорости (Velocity из JSON), постепенно набирая ход.
+        private const val ACCEL_RAMP = 0.04f
 
         // Навигационная постоянная пропорционального сближения. Классический
         // рабочий диапазон 3–5: меньше — ракета лениво выбирает ошибку и
@@ -543,7 +568,7 @@ open class Ru57e6MissileEntity(type: EntityType<out Ru57e6MissileEntity>, level:
         // Радиус срабатывания неконтактного взрывателя. Меньше радиуса самой
         // боевой части (8.4 в pantsir_s1.json) — подрыв на границе поражения
         // смысла не имеет, цель должна попасть в осколочное поле уверенно.
-        private const val FUZE_RADIUS = 5.0
+        private const val FUZE_RADIUS = 3.0
 
         // Взводится не сразу после схода: иначе ракета, выпущенная по цели в
         // упор, подорвалась бы прямо на направляющей.

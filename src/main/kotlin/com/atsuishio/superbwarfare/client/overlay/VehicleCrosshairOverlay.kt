@@ -257,19 +257,32 @@ object VehicleCrosshairOverlay : CommonOverlay("vehicle_crosshair") {
                         color
                     )
                 } else if ((crosshairPath == "@AirCraftCommon" || crosshairPath == "@VehicleLaserCannon" || crosshairPath == "@VehicleCommonGunDynamic") && pos.canBeSeen()) {
-                    RenderHelper.preciseBlitWithColor(
-                        guiGraphics,
-                        texture,
-                        x - scaledMinWH / 2,
-                        y - scaledMinWH / 2,
-                        0f,
-                        0f,
-                        scaledMinWH,
-                        scaledMinWH,
-                        scaledMinWH,
-                        scaledMinWH,
-                        color
-                    )
+                    // Pantsir autocannon: draw 4 thin lines with small gap,
+                    // no center dot — custom reticle instead of the texture.
+                    if (entity is PantsirEntity) {
+                        val xi = p.x.toInt()
+                        val yi = p.y.toInt()
+                        val gap = 3
+                        val len = 7
+                        guiGraphics.fill(xi - gap - len, yi, xi - gap, yi + 1, color)
+                        guiGraphics.fill(xi + gap, yi, xi + gap + len, yi + 1, color)
+                        guiGraphics.fill(xi, yi - gap - len, xi + 1, yi - gap, color)
+                        guiGraphics.fill(xi, yi + gap, xi + 1, yi + gap + len, color)
+                    } else {
+                        RenderHelper.preciseBlitWithColor(
+                            guiGraphics,
+                            texture,
+                            x - scaledMinWH / 2,
+                            y - scaledMinWH / 2,
+                            0f,
+                            0f,
+                            scaledMinWH,
+                            scaledMinWH,
+                            scaledMinWH,
+                            scaledMinWH,
+                            color
+                        )
+                    }
                     renderKillIndicatorDynamic(
                         guiGraphics,
                         x - 7.5f + (2 * (Math.random() - 0.5f)).toFloat(),

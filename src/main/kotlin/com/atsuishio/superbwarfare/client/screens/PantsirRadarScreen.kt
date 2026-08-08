@@ -664,7 +664,7 @@ class PantsirRadarScreen(private val vehicle: PantsirEntity) :
         // Совпадает с SeekRange ракеты 57Э6 в pantsir_s1.json: ровно на этой
         // дальности сервер и отдаёт загоризонтные контакты, так что показывать
         // меньше — терять уже полученные цели
-        private const val RANGE = 1680.0
+        private const val RANGE = 3360.0
 
         // Радиус выборки сущностей ИЗ САМОГО клиентского мира. Намеренно
         // меньше RANGE: запрос по AABB перебирает секции в коробке, и на
@@ -673,7 +673,7 @@ class PantsirRadarScreen(private val vehicle: PantsirEntity) :
         // принципе, всё остальное приходит готовым списком из радарной
         // синхронизации. Отсечение по настоящей дальности (RANGE) делается
         // ниже, уже по расстоянию.
-        private const val LOCAL_QUERY_RANGE = 512.0
+        private const val LOCAL_QUERY_RANGE = 1024.0
         private const val MIN_TARGET_HEIGHT = 10.0
         private const val AH_MIN_SCALE = 100.0
         private const val AH_HEIGHT_STEP = 100.0
