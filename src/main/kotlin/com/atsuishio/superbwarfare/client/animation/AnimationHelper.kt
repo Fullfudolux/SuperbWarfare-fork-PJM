@@ -23,6 +23,7 @@ import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.client.renderer.entity.player.PlayerRenderer
 import net.minecraft.client.renderer.texture.OverlayTexture
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.util.Mth
 import net.minecraft.world.entity.HumanoidArm
 import net.minecraft.world.entity.player.PlayerModelPart
@@ -35,6 +36,8 @@ import software.bernie.geckolib.util.RenderUtil
 
 object AnimationHelper {
     var lerpTimer: Float = 0f
+    // Cached crosshair textures keyed by name — was loc() + string-interp ResourceLocation alloc per frame while zoomed.
+    private val crosshairTextures = HashMap<String?, ResourceLocation>()
 
     fun renderPartOverBone(
         model: ModelPart,
@@ -348,7 +351,7 @@ object AnimationHelper {
             val pose = stack.last()
             val `$$7` = pose.pose()
 
-            var tex = loc("textures/crosshair/$name.png")
+            var tex = crosshairTextures.getOrPut(name) { loc("textures/crosshair/$name.png") }
 
             a = (3 * Mth.clamp(ClientEventHandler.zoomTime - 0.34, 0.0, 1.0) * 255).toInt()
 
