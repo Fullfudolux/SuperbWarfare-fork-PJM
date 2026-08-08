@@ -31,10 +31,9 @@ class SodayoPickUpRenderer<T>(manager: EntityRendererProvider.Context) :
 
         control.rotation.rotationZ(8 * Mth.lerp(partialTicks, vehicle.rudderRotO, vehicle.rudderRot))
 
-        val pitchRot = Axis.XP.rotation(head.rotationInEuler.x + -5f * vehicle.getAcceleration().toFloat())
-        val rollRot = Axis.ZP.rotation(head.rotationInEuler.z + 0.5f * Mth.lerp(partialTicks, vehicle.rudderRotO, vehicle.rudderRot) * vehicle.deltaMovement.horizontalDistance().toFloat())
-        val quaternion =  Quaterniond(pitchRot).mul(Quaterniond(rollRot))
-        head.rotation.mul(Quaternionf(quaternion))
+        head.rotation.mul(transformQuatScratch.identity()
+            .rotateX(head.rotationInEuler.x + -5f * vehicle.getAcceleration().toFloat())
+            .rotateZ(head.rotationInEuler.z + 0.5f * Mth.lerp(partialTicks, vehicle.rudderRotO, vehicle.rudderRot) * vehicle.deltaMovement.horizontalDistance().toFloat()))
 
         if (vehicle is SodayoPickUpRocketEntity) {
             model.shell.forEachIndexed { index, bone ->

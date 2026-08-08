@@ -109,9 +109,9 @@ class M10BookerRenderer<T>(manager: EntityRendererProvider.Context) :
             base.x = baseBindX + r2 * recoilShake * 0.5f
             base.z = baseBindZ - r * recoilShake
 
-            val pitch = Axis.XP.rotationDegrees(-r * recoilShake)
-            val roll = Axis.ZP.rotationDegrees(-r2 * recoilShake)
-            base.rotation.set(Quaternionf(Quaterniond(pitch).mul(Quaterniond(roll))))
+            base.rotation.set(transformQuatScratch.identity()
+                .rotateX(-r * recoilShake * Mth.DEG_TO_RAD)
+                .rotateZ(-r2 * recoilShake * Mth.DEG_TO_RAD))
         }
     }
 

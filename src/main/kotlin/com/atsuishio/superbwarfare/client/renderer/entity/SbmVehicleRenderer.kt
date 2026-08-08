@@ -70,8 +70,8 @@ open class SbmVehicleRenderer<T>(manager: EntityRendererProvider.Context) :
     var hideForPassengerWeaponStationControllerWhileZooming = false
 
     private var seatsCache: MutableList<SeatInfo>? = null
-    // Render-thread single-threaded — reused per turn-wheel/base/bound-bone (replaces Quaterniond round-trip: 5 allocs -> 0).
-    private val transformQuatScratch = Quaternionf()
+    // Render-thread single-threaded — reused per turn-wheel/base/bound-bone/dummy (replaces Quaterniond round-trip: 5 allocs -> 0). Protected for subclass access.
+    protected val transformQuatScratch = Quaternionf()
     // Render-thread single-threaded — reused per bound bone in getBoneWorldTransform/PosAndDirection (eliminates ~7 Matrix4f/Vector3f allocs/bone).
     private val worldRotScratch = Matrix4f()
     private val boneTransformScratch = Matrix4f()
