@@ -142,6 +142,9 @@ object AnimationHelper {
         packedLightIn: Int
     ) {
         if (itemStack.item !is GunItem) return
+        // Gate early: only the "flare" bone needs the GunResource lookup + flare rendering.
+        // Moving this before the NBT-aware cache lookup turns ~30-60 lookups/gun/frame into 1.
+        if (name != "flare" || ClientEventHandler.fireRotTimer <= 0) return
 
         val gunResource = GunResource.from(itemStack).compute()
         if (gunResource.flarePosition != null) {
