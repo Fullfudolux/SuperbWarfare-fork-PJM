@@ -7,7 +7,8 @@
     "ParticleType": "Huge",
     "ExplosionDamage": 50,
     "ExplosionRadius": 6,
-    "NoWreck": true
+    "NoWreck": false,
+    "ExplodePassengers": true
   },
   "ThirdPersonCameraPos": [
     0,

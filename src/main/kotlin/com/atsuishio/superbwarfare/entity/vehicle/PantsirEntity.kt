@@ -701,6 +701,7 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
 
     // ── Right-click: OBB raycast for doors + board ───────────────────────────
     override fun interactAt(player: Player, pVec: Vec3, hand: InteractionHand): InteractionResult {
+        if (isWreck) return InteractionResult.FAIL
         if (hand == InteractionHand.MAIN_HAND) {
             if (this.passengers.contains(player)) return InteractionResult.PASS
             // Shift+click is never door/board — let it fall through to interact()
@@ -948,20 +949,28 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
         if (jacksDeployed && jacksProgress > 0.96f) jacksProgress = 1f
         if (!jacksDeployed && jacksProgress < 0.02f) jacksProgress = 0f
 
-        // Wreck smoke — continuous fire/smoke from the hull when destroyed
+        // Wreck smoke + sparks from the turret
         if (isWreck && level().isClientSide && tickCount % 5 == 0) {
-            val rx = (Math.random() - 0.5) * 4.0
-            val ry = Math.random() * 2.5 + 0.5
-            val rz = (Math.random() - 0.5) * 4.0
+            val turretPos = position().add(0.0, 3.0, -4.0)
+            val rx = (Math.random() - 0.5) * 2.0
+            val ry = Math.random() * 1.5
+            val rz = (Math.random() - 0.5) * 2.0
             level().addParticle(
                 net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE,
-                x + rx, y + ry, z + rz,
+                turretPos.x + rx, turretPos.y + ry, turretPos.z + rz,
                 0.0, 0.05, 0.0
             )
-            if (Math.random() < 0.3) {
+            if (Math.random() < 0.4) {
+                level().addParticle(
+                    net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK,
+                    turretPos.x + rx, turretPos.y + ry, turretPos.z + rz,
+                    (Math.random() - 0.5) * 0.1, Math.random() * 0.05, (Math.random() - 0.5) * 0.1
+                )
+            }
+            if (Math.random() < 0.2) {
                 level().addParticle(
                     net.minecraft.core.particles.ParticleTypes.FLAME,
-                    x + rx, y + ry, z + rz,
+                    turretPos.x + rx, turretPos.y + ry, turretPos.z + rz,
                     0.0, 0.02, 0.0
                 )
             }
