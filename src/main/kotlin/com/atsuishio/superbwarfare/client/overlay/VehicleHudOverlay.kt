@@ -114,6 +114,8 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
     private var wasRenderingWeapons = false
     private var oldWeaponIndex = 0
     private var oldRenderWeaponIndex = 0
+    // Per-frame memo for passengerDisplayName — was CuriosApi.getCuriosInventory lookup 2× per passenger per frame (O(n²)).
+    private val passengerNameCache = HashMap<Entity, String>()
 
     override fun RenderContext.render() {
         if (!shouldRenderHud(player)) {
@@ -123,6 +125,8 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
 
         val entity = player.vehicle
         if (entity !is VehicleEntity) return
+
+        passengerNameCache.clear()
 
         val poseStack = guiGraphics.pose()
         poseStack.pushPose()
@@ -372,16 +376,17 @@ object VehicleHudOverlay : CommonOverlay("vehicle_hud") {
     }
 
     private fun passengerDisplayName(passenger: Entity?): String {
-        var name = "---"
-        if (passenger != null) {
-            name = passenger.name.string
+        if (passenger == null) return "---"
+        // Per-frame memo: CuriosApi.getCuriosInventory is a capability lookup + Optional + lambda — was called 2× per passenger (O(n²)).
+        return passengerNameCache.getOrPut(passenger) {
+            var name = passenger.name.string
+            if (passenger is Player) {
+                CuriosApi.getCuriosInventory(passenger)
+                    .flatMap { c -> c.findFirstCurio(ModItems.DOG_TAG.get()) }
+                    .ifPresent { s -> name = s.stack().hoverName.string }
+            }
+            name
         }
-        if (passenger is Player) {
-            CuriosApi.getCuriosInventory(passenger)
-                .flatMap { c -> c.findFirstCurio(ModItems.DOG_TAG.get()) }
-                .ifPresent { s -> name = s.stack().hoverName.string }
-        }
-        return name
     }
 
     // Widest current seat row (name text starts at x=42, same as
