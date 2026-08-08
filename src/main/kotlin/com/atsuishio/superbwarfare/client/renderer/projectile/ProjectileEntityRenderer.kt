@@ -40,26 +40,23 @@ class ProjectileEntityRenderer(manager: EntityRendererProvider.Context) : Entity
         packedLight: Int
     ) {
         val model = ProjectileModelReloadListener.getModel(MODEL) ?: return
-        val eyePos = localPlayer?.eyePosition ?: return
+        val player = localPlayer ?: return
 
         poseStack.pushPose()
 
         ClientRenderHandler.transformVirtualRenderPosition(poseStack, entity, partialTick)
 
         val width = 0.3f
-        val position = entity.getPosition(partialTick)
-        val distance = position.distanceTo(eyePos)
         val length = 0.7 * entity.deltaMovement.length()
 
         poseStack.mulPose(Axis.YP.rotationDegrees(VehicleVecUtils.getYRotFromVector(entity.deltaMovement).toFloat()))
         poseStack.mulPose(Axis.XP.rotationDegrees(-VehicleVecUtils.getXRotFromVector(entity.deltaMovement).toFloat()))
         poseStack.scale(width, width, length.toFloat())
 
-        if (entity.tickCount >= 5 || distance > 6.0) {
-            val type = RenderType.energySwirl(TEXTURE, 15.0f, 15.0f)
+        if (entity.tickCount >= 5 || entity.distanceToSqr(player) > 36.0) {
             model.renderToBuffer(
                 poseStack,
-                buffer.getBuffer(type),
+                buffer.getBuffer(ENERGY_TYPE),
                 packedLight,
                 OverlayTexture.NO_OVERLAY,
                 entity.getEntityData().get(ProjectileEntity.COLOR_R),
@@ -77,5 +74,7 @@ class ProjectileEntityRenderer(manager: EntityRendererProvider.Context) : Entity
     companion object {
         val TEXTURE = loc("textures/bedrock/projectile/projectile.png")
         val MODEL = loc("models/bedrock/projectile/projectile.geo.json")
+        // Precomputed — RenderType.energySwirl is not memoized by vanilla; reusing one instance ensures BufferSource cache hits.
+        val ENERGY_TYPE = RenderType.energySwirl(TEXTURE, 15.0f, 15.0f)
     }
 }
