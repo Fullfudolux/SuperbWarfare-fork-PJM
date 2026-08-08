@@ -18,6 +18,8 @@ public class BedrockModelBase extends BedrockModel implements PositionableModel 
     private static final String THIRD_PERSON_HAND_ORIGIN_NAME = "thirdperson_hand";
     private static final String FIRST_PERSON_HAND_ORIGIN_NAME = "firstperson_hand";
     private static final Vector3f DEFAULT_SCALE = new Vector3f(1, 1, 1);
+    // Render-thread single-threaded — pooled scratch eliminates per-call Vector3f allocation (mirrors BedrockPolyMesh/GeoArmorRenderer)
+    private static final Vector3f SCRATCH_TRANSLATION = new Vector3f();
     private final @Nullable PositionPointTransform fixedTransform;
     private final @Nullable PositionPointTransform groundTransform;
     private final @Nullable PositionPointTransform thirdPersonHandTransform;
@@ -47,7 +49,7 @@ public class BedrockModelBase extends BedrockModel implements PositionableModel 
 
     private void applyOriginTransform(@Nullable PositionPointTransform transform, @Nullable Vector3f scaleVector, PoseStack poseStack) {
         if (transform != null) {
-            Vector3f translation = transform.translation.mul(scaleVector, new Vector3f());
+            Vector3f translation = transform.translation.mul(scaleVector, SCRATCH_TRANSLATION);
             poseStack.translate(translation.x, translation.y, translation.z);
             poseStack.mulPose(transform.rotation);
         }
