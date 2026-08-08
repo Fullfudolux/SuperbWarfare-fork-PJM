@@ -19,29 +19,34 @@ public class ItemModelHelper {
         splitBoneName(bone, name, GunData.from(stack).selectedAmmoType.get());
     }
 
-    private static void splitBoneName(GeoBone bone, String boneName, Attachment attachment, AttachmentType type) {
+    // Trailing-integer suffix of boneName, or -1 if boneName is not exactly [non-digits][digits].
+    // Replaces boneName.split("(?<=\\D)(?=\\d)") (regex + String[] alloc per call, up to 12x per bone per frame).
+    private static int trailingIndex(String boneName) {
+        int len = boneName.length();
+        int digitStart = len;
+        while (digitStart > 0 && Character.isDigit(boneName.charAt(digitStart - 1))) digitStart--;
+        if (digitStart == 0 || digitStart == len) return -1;
+        for (int j = 0; j < digitStart; j++) {
+            if (Character.isDigit(boneName.charAt(j))) return -1;
+        }
         try {
-            if (boneName.startsWith(type.getAttachmentName())) {
-                String[] parts = boneName.split("(?<=\\D)(?=\\d)");
-                if (parts.length == 2) {
-                    int index = Integer.parseInt(parts[1]);
-                    bone.setHidden(attachment.get(type) != index);
-                }
-            }
-        } catch (NumberFormatException ignored) {
+            return Integer.parseInt(boneName.substring(digitStart));
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    private static void splitBoneName(GeoBone bone, String boneName, Attachment attachment, AttachmentType type) {
+        if (boneName.startsWith(type.getAttachmentName())) {
+            int index = trailingIndex(boneName);
+            if (index >= 0) bone.setHidden(attachment.get(type) != index);
         }
     }
 
     private static void splitBoneName(GeoBone bone, String boneName, int ammoType) {
-        try {
-            if (boneName.startsWith("AmmoType")) {
-                String[] parts = boneName.split("(?<=\\D)(?=\\d)");
-                if (parts.length == 2) {
-                    int index = Integer.parseInt(parts[1]);
-                    bone.setHidden(ammoType != index);
-                }
-            }
-        } catch (NumberFormatException ignored) {
+        if (boneName.startsWith("AmmoType")) {
+            int index = trailingIndex(boneName);
+            if (index >= 0) bone.setHidden(ammoType != index);
         }
     }
 
@@ -55,28 +60,16 @@ public class ItemModelHelper {
     }
 
     private static void splitAndHideBone(GeoBone bone, String boneName, String tagName) {
-        try {
-            if (boneName.startsWith(tagName)) {
-                String[] parts = boneName.split("(?<=\\D)(?=\\d)");
-                if (parts.length == 2) {
-                    int index = Integer.parseInt(parts[1]);
-                    bone.setHidden(index != 0);
-                }
-            }
-        } catch (NumberFormatException ignored) {
+        if (boneName.startsWith(tagName)) {
+            int index = trailingIndex(boneName);
+            if (index >= 0) bone.setHidden(index != 0);
         }
     }
 
     private static void splitAndHideBoneAmmoType(GeoBone bone, String boneName) {
-        try {
-            if (boneName.startsWith("AmmoType")) {
-                String[] parts = boneName.split("(?<=\\D)(?=\\d)");
-                if (parts.length == 2) {
-                    int index = Integer.parseInt(parts[1]);
-                    bone.setHidden(index != 0);
-                }
-            }
-        } catch (NumberFormatException ignored) {
+        if (boneName.startsWith("AmmoType")) {
+            int index = trailingIndex(boneName);
+            if (index >= 0) bone.setHidden(index != 0);
         }
     }
 }
