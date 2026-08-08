@@ -70,6 +70,8 @@ open class SbmVehicleRenderer<T>(manager: EntityRendererProvider.Context) :
     var hideForPassengerWeaponStationControllerWhileZooming = false
 
     private var seatsCache: MutableList<SeatInfo>? = null
+    // Render-thread single-threaded — reused per turn-wheel/base/bound-bone (replaces Quaterniond round-trip: 5 allocs -> 0).
+    private val transformQuatScratch = Quaternionf()
 
     override fun getTextureLocation(entity: T): ResourceLocation {
         val (_, namespace, id) = entity.type.descriptionId.split(".")
@@ -359,11 +361,10 @@ open class SbmVehicleRenderer<T>(manager: EntityRendererProvider.Context) :
 
                         val rotate = dummyInfo.rotate
 
-                        val yawRot = Axis.YP.rotation(rotate.y.toFloat())
-                        val pitchRot = Axis.XP.rotation(rotate.x.toFloat())
-                        val rollRot = Axis.ZP.rotation(rotate.z.toFloat())
-                        val quaternion = Quaterniond(yawRot).mul(Quaterniond(pitchRot)).mul(Quaterniond(rollRot))
-                        poseStack.mulPose(Quaternionf(quaternion))
+                        poseStack.mulPose(transformQuatScratch.identity()
+                            .rotateY(rotate.y.toFloat())
+                            .rotateX(rotate.x.toFloat())
+                            .rotateZ(rotate.z.toFloat()))
 
                         val offset = dummyInfo.offset
 
@@ -424,17 +425,12 @@ open class SbmVehicleRenderer<T>(manager: EntityRendererProvider.Context) :
         model.rightWheels.forEach {
             it.rotation.rotationX(1.5f * rightWheelRot)
         }
+        val rudderLerp = Mth.lerp(partialTicks, vehicle.rudderRotO, vehicle.rudderRot)
         model.leftWheelsTurn.forEach {
-            val yawRot = Axis.YP.rotation(Mth.lerp(partialTicks, vehicle.rudderRotO, vehicle.rudderRot))
-            val pitchRot = Axis.XP.rotation(1.5f * leftWheelRot)
-            val quaternion = Quaterniond(yawRot).mul(Quaterniond(pitchRot))
-            it.rotation.mul(Quaternionf(quaternion))
+            it.rotation.mul(transformQuatScratch.identity().rotateY(rudderLerp).rotateX(1.5f * leftWheelRot))
         }
         model.rightWheelsTurn.forEach {
-            val yawRot = Axis.YP.rotation(Mth.lerp(partialTicks, vehicle.rudderRotO, vehicle.rudderRot))
-            val pitchRot = Axis.XP.rotation(1.5f * rightWheelRot)
-            val quaternion = Quaterniond(yawRot).mul(Quaterniond(pitchRot))
-            it.rotation.mul(Quaternionf(quaternion))
+            it.rotation.mul(transformQuatScratch.identity().rotateY(rudderLerp).rotateX(1.5f * rightWheelRot))
         }
 
         // 履带
@@ -494,10 +490,9 @@ open class SbmVehicleRenderer<T>(manager: EntityRendererProvider.Context) :
             base.x = -r2 * recoilShake * 0.5f
             base.z = r * recoilShake
 
-            val pitch = Axis.XP.rotationDegrees(r * recoilShake)
-            val roll = Axis.ZP.rotationDegrees(r2 * recoilShake)
-            val quaternion = Quaterniond(pitch).mul(Quaterniond(roll))
-            base.rotation.mul(Quaternionf(quaternion))
+            base.rotation.mul(transformQuatScratch.identity()
+                .rotateX(r * recoilShake * Mth.DEG_TO_RAD)
+                .rotateZ(r2 * recoilShake * Mth.DEG_TO_RAD))
         }
 
         // Turret
@@ -580,10 +575,9 @@ open class SbmVehicleRenderer<T>(manager: EntityRendererProvider.Context) :
                         )
                         ).toFloat()
 
-                        val yawRot = Axis.YP.rotationDegrees(-diffY)
-                        val pitchRot = Axis.XP.rotationDegrees(-diffX)
-                        val quaternion = Quaterniond(yawRot).mul(Quaterniond(pitchRot))
-                        bone.rotation.mul(Quaternionf(quaternion))
+                        bone.rotation.mul(transformQuatScratch.identity()
+                            .rotateY(-diffY * Mth.DEG_TO_RAD)
+                            .rotateX(-diffX * Mth.DEG_TO_RAD))
                     }
                 }
             }
