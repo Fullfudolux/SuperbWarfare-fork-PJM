@@ -172,7 +172,7 @@ object SpyglassRangeOverlay : CommonOverlay("spyglass_range") {
                 if (blockRange > 500) {
                     guiGraphics.drawString(
                         Minecraft.getInstance().font, Component.translatable("tips.superbwarfare.drone.range")
-                            .append(Component.literal("---M")), screenWidth / 2 + 12, screenHeight / 2 - 28, -1, false
+                            .append(HudComponents.DASH_M_CAP), screenWidth / 2 + 12, screenHeight / 2 - 28, -1, false
                     )
                 } else {
                     guiGraphics.drawString(

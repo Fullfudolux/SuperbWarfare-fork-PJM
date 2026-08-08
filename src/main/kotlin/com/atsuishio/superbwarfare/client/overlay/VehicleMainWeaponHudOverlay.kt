@@ -629,7 +629,7 @@ object VehicleMainWeaponHudOverlay : CommonOverlay("vehicle_main_weapon_hud") {
         if (vehicle.energy < 0.02 * vehicle.maxEnergy) {
             guiGraphics.drawString(
                 font,
-                Component.literal("NO POWER!"),
+                HudComponents.NO_POWER,
                 screenWidth / 2 - 144,
                 screenHeight / 2 + 14,
                 -65536,
@@ -638,7 +638,7 @@ object VehicleMainWeaponHudOverlay : CommonOverlay("vehicle_main_weapon_hud") {
         } else if (vehicle.energy < 0.2 * vehicle.maxEnergy) {
             guiGraphics.drawString(
                 font,
-                Component.literal("LOW POWER"),
+                HudComponents.LOW_POWER,
                 screenWidth / 2 - 144,
                 screenHeight / 2 + 14,
                 0xFF6B00,

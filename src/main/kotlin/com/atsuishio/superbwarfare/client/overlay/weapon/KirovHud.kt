@@ -1,5 +1,7 @@
 package com.atsuishio.superbwarfare.client.overlay.weapon
 
+import com.atsuishio.superbwarfare.client.overlay.HudComponents
+
 import com.atsuishio.superbwarfare.Mod.Companion.loc
 import com.atsuishio.superbwarfare.client.RenderHelper
 import com.atsuishio.superbwarfare.client.overlay.CompassHud
@@ -180,7 +182,7 @@ object KirovHud {
                     } else {
                         guiGraphics.drawString(
                             Minecraft.getInstance().font,
-                            Component.translatable("tips.superbwarfare.flare.reloading"),
+                            HudComponents.FLARE_RELOADING,
                             25,
                             1,
                             0xFF0000,

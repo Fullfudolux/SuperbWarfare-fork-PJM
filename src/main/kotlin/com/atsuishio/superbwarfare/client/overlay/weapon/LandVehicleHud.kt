@@ -1,5 +1,7 @@
 package com.atsuishio.superbwarfare.client.overlay.weapon
 
+import com.atsuishio.superbwarfare.client.overlay.HudComponents
+
 import com.atsuishio.superbwarfare.Mod.Companion.loc
 import com.atsuishio.superbwarfare.client.RenderHelper
 import com.atsuishio.superbwarfare.client.overlay.VehicleMainWeaponHudOverlay
@@ -218,7 +220,7 @@ object LandVehicleHud {
                     val width = Minecraft.getInstance().font.width("---m")
                     gui.drawString(
                         Minecraft.getInstance().font,
-                        Component.literal("---m"),
+                        HudComponents.DASH_M,
                         screenWidth / 2 - width / 2,
                         screenHeight - 53,
                         color,
@@ -266,7 +268,7 @@ object LandVehicleHud {
                 } else {
                     gui.drawString(
                         Minecraft.getInstance().font,
-                        Component.translatable("tips.superbwarfare.smoke.reloading"),
+                        HudComponents.SMOKE_RELOADING,
                         screenWidth / 2 - 165,
                         screenHeight / 2 - 36,
                         0xFF0000,

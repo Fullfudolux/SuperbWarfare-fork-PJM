@@ -1,5 +1,7 @@
 package com.atsuishio.superbwarfare.client.overlay.weapon
 
+import com.atsuishio.superbwarfare.client.overlay.HudComponents
+
 import com.atsuishio.superbwarfare.Mod.Companion.loc
 import com.atsuishio.superbwarfare.client.RenderHelper
 import com.atsuishio.superbwarfare.entity.vehicle.AnnihilatorEntity
@@ -167,7 +169,7 @@ object ArtilleryHud {
             if (blockRange > 511) {
                 guiGraphics.drawString(
                     Minecraft.getInstance().font, Component.translatable("tips.superbwarfare.drone.range")
-                        .append(Component.literal("---m")), screenWidth / 2 + 14, screenHeight / 2 - 20, -1, false
+                        .append(HudComponents.DASH_M), screenWidth / 2 + 14, screenHeight / 2 - 20, -1, false
                 )
             } else {
                 guiGraphics.drawString(

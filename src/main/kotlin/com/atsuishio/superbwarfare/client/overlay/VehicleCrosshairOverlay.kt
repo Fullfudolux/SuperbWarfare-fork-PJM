@@ -465,7 +465,7 @@ object VehicleCrosshairOverlay : CommonOverlay("vehicle_crosshair") {
                     } else {
                         guiGraphics.drawString(
                             Minecraft.getInstance().font,
-                            Component.translatable("tips.superbwarfare.smoke.reloading"),
+                            HudComponents.SMOKE_RELOADING,
                             30,
                             1,
                             0xFF0000,

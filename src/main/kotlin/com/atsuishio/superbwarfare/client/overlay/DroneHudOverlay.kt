@@ -198,7 +198,7 @@ object DroneHudOverlay : CommonOverlay("drone_hud") {
                             guiGraphics.drawString(
                                 mc.font,
                                 Component.translatable("tips.superbwarfare.drone.range")
-                                    .append(Component.literal("---m")),
+                                    .append(HudComponents.DASH_M),
                                 screenWidth / 2 + 12,
                                 screenHeight / 2 - 28,
                                 color,

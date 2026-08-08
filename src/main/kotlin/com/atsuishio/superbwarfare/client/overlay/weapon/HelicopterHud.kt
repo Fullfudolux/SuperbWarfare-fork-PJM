@@ -1,5 +1,7 @@
 package com.atsuishio.superbwarfare.client.overlay.weapon
 
+import com.atsuishio.superbwarfare.client.overlay.HudComponents
+
 import com.atsuishio.superbwarfare.Mod.Companion.loc
 import com.atsuishio.superbwarfare.client.RenderHelper
 import com.atsuishio.superbwarfare.client.overlay.VehicleHudOverlay.renderKillIndicatorDynamic
@@ -260,7 +262,7 @@ object HelicopterHud {
                         val width = Minecraft.getInstance().font.width("---m")
                         guiGraphics.drawString(
                             Minecraft.getInstance().font,
-                            Component.literal("---m"),
+                            HudComponents.DASH_M,
                             screenWidth / 2 - width / 2,
                             screenHeight - 53,
                             color,
@@ -485,7 +487,7 @@ object HelicopterHud {
                     } else {
                         guiGraphics.drawString(
                             Minecraft.getInstance().font,
-                            Component.translatable("tips.superbwarfare.flare.reloading"),
+                            HudComponents.FLARE_RELOADING,
                             screenWidth / 2 - 160,
                             screenHeight / 2 - 50,
                             0xFF0000,
@@ -662,7 +664,7 @@ object HelicopterHud {
                             false
                         )
                     } else {
-                        val componentReloading = Component.translatable("tips.superbwarfare.flare.reloading")
+                        val componentReloading = HudComponents.FLARE_RELOADING
                         val length = font.width(componentReloading)
 
                         guiGraphics.drawString(

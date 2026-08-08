@@ -1,5 +1,7 @@
 package com.atsuishio.superbwarfare.client.overlay.weapon
 
+import com.atsuishio.superbwarfare.client.overlay.HudComponents
+
 import com.atsuishio.superbwarfare.Mod.Companion.loc
 import com.atsuishio.superbwarfare.client.RenderHelper
 import com.atsuishio.superbwarfare.client.overlay.VehicleHudOverlay.renderKillIndicatorDynamic
@@ -393,7 +395,7 @@ object AircraftHud {
                 } else {
                     guiGraphics.drawString(
                         Minecraft.getInstance().font,
-                        Component.translatable("tips.superbwarfare.flare.reloading"),
+                        HudComponents.FLARE_RELOADING,
                         72,
                         0,
                         0xFF0000,
@@ -418,12 +420,12 @@ object AircraftHud {
             if (vehicle.hasEnergyStorage()) {
                 if (vehicle.energy < 0.02 * vehicle.maxEnergy) {
                     guiGraphics.drawString(
-                        mc.font, Component.literal("NO POWER!"),
+                        mc.font, HudComponents.NO_POWER,
                         -144, 14, -65536, false
                     )
                 } else if (vehicle.energy < 0.2 * vehicle.maxEnergy) {
                     guiGraphics.drawString(
-                        mc.font, Component.literal("LOW POWER"),
+                        mc.font, HudComponents.LOW_POWER,
                         -144, 14, 0xFF6B00, false
                     )
                 }
@@ -720,7 +722,7 @@ object AircraftHud {
                             false
                         )
                     } else {
-                        val componentReloading = Component.translatable("tips.superbwarfare.flare.reloading")
+                        val componentReloading = HudComponents.FLARE_RELOADING
                         val length = font.width(componentReloading)
 
                         guiGraphics.drawString(
