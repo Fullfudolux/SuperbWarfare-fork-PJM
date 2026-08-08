@@ -18,6 +18,12 @@ import org.joml.Quaternionf
 
 @EventBusSubscriber(Dist.CLIENT)
 object PhosphorusFireRenderer {
+    // Resolved once (atlas must be loaded); reused per burning-entity per frame — was Material+ResourceLocation alloc per frame.
+    private val sprite1 by lazy { Material(TextureAtlas.LOCATION_BLOCKS, ResourceLocation.withDefaultNamespace("block/soul_fire_0")).sprite() }
+    private val sprite2 by lazy { Material(TextureAtlas.LOCATION_BLOCKS, ResourceLocation.withDefaultNamespace("block/soul_fire_1")).sprite() }
+    // Render-thread single-threaded — reused per burning entity; mulPose copies values immediately.
+    private val cameraRotQuat = Quaternionf()
+
     @Suppress("DEPRECATION")
     @SubscribeEvent
     fun onRenderCurseFlame(event: RenderLivingEvent.Pre<LivingEntity, out EntityModel<LivingEntity>>) {
@@ -25,11 +31,6 @@ object PhosphorusFireRenderer {
         if (!PhosphorusFireCapability.of(entity).isOnFire) return
 
         val stack = event.poseStack
-
-        val sprite1 =
-            Material(TextureAtlas.LOCATION_BLOCKS, ResourceLocation.withDefaultNamespace("block/soul_fire_0")).sprite()
-        val sprite2 =
-            Material(TextureAtlas.LOCATION_BLOCKS, ResourceLocation.withDefaultNamespace("block/soul_fire_1")).sprite()
 
         stack.pushPose()
         val size = entity.bbWidth * 1.6f
@@ -41,7 +42,7 @@ object PhosphorusFireRenderer {
         var zOffset = 0.0f
 
         val camera = mc.entityRenderDispatcher.cameraOrientation()
-        stack.mulPose(Quaternionf(0f, camera.y, 0f, camera.w))
+        stack.mulPose(cameraRotQuat.set(0f, camera.y, 0f, camera.w))
         stack.translate(0.0f, 0.0f, 0.3f - (hwRatio.toInt()).toFloat() * 0.02f)
 
         var i = 0
