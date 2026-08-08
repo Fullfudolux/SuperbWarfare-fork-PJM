@@ -15,17 +15,6 @@ import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
 
 public class RenderHelper {
-    // Precomputed sin/cos LUT for drawCircularRing — eliminates up to 720 Math.cos/sin calls per ring-pair per frame.
-    private static final int RING_SEGMENTS = 180;
-    private static final float RING_ANGLE_STEP = (float) (2 * Math.PI / RING_SEGMENTS);
-    private static final float[] RING_COS = new float[RING_SEGMENTS];
-    private static final float[] RING_SIN = new float[RING_SEGMENTS];
-    static {
-        for (int i = 0; i < RING_SEGMENTS; i++) {
-            RING_COS[i] = (float) Math.cos(i * RING_ANGLE_STEP);
-            RING_SIN[i] = (float) Math.sin(i * RING_ANGLE_STEP);
-        }
-    }
 
     // code from GuiGraphics
     /**
@@ -392,9 +381,8 @@ public class RenderHelper {
                 angle = maxAngle;
             }
 
-            int ringIdx = i % RING_SEGMENTS;
-            float cos = RING_COS[ringIdx];
-            float sin = RING_SIN[ringIdx];
+            float cos = (float) Math.cos(angle);
+            float sin = (float) Math.sin(angle);
 
             // 外圆点
             float outerX = centerX + outerRadius * cos;
