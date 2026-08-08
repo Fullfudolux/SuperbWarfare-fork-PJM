@@ -72,6 +72,14 @@ open class SbmVehicleRenderer<T>(manager: EntityRendererProvider.Context) :
     private var seatsCache: MutableList<SeatInfo>? = null
     // Render-thread single-threaded — reused per turn-wheel/base/bound-bone (replaces Quaterniond round-trip: 5 allocs -> 0).
     private val transformQuatScratch = Quaternionf()
+    // Render-thread single-threaded — reused per bound bone in getBoneWorldTransform/PosAndDirection (eliminates ~7 Matrix4f/Vector3f allocs/bone).
+    private val worldRotScratch = Matrix4f()
+    private val boneTransformScratch = Matrix4f()
+    private val relativeToPivotScratch = Vector3f()
+    private val rotatedRelativeScratch = Vector3f()
+    private val boneRotScratch = Matrix4f()
+    private val worldDirVecScratch = Vector3f()
+    private val FORWARD_Z = Vector3f(0f, 0f, 1f)
 
     override fun getTextureLocation(entity: T): ResourceLocation {
         val (_, namespace, id) = entity.type.descriptionId.split(".")
@@ -673,7 +681,7 @@ open class SbmVehicleRenderer<T>(manager: EntityRendererProvider.Context) :
     ): Matrix4f {
         val pitch = Mth.lerp(partialTicks, vehicle.xRotO + vehicle.fakePitchO, vehicle.xRot + vehicle.fakePitch)
         val roll = Mth.lerp(partialTicks, vehicle.prevRoll + vehicle.fakeRollO, vehicle.roll + vehicle.fakeRoll)
-        return Matrix4f()
+        return worldRotScratch.identity()
             .rotateZ(-roll * Mth.DEG_TO_RAD)
             .rotateX(-pitch * Mth.DEG_TO_RAD)
             .rotateY((-entityYaw + 180f) * Mth.DEG_TO_RAD)
@@ -699,35 +707,29 @@ open class SbmVehicleRenderer<T>(manager: EntityRendererProvider.Context) :
         partialTicks: Float
     ): Pair<Vec3, Matrix4f> {
         // 1. 骨骼在模型空间中的变换（SBM库迭代所有parent累乘得到）
-        val boneTransform = Matrix4f(bone.globalTransform)
-        val modelPos = Vec3(
-            boneTransform.m30().toDouble(),
-            boneTransform.m31().toDouble(),
-            boneTransform.m32().toDouble()
-        )
+        val boneTransform = boneTransformScratch.set(bone.globalTransform)
 
         // 2. 构建实体世界旋转矩阵
         val worldRot = buildWorldRotationMatrix(vehicle, entityYaw, partialTicks)
         val pivotY = vehicle.rotateOffsetHeight
 
-        // 3. 旋转中心偏移：pivot + R * (modelPos - pivot)
-        val relativeToPivot = Vector3f(
-            modelPos.x.toFloat(),
-            (modelPos.y - pivotY).toFloat(),
-            modelPos.z.toFloat()
+        // 3. 旋转中心偏移：pivot + R * (modelPos - pivot) — inline modelPos from boneTransform columns (eliminates Vec3 alloc)
+        relativeToPivotScratch.set(
+            boneTransform.m30(),
+            (boneTransform.m31() - pivotY).toFloat(),
+            boneTransform.m32()
         )
-        val rotatedRelative = Vector3f()
-        worldRot.transformPosition(relativeToPivot, rotatedRelative)
+        worldRot.transformPosition(relativeToPivotScratch, rotatedRelativeScratch)
 
         val worldPos = vehicle.position().add(
-            rotatedRelative.x().toDouble(),
-            rotatedRelative.y().toDouble() + pivotY,
-            rotatedRelative.z().toDouble()
+            rotatedRelativeScratch.x().toDouble(),
+            rotatedRelativeScratch.y().toDouble() + pivotY,
+            rotatedRelativeScratch.z().toDouble()
         )
 
         // 4. 构建骨骼的世界旋转矩阵 = R_world * boneRot
         //    提取 boneTransform 的纯旋转部分（清除平移列）
-        val boneRot = Matrix4f(boneTransform)
+        val boneRot = boneRotScratch.set(boneTransform)
         boneRot.m30(0f)
         boneRot.m31(0f)
         boneRot.m32(0f)
@@ -753,12 +755,11 @@ open class SbmVehicleRenderer<T>(manager: EntityRendererProvider.Context) :
         val (worldPos, worldOrient) = getBoneWorldTransform(vehicle, bone, entityYaw, partialTicks)
 
         // 从世界旋转矩阵中提取前向（局部Z轴正方向 = 矩阵第3列）
-        val worldDirVec = Vector3f()
-        worldOrient.transformDirection(Vector3f(0f, 0f, 1f), worldDirVec)
+        worldOrient.transformDirection(FORWARD_Z, worldDirVecScratch)
         val worldDir = Vec3(
-            worldDirVec.x().toDouble(),
-            worldDirVec.y().toDouble(),
-            worldDirVec.z().toDouble()
+            worldDirVecScratch.x().toDouble(),
+            worldDirVecScratch.y().toDouble(),
+            worldDirVecScratch.z().toDouble()
         ).normalize()
 
         return Pair(worldPos, worldDir.scale(-1.0))
