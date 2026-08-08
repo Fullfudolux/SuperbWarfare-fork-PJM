@@ -21,9 +21,36 @@ import software.bernie.geckolib.renderer.GeoItemRenderer;
 import software.bernie.geckolib.util.Color;
 import software.bernie.geckolib.util.RenderUtil;
 
+import java.util.Map;
+import java.util.WeakHashMap;
+
 public class CustomGunRenderer<T extends GunGeoItem & GeoAnimatable> extends GeoItemRenderer<T> {
 
     public static final float SCALE_RECIPROCAL = 1.0f / 16.0f;
+
+    // Per-model cache: true if any bone name ends with "_illuminated". When false, the illuminated
+    // pass produces no visible output (renderCubesOfBone is suffix-gated), so the per-bone matrix
+    // tracking loop is skipped — eliminates ~3 Matrix4f/bone/gun/frame for guns with no glow parts.
+    private static final Map<BakedGeoModel, Boolean> HAS_ILLUMINATED_BONES = new WeakHashMap<>();
+
+    private static boolean hasIlluminatedBones(BakedGeoModel model) {
+        Boolean cached = HAS_ILLUMINATED_BONES.get(model);
+        if (cached != null) return cached;
+        boolean found = false;
+        for (GeoBone bone : model.topLevelBones()) {
+            if (boneHasIlluminatedSuffix(bone)) { found = true; break; }
+        }
+        HAS_ILLUMINATED_BONES.put(model, found);
+        return found;
+    }
+
+    private static boolean boneHasIlluminatedSuffix(GeoBone bone) {
+        if (bone.getName().endsWith("_illuminated")) return true;
+        for (GeoBone child : bone.getChildBones()) {
+            if (boneHasIlluminatedSuffix(child)) return true;
+        }
+        return false;
+    }
 
 //    public static final int LOD_DISTANCE = 100;
 
@@ -194,9 +221,11 @@ public class CustomGunRenderer<T extends GunGeoItem & GeoAnimatable> extends Geo
 
         updateAnimatedTextureFrame(animatable);
 
-        for (GeoBone bone : model.topLevelBones()) {
-            this.illuminatedRender(poseStack, animatable, bone, renderType, bufferSource, buffer,
-                    partialTick, packedLight, packedOverlay, color);
+        if (hasIlluminatedBones(model)) {
+            for (GeoBone bone : model.topLevelBones()) {
+                this.illuminatedRender(poseStack, animatable, bone, renderType, bufferSource, buffer,
+                        partialTick, packedLight, packedOverlay, color);
+            }
         }
 
         postRender(poseStack, animatable, model, bufferSource, buffer, true, partialTick, packedLight, packedOverlay, color);
