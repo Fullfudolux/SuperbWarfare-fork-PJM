@@ -82,6 +82,8 @@ object IFFOverlay : CommonOverlay("iff") {
 
     override fun RenderContext.render() {
         val level = player.level()
+        val cx = screenWidth.toFloat() / 2f
+        val cy = screenHeight.toFloat() / 2f
 
         val poseStack = guiGraphics.pose()
         poseStack.pushPose()
@@ -133,9 +135,7 @@ object IFFOverlay : CommonOverlay("iff") {
                             0x7FFFAD
                         )
 
-                        if (Vec2(xf, yf)
-                                .distanceToSqr(Vec2(screenWidth.toFloat() / 2.0f, screenHeight.toFloat() / 2.0f)) < 12
-                        ) {
+                        if ((xf - cx) * (xf - cx) + (yf - cy) * (yf - cy) < 12) {
                             poseStack.pushPose()
                             poseStack.translate(xf, yf, 0f)
                             poseStack.scale(0.75f, 0.75f, 1f)
@@ -213,13 +213,7 @@ object IFFOverlay : CommonOverlay("iff") {
                                 height = 20
                             }
 
-                            if (Vec2(xf, yf).distanceToSqr(
-                                    Vec2(
-                                        screenWidth.toFloat() / 2.0f,
-                                        screenHeight.toFloat() / 2.0f
-                                    )
-                                ) < 12
-                            ) {
+                            if ((xf - cx) * (xf - cx) + (yf - cy) * (yf - cy) < 12) {
                                 poseStack.pushPose()
                                 poseStack.translate(xf, yf, 0f)
                                 poseStack.scale(0.75f, 0.75f, 1f)
@@ -298,13 +292,7 @@ object IFFOverlay : CommonOverlay("iff") {
                             color
                         )
 
-                        if (Vec2(xf, yf).distanceToSqr(
-                                Vec2(
-                                    screenWidth.toFloat() / 2.0f,
-                                    screenHeight.toFloat() / 2.0f
-                                )
-                            ) < 12
-                        ) {
+                        if ((xf - cx) * (xf - cx) + (yf - cy) * (yf - cy) < 12) {
                             poseStack.pushPose()
                             poseStack.translate(xf, yf, 0f)
                             poseStack.scale(0.75f, 0.75f, 1f)
