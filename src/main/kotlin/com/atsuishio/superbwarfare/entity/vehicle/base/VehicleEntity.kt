@@ -2710,7 +2710,7 @@ open class VehicleEntity(pEntityType: EntityType<*>, pLevel: Level) : Entity(pEn
 
     protected var positionTransform = HashMap<String, Function<Float, Matrix4d>>()
     protected var vectorTransform = HashMap<String, Function<Float, Vec3>>()
-    protected var rotationTransform = HashMap<String, Function<Float, Quaterniond>>()
+    protected var rotationTransform = HashMap<String, Function<Float, Quaternionf>>()
 
     //    @Override
     //    public void onAddedToWorld() {
@@ -2793,11 +2793,11 @@ open class VehicleEntity(pEntityType: EntityType<*>, pLevel: Level) : Entity(pEn
         return Vec3(Minecraft.getInstance().gameRenderer.mainCamera.lookVector)
     }
 
-    open fun getRotationFromString(string: String?): Quaterniond {
+    open fun getRotationFromString(string: String?): Quaternionf {
         return getRotationFromString(string, 0f)
     }
 
-    open fun getRotationFromString(string: String?, ticks: Float): Quaterniond {
+    open fun getRotationFromString(string: String?, ticks: Float): Quaternionf {
         return rotationTransform
             .getOrDefault(string, rotationTransform["Default"])!!
             .apply(ticks)

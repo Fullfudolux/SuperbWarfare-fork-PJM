@@ -37,6 +37,11 @@ data class OBB(
         this.rotation.set(rotation)
     }
 
+    // Overload for Quaternionf (render path) — writes into the Quaterniond field without per-call alloc.
+    fun updateRotation(rotation: Quaternionf) {
+        this.rotation.set(rotation)
+    }
+
     /**
      * 计算与向量相交的某个面
      * 

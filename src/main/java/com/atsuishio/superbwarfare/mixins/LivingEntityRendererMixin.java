@@ -44,8 +44,7 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, M extend
             float transformYaw = (float) VehicleVecUtils.getYRotFromVector(vehicle.getTransformDirectionNoOrientation(partialTick, entity));
             var passengerWeaponStationYawRot = Axis.YP.rotationDegrees(-transformYaw);
 
-            Quaterniond quaterniond = vehicle.getRotationFromString(seat.transform, partialTick).mul(new Quaterniond(passengerWeaponStationYawRot));
-            Quaternionf quaternionf = new Quaternionf(quaterniond.x, quaterniond.y, quaterniond.z, quaterniond.w);
+            Quaternionf quaternionf = vehicle.getRotationFromString(seat.transform, partialTick).mul(passengerWeaponStationYawRot);
 
             poseStack.mulPose(quaternionf);
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - yBodyRot));

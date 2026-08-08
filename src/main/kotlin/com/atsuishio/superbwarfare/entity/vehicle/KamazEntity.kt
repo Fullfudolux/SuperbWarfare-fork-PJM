@@ -16,6 +16,7 @@ import net.minecraft.world.level.Level
 import net.minecraft.world.phys.Vec3
 import org.joml.Matrix4d
 import org.joml.Quaterniond
+import org.joml.Quaternionf
 import java.util.function.Function
 
 class KamazEntity(type: EntityType<KamazEntity>, world: Level) : VehicleEntity(type, world), BasicGeoVehicleEntity {
@@ -51,10 +52,10 @@ class KamazEntity(type: EntityType<KamazEntity>, world: Level) : VehicleEntity(t
         return transform.rotate(Axis.XP.rotation(-1.5f * if (left) leftWheelRot else rightWheelRot))
     }
 
-    private fun wheelRotation(left: Boolean, steering: Boolean, partialTicks: Float): Quaterniond {
+    private fun wheelRotation(left: Boolean, steering: Boolean, partialTicks: Float): Quaternionf {
         val rotation = VectorTool.combineRotations(partialTicks, this)
-        if (steering) rotation.mul(Quaterniond(Axis.YP.rotation(rudderRot)))
-        return rotation.mul(Quaterniond(Axis.XP.rotation(-1.5f * if (left) leftWheelRot else rightWheelRot)))
+        if (steering) rotation.rotateY(rudderRot)
+        return rotation.rotateX(-1.5f * if (left) leftWheelRot else rightWheelRot)
     }
 
     private fun steeringWheelTransform(partialTicks: Float): Matrix4d {
@@ -65,10 +66,10 @@ class KamazEntity(type: EntityType<KamazEntity>, world: Level) : VehicleEntity(t
         return transform.rotate(Axis.ZP.rotation(-12 * Mth.lerp(partialTicks, rudderRotO, rudderRot)))
     }
 
-    private fun steeringWheelRotation(partialTicks: Float): Quaterniond {
+    private fun steeringWheelRotation(partialTicks: Float): Quaternionf {
         val rotation = VectorTool.combineRotations(partialTicks, this)
-        rotation.mul(Quaterniond(Axis.XP.rotationDegrees(60f)))
-        return rotation.mul(Quaterniond(Axis.ZP.rotation(-12 * Mth.lerp(partialTicks, rudderRotO, rudderRot))))
+        rotation.rotateX(60f * Mth.DEG_TO_RAD)
+        return rotation.rotateZ(-12 * Mth.lerp(partialTicks, rudderRotO, rudderRot))
     }
 
     // ── Door transforms (OBB follows door animation with partialTick interpolation) ─
@@ -79,10 +80,10 @@ class KamazEntity(type: EntityType<KamazEntity>, world: Level) : VehicleEntity(t
         return transform.rotate(Axis.XP.rotationDegrees(-170f * progress))
     }
 
-    private fun rearDoorRotation(partialTicks: Float): Quaterniond {
+    private fun rearDoorRotation(partialTicks: Float): Quaternionf {
         val progress = Mth.lerp(partialTicks, rearDoorProgressO, rearDoorProgress)
         val rotation = VectorTool.combineRotations(partialTicks, this)
-        return rotation.mul(Quaterniond(Axis.XP.rotationDegrees(-170f * progress)))
+        return rotation.rotateX(-170f * progress * Mth.DEG_TO_RAD)
     }
 
     private fun leftDoorTransform(partialTicks: Float): Matrix4d {
@@ -92,10 +93,10 @@ class KamazEntity(type: EntityType<KamazEntity>, world: Level) : VehicleEntity(t
         return transform.rotate(Axis.YP.rotationDegrees(-70f * progress))
     }
 
-    private fun leftDoorRotation(partialTicks: Float): Quaterniond {
+    private fun leftDoorRotation(partialTicks: Float): Quaternionf {
         val progress = Mth.lerp(partialTicks, leftDoorProgressO, leftDoorProgress)
         val rotation = VectorTool.combineRotations(partialTicks, this)
-        return rotation.mul(Quaterniond(Axis.YP.rotationDegrees(-70f * progress)))
+        return rotation.rotateY(-70f * progress * Mth.DEG_TO_RAD)
     }
 
     private fun rightDoorTransform(partialTicks: Float): Matrix4d {
@@ -105,10 +106,10 @@ class KamazEntity(type: EntityType<KamazEntity>, world: Level) : VehicleEntity(t
         return transform.rotate(Axis.YP.rotationDegrees(70f * progress))
     }
 
-    private fun rightDoorRotation(partialTicks: Float): Quaterniond {
+    private fun rightDoorRotation(partialTicks: Float): Quaternionf {
         val progress = Mth.lerp(partialTicks, rightDoorProgressO, rightDoorProgress)
         val rotation = VectorTool.combineRotations(partialTicks, this)
-        return rotation.mul(Quaterniond(Axis.YP.rotationDegrees(70f * progress)))
+        return rotation.rotateY(70f * progress * Mth.DEG_TO_RAD)
     }
 
     // ── Door state (synced) ────────────────────────────────────────────────────

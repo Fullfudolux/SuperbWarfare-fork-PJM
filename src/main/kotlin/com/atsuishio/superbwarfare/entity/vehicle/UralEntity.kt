@@ -17,6 +17,8 @@ import net.minecraft.world.level.Level
 import net.minecraft.world.phys.Vec3
 import org.joml.Matrix4d
 import org.joml.Quaterniond
+import org.joml.Quaternionf
+import net.minecraft.util.Mth
 import java.util.function.Function
 import kotlin.math.cos
 import kotlin.math.sin
@@ -103,9 +105,8 @@ class UralEntity(type: EntityType<UralEntity>, world: Level) : VehicleEntity(typ
         return transform
     }
 
-    private fun getZadRotation(partialTicks: Float): Quaterniond {
-        val doorRot = Axis.XP.rotationDegrees(zadRot)
-        return VectorTool.combineRotations(partialTicks, this).mul(Quaterniond(doorRot))
+    private fun getZadRotation(partialTicks: Float): Quaternionf {
+        return VectorTool.combineRotations(partialTicks, this).rotateX(zadRot * Mth.DEG_TO_RAD)
     }
 
     // Front-axle steering pivot (wheelL0Turn/wheelR0Turn's bone pivot, converted from geo
@@ -120,10 +121,10 @@ class UralEntity(type: EntityType<UralEntity>, world: Level) : VehicleEntity(typ
         return transform
     }
 
-    private fun getWheelTurnRotation(wheelRot: Float, partialTicks: Float): Quaterniond {
-        val yawRot = Axis.YP.rotation(rudderRot)
-        val pitchRot = Axis.XP.rotation(-1.5f * wheelRot)
-        return VectorTool.combineRotations(partialTicks, this).mul(Quaterniond(yawRot)).mul(Quaterniond(pitchRot))
+    private fun getWheelTurnRotation(wheelRot: Float, partialTicks: Float): Quaternionf {
+        return VectorTool.combineRotations(partialTicks, this)
+            .rotateY(rudderRot)
+            .rotateX(-1.5f * wheelRot)
     }
 
     // Center/rear axle pivots (fixed, no steering) - same roll as the front wheels.
@@ -134,9 +135,8 @@ class UralEntity(type: EntityType<UralEntity>, world: Level) : VehicleEntity(typ
         return transform
     }
 
-    private fun getWheelRollRotation(wheelRot: Float, partialTicks: Float): Quaterniond {
-        val pitchRot = Axis.XP.rotation(-1.5f * wheelRot)
-        return VectorTool.combineRotations(partialTicks, this).mul(Quaterniond(pitchRot))
+    private fun getWheelRollRotation(wheelRot: Float, partialTicks: Float): Quaternionf {
+        return VectorTool.combineRotations(partialTicks, this).rotateX(-1.5f * wheelRot)
     }
 
     override fun baseTick() {

@@ -11,6 +11,7 @@ import com.atsuishio.superbwarfare.init.ModDamageTypes
 import com.atsuishio.superbwarfare.init.ModEntities
 import com.atsuishio.superbwarfare.tools.CustomExplosion
 import com.atsuishio.superbwarfare.tools.VectorTool.combineRotationsTurret
+import org.joml.Quaterniond
 import com.atsuishio.superbwarfare.tools.plus
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.world.entity.LivingEntity
@@ -62,8 +63,8 @@ object VehicleDestroyUtils {
             turretWreckEntity.vehicleName = BuiltInRegistries.ENTITY_TYPE.getKey(vehicle.type).toString()
             turretWreckEntity.xRot = vehicle.getTurretPitch(1f)
             turretWreckEntity.yRot = -getYRotFromVector(vehicle.getBarrelVector(1f)).toFloat()
-            turretWreckEntity.setQuaternion0(quaternion)
-            turretWreckEntity.setQuaternion(quaternion)
+            turretWreckEntity.setQuaternion0(Quaterniond(quaternion))
+            turretWreckEntity.setQuaternion(Quaterniond(quaternion))
             vehicle.level().addFreshEntity(turretWreckEntity)
         }
 

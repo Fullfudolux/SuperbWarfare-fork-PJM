@@ -22,6 +22,7 @@ import net.minecraft.world.level.Level
 import net.minecraft.world.phys.Vec3
 import org.joml.Matrix4d
 import org.joml.Quaterniond
+import org.joml.Quaternionf
 import java.util.UUID
 import java.util.function.Function
 
@@ -103,7 +104,7 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
         rotationTransform["PantsirLeftDoor"] = Function { partialTicks ->
             val p = Mth.lerp(partialTicks, leftDoorProgressO, leftDoorProgress)
             val rot = VectorTool.combineRotations(partialTicks, this)
-            if (p > 0.01f) rot.mul(Quaterniond(Axis.YP.rotationDegrees(-70f * p)))
+            if (p > 0.01f) rot.rotateY(-70f * p * Mth.DEG_TO_RAD)
             rot
         }
         positionTransform["PantsirRightDoor"] = Function { partialTicks ->
@@ -116,7 +117,7 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
         rotationTransform["PantsirRightDoor"] = Function { partialTicks ->
             val p = Mth.lerp(partialTicks, rightDoorProgressO, rightDoorProgress)
             val rot = VectorTool.combineRotations(partialTicks, this)
-            if (p > 0.01f) rot.mul(Quaterniond(Axis.YP.rotationDegrees(70f * p)))
+            if (p > 0.01f) rot.rotateY(70f * p * Mth.DEG_TO_RAD)
             rot
         }
 
@@ -138,7 +139,7 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
         rotationTransform["PantsirLadder"] = Function { partialTicks ->
             val p = Mth.lerp(partialTicks, ladderProgressO, ladderProgress)
             val rot = VectorTool.combineRotations(partialTicks, this)
-            if (p > 0.01f) rot.mul(Quaterniond(Axis.ZP.rotationDegrees(-155f * p)))
+            if (p > 0.01f) rot.rotateZ(-155f * p * Mth.DEG_TO_RAD)
             rot
         }
 
@@ -184,10 +185,10 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
             val jp = Mth.lerp(partialTicks, jacksProgressO, jacksProgress)
             val spin = if (jp > 0.95f) radarSpin else 0f
             VectorTool.combineRotationsTurret(partialTicks, this)
-                .mul(Quaterniond(Axis.XP.rotationDegrees(jp * 70f)))
-                .mul(Quaterniond(Axis.XP.rotationDegrees(-70f)))
-                .mul(Quaterniond(Axis.YP.rotationDegrees(-spin)))
-                .mul(Quaterniond(Axis.XP.rotationDegrees(70f)))
+                .rotateX(jp * 70f * Mth.DEG_TO_RAD)
+                .rotateX(-70f * Mth.DEG_TO_RAD)
+                .rotateY(-spin * Mth.DEG_TO_RAD)
+                .rotateX(70f * Mth.DEG_TO_RAD)
         }
     }
 
@@ -202,9 +203,9 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
         return transform
     }
 
-    private fun wheelRotation(left: Boolean, steering: Boolean, partialTicks: Float): Quaterniond {
+    private fun wheelRotation(left: Boolean, steering: Boolean, partialTicks: Float): Quaternionf {
         val rotation = VectorTool.combineRotations(partialTicks, this)
-        if (steering) rotation.mul(Quaterniond(Axis.YP.rotation(rudderRot)))
+        if (steering) rotation.rotateY(rudderRot)
         return rotation
     }
 
@@ -215,10 +216,10 @@ class PantsirEntity(type: EntityType<PantsirEntity>, world: Level) : VehicleEnti
         return transform.rotate(Axis.ZP.rotation(-12 * Mth.lerp(partialTicks, rudderRotO, rudderRot)))
     }
 
-    private fun steeringWheelRotation(partialTicks: Float): Quaterniond {
+    private fun steeringWheelRotation(partialTicks: Float): Quaternionf {
         val rotation = VectorTool.combineRotations(partialTicks, this)
-        rotation.mul(Quaterniond(Axis.XP.rotationDegrees(60f)))
-        return rotation.mul(Quaterniond(Axis.ZP.rotation(-12 * Mth.lerp(partialTicks, rudderRotO, rudderRot))))
+        rotation.rotateX(60f * Mth.DEG_TO_RAD)
+        return rotation.rotateZ(-12 * Mth.lerp(partialTicks, rudderRotO, rudderRot))
     }
 
     // ── State ─────────────────────────────────────────────────────────────────

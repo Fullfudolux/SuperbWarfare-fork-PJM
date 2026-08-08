@@ -14,7 +14,7 @@ import net.minecraft.world.phys.Vec3
 import net.minecraft.world.phys.shapes.CollisionContext
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.api.distmarker.OnlyIn
-import org.joml.Quaterniond
+import org.joml.Quaternionf
 import org.joml.Vector3d
 import org.joml.Vector3f
 import org.joml.Vector3i
@@ -122,62 +122,50 @@ object VectorTool {
         }
     }
 
-    // 合并三个旋转（Yaw -> Pitch -> Roll）
+    // 合并三个旋转（Yaw -> Pitch -> Roll）— in-place rotateY/X/Z (was 6 allocs via Axis+Quaterniond round-trip, now 1)
     @JvmStatic
-    fun combineRotations(partialTicks: Float, entity: VehicleEntity): Quaterniond {
-        // 1. 获取三个独立的旋转四元数
-        val yawRot = Axis.YP.rotationDegrees(-Mth.lerp(partialTicks, entity.yRotO, entity.yRot))
-        val pitchRot = Axis.XP.rotationDegrees(Mth.lerp(partialTicks, entity.xRotO, entity.xRot))
-        val rollRot = Axis.ZP.rotationDegrees(Mth.lerp(partialTicks, entity.prevRoll, entity.roll))
-
-        // 2. 按照正确顺序合并：先Yaw，再Pitch，最后Roll
-        return Quaterniond(yawRot)  // 初始化为Yaw旋转
-            .mul(Quaterniond(pitchRot))     // 应用Pitch旋转
-            .mul(Quaterniond(rollRot))      // 应用Roll旋转
+    fun combineRotations(partialTicks: Float, entity: VehicleEntity): Quaternionf {
+        return Quaternionf()
+            .rotateY(-Mth.lerp(partialTicks, entity.yRotO, entity.yRot) * Mth.DEG_TO_RAD)
+            .rotateX(Mth.lerp(partialTicks, entity.xRotO, entity.xRot) * Mth.DEG_TO_RAD)
+            .rotateZ(Mth.lerp(partialTicks, entity.prevRoll, entity.roll) * Mth.DEG_TO_RAD)
     }
 
     // 仅水平旋转
     @JvmStatic
-    fun combineRotationsYaw(partialTicks: Float, entity: VehicleEntity) =
-        Quaterniond(Axis.YP.rotationDegrees(-Mth.lerp(partialTicks, entity.yRotO, entity.yRot)))
+    fun combineRotationsYaw(partialTicks: Float, entity: VehicleEntity): Quaternionf =
+        Quaternionf().rotateY(-Mth.lerp(partialTicks, entity.yRotO, entity.yRot) * Mth.DEG_TO_RAD)
 
 
     @JvmStatic
-    fun combineRotationsTurret(partialTicks: Float, entity: VehicleEntity): Quaterniond {
-        val turretYawRot = Axis.YP.rotationDegrees(Mth.lerp(partialTicks, entity.turretYRotO, entity.turretYRot))
-        val turretPitchRot = Axis.XP.rotationDegrees(entity.turretCustomPitch)
+    fun combineRotationsTurret(partialTicks: Float, entity: VehicleEntity): Quaternionf {
         return combineRotations(partialTicks, entity)
-            .mul(Quaterniond(turretPitchRot))
-            .mul(Quaterniond(turretYawRot))
+            .rotateX(entity.turretCustomPitch * Mth.DEG_TO_RAD)
+            .rotateY(Mth.lerp(partialTicks, entity.turretYRotO, entity.turretYRot) * Mth.DEG_TO_RAD)
     }
 
     @JvmStatic
-    fun combineRotationsBarrel(partialTicks: Float, entity: VehicleEntity): Quaterniond {
-        val turretPitchRot = Axis.XP.rotationDegrees(Mth.lerp(partialTicks, entity.turretXRotO, entity.turretXRot))
+    fun combineRotationsBarrel(partialTicks: Float, entity: VehicleEntity): Quaternionf {
         return combineRotationsTurret(partialTicks, entity)
-            .mul(Quaterniond(turretPitchRot))
+            .rotateX(Mth.lerp(partialTicks, entity.turretXRotO, entity.turretXRot) * Mth.DEG_TO_RAD)
     }
 
     @JvmStatic
-    fun combineRotationsPassengerWeaponStation(partialTicks: Float, entity: VehicleEntity): Quaterniond {
-        val passengerWeaponStationYawRot = Axis.YP.rotationDegrees(
-            Mth.lerp(partialTicks, entity.gunYRotO, entity.gunYRot)
-                    - Mth.lerp(partialTicks, entity.turretYRotO, entity.turretYRot)
-        )
+    fun combineRotationsPassengerWeaponStation(partialTicks: Float, entity: VehicleEntity): Quaternionf {
         return combineRotationsTurret(partialTicks, entity)
-            .mul(Quaterniond(passengerWeaponStationYawRot))
+            .rotateY((Mth.lerp(partialTicks, entity.gunYRotO, entity.gunYRot)
+                    - Mth.lerp(partialTicks, entity.turretYRotO, entity.turretYRot)) * Mth.DEG_TO_RAD)
     }
 
     @JvmStatic
-    fun combineRotationsPassengerWeaponStationBarrel(partialTicks: Float, entity: VehicleEntity): Quaterniond {
+    fun combineRotationsPassengerWeaponStationBarrel(partialTicks: Float, entity: VehicleEntity): Quaternionf {
         val barrelPitch = Mth.clamp(
             -Mth.lerp(partialTicks, entity.gunXRotO, entity.gunXRot),
             entity.passengerWeaponMinPitch,
             entity.passengerWeaponMaxPitch
         )
-        val passengerWeaponStationPitchRot = Axis.XP.rotationDegrees(-barrelPitch)
         return combineRotationsPassengerWeaponStation(partialTicks, entity)
-            .mul(Quaterniond(passengerWeaponStationPitchRot))
+            .rotateX(-barrelPitch * Mth.DEG_TO_RAD)
     }
 
     @JvmStatic

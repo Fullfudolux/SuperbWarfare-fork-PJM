@@ -38,7 +38,7 @@ class Cv90Entity(type: EntityType<Cv90Entity>, world: Level) : VehicleEntity(typ
         rotationTransform[RAMP_TRANSFORM] = Function { partialTicks ->
             val p = Mth.lerp(partialTicks, rampProgressO, rampProgress)
             val rot = VectorTool.combineRotations(partialTicks, this)
-            if (p > 0.01f) rot.mul(Quaterniond(Axis.XP.rotationDegrees(-RAMP_OPEN_ANGLE * p)))
+            if (p > 0.01f) rot.rotateX(-RAMP_OPEN_ANGLE * p * Mth.DEG_TO_RAD)
             rot
         }
 
