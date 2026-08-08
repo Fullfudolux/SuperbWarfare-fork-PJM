@@ -25,6 +25,7 @@ import net.minecraft.client.renderer.entity.player.PlayerRenderer
 import net.minecraft.client.renderer.texture.OverlayTexture
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.util.Mth
+import net.minecraft.Util
 import net.minecraft.world.entity.HumanoidArm
 import net.minecraft.world.entity.player.PlayerModelPart
 import net.minecraft.world.item.ItemDisplayContext
@@ -38,6 +39,11 @@ object AnimationHelper {
     var lerpTimer: Float = 0f
     // Cached crosshair textures keyed by name — was loc() + string-interp ResourceLocation alloc per frame while zoomed.
     private val crosshairTextures = HashMap<String?, ResourceLocation>()
+    // Memoized arm RenderTypes — vanilla entitySolid/entityTranslucent are NOT memoized (new RenderType + CompositeState per call),
+    // causing BufferSource cache-miss -> new BufferBuilder per arm-bone per frame. loc = player skin (constant per player).
+    private val ARM_ENTITY_SOLID = Util.memoize { loc: ResourceLocation -> RenderType.entitySolid(loc) }
+    private val ARM_ENTITY_TRANSLUCENT = Util.memoize { loc: ResourceLocation -> RenderType.entityTranslucent(loc) }
+    private val CROSSHAIR_EMISSIVE = Util.memoize { tex: ResourceLocation -> RenderType.entityTranslucentEmissive(tex) }
 
     fun renderPartOverBone(
         model: ModelPart,
@@ -365,7 +371,7 @@ object AnimationHelper {
                 tex = getSmartBrightenedTexture(tex, 10f)
             }
 
-            val blackPart = buffer.getBuffer(RenderType.entityTranslucentEmissive(tex))
+            val blackPart = buffer.getBuffer(CROSSHAIR_EMISSIVE.apply(tex))
             vertexRGB(blackPart, `$$7`, pose, 255, 0f, 0f, 0, 1, r, g, b, alpha, size)
             vertexRGB(blackPart, `$$7`, pose, 255, size, 0f, 1, 1, r, g, b, alpha, size)
             vertexRGB(blackPart, `$$7`, pose, 255, size, size, 1, 0, r, g, b, alpha, size)
@@ -465,7 +471,7 @@ object AnimationHelper {
                         model.leftArm,
                         bone,
                         stack,
-                        currentBuffer.getBuffer(RenderType.entitySolid(loc)),
+                        currentBuffer.getBuffer(ARM_ENTITY_SOLID.apply(loc)),
                         packedLightIn,
                         overlayTexture
                     )
@@ -473,7 +479,7 @@ object AnimationHelper {
                         model.leftSleeve,
                         bone,
                         stack,
-                        currentBuffer.getBuffer(RenderType.entityTranslucent(loc)),
+                        currentBuffer.getBuffer(ARM_ENTITY_TRANSLUCENT.apply(loc)),
                         packedLightIn,
                         overlayTexture
                     )
@@ -482,7 +488,7 @@ object AnimationHelper {
                         model.leftArm,
                         bone,
                         stack,
-                        currentBuffer.getBuffer(RenderType.entitySolid(loc)),
+                        currentBuffer.getBuffer(ARM_ENTITY_SOLID.apply(loc)),
                         packedLightIn,
                         overlayTexture
                     )
@@ -490,7 +496,7 @@ object AnimationHelper {
                         model.leftSleeve,
                         bone,
                         stack,
-                        currentBuffer.getBuffer(RenderType.entityTranslucent(loc)),
+                        currentBuffer.getBuffer(ARM_ENTITY_TRANSLUCENT.apply(loc)),
                         packedLightIn,
                         overlayTexture
                     )
@@ -509,7 +515,7 @@ object AnimationHelper {
                         model.rightArm,
                         bone,
                         stack,
-                        currentBuffer.getBuffer(RenderType.entitySolid(loc)),
+                        currentBuffer.getBuffer(ARM_ENTITY_SOLID.apply(loc)),
                         packedLightIn,
                         overlayTexture
                     )
@@ -517,7 +523,7 @@ object AnimationHelper {
                         model.rightSleeve,
                         bone,
                         stack,
-                        currentBuffer.getBuffer(RenderType.entityTranslucent(loc)),
+                        currentBuffer.getBuffer(ARM_ENTITY_TRANSLUCENT.apply(loc)),
                         packedLightIn,
                         overlayTexture
                     )
@@ -526,7 +532,7 @@ object AnimationHelper {
                         model.rightArm,
                         bone,
                         stack,
-                        currentBuffer.getBuffer(RenderType.entitySolid(loc)),
+                        currentBuffer.getBuffer(ARM_ENTITY_SOLID.apply(loc)),
                         packedLightIn,
                         overlayTexture
                     )
@@ -534,7 +540,7 @@ object AnimationHelper {
                         model.rightSleeve,
                         bone,
                         stack,
-                        currentBuffer.getBuffer(RenderType.entityTranslucent(loc)),
+                        currentBuffer.getBuffer(ARM_ENTITY_TRANSLUCENT.apply(loc)),
                         packedLightIn,
                         overlayTexture
                     )
